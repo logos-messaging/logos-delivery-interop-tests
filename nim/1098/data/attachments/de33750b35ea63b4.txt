@@ -1,0 +1,666 @@
+2026-02-28 04:25:15.348 DEBUG [tests.conftest] Running fixture setup: test_id
+2026-02-28 04:25:15.348 DEBUG [tests.conftest] Running test: test_filter_subscribe_to_29_content_topics_in_separate_calls with id: 2026-02-28_04-25-15__e26ba36c-c474-4ab8-8a7c-f8e43f2a6c5a
+2026-02-28 04:25:15.349 DEBUG [src.steps.common] Running fixture setup: common_setup
+2026-02-28 04:25:15.349 DEBUG [src.steps.filter] Running fixture setup: filter_setup
+2026-02-28 04:25:15.349 DEBUG [src.steps.filter] Running fixture setup: setup_main_relay_node
+2026-02-28 04:25:15.355 DEBUG [src.node.docker_mananger] Docker client initialized with image wakuorg/nwaku:latest
+2026-02-28 04:25:15.355 DEBUG [src.node.waku_node] WakuNode instance initialized with log path ./log/docker/node1_2026-02-28_04-25-15__e26ba36c-c474-4ab8-8a7c-f8e43f2a6c5a__wakuorg_nwaku:latest.log
+2026-02-28 04:25:15.356 DEBUG [src.node.waku_node] Starting Node...
+2026-02-28 04:25:15.356 DEBUG [src.node.docker_mananger] Attempting to create or retrieve network waku
+2026-02-28 04:25:15.357 DEBUG [src.node.docker_mananger] Network waku already exists
+2026-02-28 04:25:15.357 DEBUG [src.node.docker_mananger] Generated random external IP 172.18.1.189
+2026-02-28 04:25:15.357 DEBUG [src.node.docker_mananger] Generated ports ['57973', '57974', '57975', '57976', '57977']
+2026-02-28 04:25:15.358 DEBUG [src.node.waku_node] RLN credentials were not set
+2026-02-28 04:25:15.358 INFO [src.node.waku_node] RLN credentials not set or credential store not available, starting without RLN
+2026-02-28 04:25:15.358 DEBUG [src.node.waku_node] Using volumes []
+2026-02-28 04:25:15.358 DEBUG [src.node.docker_mananger] docker run -i -t -p 57973:57973 -p 57974:57974 -p 57975:57975 -p 57976:57976 -p 57977:57977 wakuorg/nwaku:latest --listen-address=0.0.0.0 --rest=true --rest-admin=true --websocket-support=true --log-level=TRACE --rest-relay-cache-capacity=100 --websocket-port=57975 --rest-port=57973 --tcp-port=57974 --discv5-udp-port=57976 --rest-address=0.0.0.0 --nat=extip:172.18.1.189 --peer-exchange=true --discv5-discovery=true --cluster-id=3 --nodekey=b8cbb129cd9a2ac99e63cda88abec1a4db88beeeeffab1b16f90c9653d526a3d --shard=0 --metrics-server=true --metrics-server-address=0.0.0.0 --metrics-server-port=57977 --metrics-logging=true --relay=true --filter=true
+2026-02-28 04:25:15.517 DEBUG [src.node.docker_mananger] docker network connect --ip 172.18.1.189 waku 9fd8fc94b4c7afe4f0daf950860665fa164879a55a4d2d83e72933e95bd0fed4
+2026-02-28 04:25:15.543 DEBUG [src.node.docker_mananger] Container started with ID 9fd8fc94b4c7. Setting up logs at ./log/docker/node1_2026-02-28_04-25-15__e26ba36c-c474-4ab8-8a7c-f8e43f2a6c5a__wakuorg_nwaku:latest.log
+2026-02-28 04:25:15.544 DEBUG [src.node.waku_node] Started container from image wakuorg/nwaku:latest. REST: 57973
+2026-02-28 04:25:15.544 DEBUG [src.libs.common] Sleeping for 1 seconds
+2026-02-28 04:25:15.666 ERROR [src.node.docker_mananger] Max retries reached for container 32547bb35c07. Exiting log stream.
+2026-02-28 04:25:16.155 ERROR [src.node.docker_mananger] Max retries reached for container c1d4d1610e9f. Exiting log stream.
+2026-02-28 04:25:16.545 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:57973/health" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:16.547 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"nodeHealth":"READY","connectionStatus":"Disconnected","protocolsHealth":[{"Relay":"NOT_READY","desc":"No connected peers"},{"Lightpush":"NOT_MOUNTED"},{"Legacy Lightpush":"NOT_MOUNTED"},{"Filter":"NOT_READY","desc":"Relay is not ready, filter will not be able to sort out messages"},{"Store":"NOT_MOUNTED"},{"Legacy Store":"NOT_MOUNTED"},{"Peer Exchange":"READY"},{"Rendezvous":"NOT_READY","desc":"No Rendezvous peers are available yet"},{"Mix":"NOT_MOUNTED"},{"Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Legacy Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Store Client":"NOT_READY","desc":"No Store service peer available yet, neither Store service set up for the node"},{"Legacy Store Client":"NOT_READY","desc":"No Legacy Store service peers are available yet, neither Store service set up for the node"},{"Filter Client":"NOT_READY","desc":"No Filter service peer available yet"},{"Rln Relay":"NOT_MOUNTED"}]}'
+2026-02-28 04:25:16.548 INFO [src.node.waku_node] Node protocols are initialized !!
+2026-02-28 04:25:16.548 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:57973/debug/v1/info" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:16.551 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"listenAddresses":["/ip4/172.18.1.189/tcp/57974/p2p/16Uiu2HAmFEirp7exZbTJWoLWH2L2HtpQ4C7RqA9ZeLP9AMny7H8R","/ip4/172.18.1.189/tcp/57975/ws/p2p/16Uiu2HAmFEirp7exZbTJWoLWH2L2HtpQ4C7RqA9ZeLP9AMny7H8R"],"enrUri":"enr:-L24QKmBUz0Utc8ut7C7EAcgUZbltWxBCwG7MFrE7U5VFlEJbExkSqonqRYgGsltI-41dDRJiEIukxrdSGKQ9aqwGDECgmlkgnY0gmlwhKwSAb2KbXVsdGlhZGRyc5YACASsEgG9BuJ2AAoErBIBvQbid90DgnJzhQADAQAAiXNlY3AyNTZrMaEDJlubDEtLhLVURPi2qLmv9mOfxiAY8Ax0tGupUWmyrP6DdGNwguJ2g3VkcILieIV3YWt1MgU"}'
+2026-02-28 04:25:16.551 INFO [src.node.waku_node] REST service is ready !!
+2026-02-28 04:25:16.551 DEBUG [src.steps.filter] Running fixture setup: setup_main_filter_node
+2026-02-28 04:25:16.557 DEBUG [src.node.docker_mananger] Docker client initialized with image wakuorg/nwaku:latest
+2026-02-28 04:25:16.557 DEBUG [src.node.waku_node] WakuNode instance initialized with log path ./log/docker/node2_2026-02-28_04-25-15__e26ba36c-c474-4ab8-8a7c-f8e43f2a6c5a__wakuorg_nwaku:latest.log
+2026-02-28 04:25:16.557 DEBUG [src.node.waku_node] Starting Node...
+2026-02-28 04:25:16.558 DEBUG [src.node.docker_mananger] Attempting to create or retrieve network waku
+2026-02-28 04:25:16.559 DEBUG [src.node.docker_mananger] Network waku already exists
+2026-02-28 04:25:16.559 DEBUG [src.node.docker_mananger] Generated random external IP 172.18.238.239
+2026-02-28 04:25:16.559 DEBUG [src.node.docker_mananger] Generated ports ['12006', '12007', '12008', '12009', '12010']
+2026-02-28 04:25:16.559 DEBUG [src.node.waku_node] RLN credentials were not set
+2026-02-28 04:25:16.559 INFO [src.node.waku_node] RLN credentials not set or credential store not available, starting without RLN
+2026-02-28 04:25:16.559 DEBUG [src.node.waku_node] Using volumes []
+2026-02-28 04:25:16.559 DEBUG [src.node.docker_mananger] docker run -i -t -p 12006:12006 -p 12007:12007 -p 12008:12008 -p 12009:12009 -p 12010:12010 wakuorg/nwaku:latest --listen-address=0.0.0.0 --rest=true --rest-admin=true --websocket-support=true --log-level=TRACE --rest-relay-cache-capacity=100 --websocket-port=12008 --rest-port=12006 --tcp-port=12007 --discv5-udp-port=12009 --rest-address=0.0.0.0 --nat=extip:172.18.238.239 --peer-exchange=true --discv5-discovery=true --cluster-id=3 --nodekey=f1ab0aaeb8fcc5cceb109f4f53a0bc147edace05da988ccf5a63ed00a369bacc --shard=0 --metrics-server=true --metrics-server-address=0.0.0.0 --metrics-server-port=12010 --metrics-logging=true --relay=false --discv5-bootstrap-node=enr:-L24QKmBUz0Utc8ut7C7EAcgUZbltWxBCwG7MFrE7U5VFlEJbExkSqonqRYgGsltI-41dDRJiEIukxrdSGKQ9aqwGDECgmlkgnY0gmlwhKwSAb2KbXVsdGlhZGRyc5YACASsEgG9BuJ2AAoErBIBvQbid90DgnJzhQADAQAAiXNlY3AyNTZrMaEDJlubDEtLhLVURPi2qLmv9mOfxiAY8Ax0tGupUWmyrP6DdGNwguJ2g3VkcILieIV3YWt1MgU --filternode=/ip4/172.18.1.189/tcp/57974/p2p/16Uiu2HAmFEirp7exZbTJWoLWH2L2HtpQ4C7RqA9ZeLP9AMny7H8R
+2026-02-28 04:25:16.719 DEBUG [src.node.docker_mananger] docker network connect --ip 172.18.238.239 waku 7192f833c37cfafa50138a16a84d3d7fb7681a489de420e378e7bf4131d24429
+2026-02-28 04:25:16.745 DEBUG [src.node.docker_mananger] Container started with ID 7192f833c37c. Setting up logs at ./log/docker/node2_2026-02-28_04-25-15__e26ba36c-c474-4ab8-8a7c-f8e43f2a6c5a__wakuorg_nwaku:latest.log
+2026-02-28 04:25:16.746 DEBUG [src.node.waku_node] Started container from image wakuorg/nwaku:latest. REST: 12006
+2026-02-28 04:25:16.746 DEBUG [src.libs.common] Sleeping for 1 seconds
+2026-02-28 04:25:17.746 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/health" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:17.749 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"nodeHealth":"READY","connectionStatus":"Disconnected","protocolsHealth":[{"Relay":"NOT_MOUNTED"},{"Lightpush":"NOT_MOUNTED"},{"Legacy Lightpush":"NOT_MOUNTED"},{"Filter":"NOT_MOUNTED"},{"Store":"NOT_MOUNTED"},{"Legacy Store":"NOT_MOUNTED"},{"Peer Exchange":"READY"},{"Rendezvous":"NOT_READY","desc":"No Rendezvous peers are available yet"},{"Mix":"NOT_MOUNTED"},{"Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Legacy Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Store Client":"NOT_READY","desc":"No Store service peer available yet, neither Store service set up for the node"},{"Legacy Store Client":"NOT_READY","desc":"No Legacy Store service peers are available yet, neither Store service set up for the node"},{"Filter Client":"NOT_READY","desc":"No Filter service peer available yet"},{"Rln Relay":"NOT_MOUNTED"}]}'
+2026-02-28 04:25:17.749 INFO [src.node.waku_node] Node protocols are initialized !!
+2026-02-28 04:25:17.749 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/debug/v1/info" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:17.751 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"listenAddresses":["/ip4/172.18.238.239/tcp/12007/p2p/16Uiu2HAmEhZxARM2AyVAggiCfJ5osPGB3d8X5zV7FJPMkHLqs4e3","/ip4/172.18.238.239/tcp/12008/ws/p2p/16Uiu2HAmEhZxARM2AyVAggiCfJ5osPGB3d8X5zV7FJPMkHLqs4e3"],"enrUri":"enr:-L24QIeGkVUyWeIb_10LjR4ccNEQELHsLAIwsqP4-FqxWjOTH4xLY1cWzqfZcp4Huqg4KgcS4PCJydAHOcEFTmfPgg4CgmlkgnY0gmlwhKwS7u-KbXVsdGlhZGRyc5YACASsEu7vBi7nAAoErBLu7wYu6N0DgnJzhQADAQAAiXNlY3AyNTZrMaEDHmCHToXyNcs8F0O7LcyDxLkw7_fp065wbHWCzwnsxQCDdGNwgi7ng3VkcIIu6YV3YWt1MgA"}'
+2026-02-28 04:25:17.752 INFO [src.node.waku_node] REST service is ready !!
+2026-02-28 04:25:17.752 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/admin/v1/peers" -H "Content-Type: application/json" -d '["/ip4/172.18.1.189/tcp/57974/p2p/16Uiu2HAmFEirp7exZbTJWoLWH2L2HtpQ4C7RqA9ZeLP9AMny7H8R"]'
+2026-02-28 04:25:17.783 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:17.783 DEBUG [src.steps.filter] Running fixture setup: subscribe_main_nodes
+2026-02-28 04:25:17.784 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/subscriptions" -H "Content-Type: application/json" -d '["/waku/2/rs/3/1"]'
+2026-02-28 04:25:17.799 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:17.800 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "52dd0129-1a49-4b15-9c43-60e4936c52f6", "contentFilters": ["/test/1/waku-filter/proto"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.810 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"52dd0129-1a49-4b15-9c43-60e4936c52f6","statusDesc":"OK"}'
+2026-02-28 04:25:17.813 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["0"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.821 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.822 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["1"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.830 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.830 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["2"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.840 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.840 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["3"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.848 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.848 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["4"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.856 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.857 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["5"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.865 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.865 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["6"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.874 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.874 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["7"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.883 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.883 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["8"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.892 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.893 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["9"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.902 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.902 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["10"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.911 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.911 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["11"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.920 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.921 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["12"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.930 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.930 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["13"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.940 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.940 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["14"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.950 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.950 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["15"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.960 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.960 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["16"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.970 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.971 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["17"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.981 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.981 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["18"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:17.992 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:17.992 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["19"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:18.002 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:18.003 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["20"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:18.014 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:18.014 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["21"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:18.025 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:18.025 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["22"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:18.038 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:18.038 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["23"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:18.049 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:18.050 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["24"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:18.062 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:18.062 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["25"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:18.074 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:18.075 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["26"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:18.086 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:18.087 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["27"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:18.099 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:18.099 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["28"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:18.112 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:18.112 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 0
+2026-02-28 04:25:18.112 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "0", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:18.125 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:18.125 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:18.225 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:18.226 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/0" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:18.228 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"0","version":0,"timestamp":1772252718112691501,"ephemeral":false}]'
+2026-02-28 04:25:18.230 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 1
+2026-02-28 04:25:18.230 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "1", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:18.240 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:18.241 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:18.341 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:18.341 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/1" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:18.344 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"1","version":0,"timestamp":1772252718230474258,"ephemeral":false}]'
+2026-02-28 04:25:18.345 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 2
+2026-02-28 04:25:18.346 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "2", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:18.356 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:18.356 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:18.456 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:18.457 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/2" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:18.459 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"2","version":0,"timestamp":1772252718346057900,"ephemeral":false}]'
+2026-02-28 04:25:18.461 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 3
+2026-02-28 04:25:18.461 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "3", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:18.471 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:18.472 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:18.572 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:18.572 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/3" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:18.575 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"3","version":0,"timestamp":1772252718461584125,"ephemeral":false}]'
+2026-02-28 04:25:18.576 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 4
+2026-02-28 04:25:18.576 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "4", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:18.587 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:18.587 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:18.687 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:18.688 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/4" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:18.690 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"4","version":0,"timestamp":1772252718576850048,"ephemeral":false}]'
+2026-02-28 04:25:18.692 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 5
+2026-02-28 04:25:18.692 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "5", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:18.703 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:18.703 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:18.803 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:18.804 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/5" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:18.806 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"5","version":0,"timestamp":1772252718692723076,"ephemeral":false}]'
+2026-02-28 04:25:18.808 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 6
+2026-02-28 04:25:18.808 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "6", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:18.818 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:18.818 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:18.919 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:18.919 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/6" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:18.921 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"6","version":0,"timestamp":1772252718808352889,"ephemeral":false}]'
+2026-02-28 04:25:18.923 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 7
+2026-02-28 04:25:18.924 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "7", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:18.934 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:18.934 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:19.034 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:19.035 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/7" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:19.037 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"7","version":0,"timestamp":1772252718923838820,"ephemeral":false}]'
+2026-02-28 04:25:19.039 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 8
+2026-02-28 04:25:19.039 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "8", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:19.049 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:19.050 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:19.150 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:19.150 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/8" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:19.153 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"8","version":0,"timestamp":1772252719039542321,"ephemeral":false}]'
+2026-02-28 04:25:19.154 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 9
+2026-02-28 04:25:19.155 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "9", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:19.165 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:19.165 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:19.266 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:19.266 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/9" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:19.269 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"9","version":0,"timestamp":1772252719155259128,"ephemeral":false}]'
+2026-02-28 04:25:19.270 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 10
+2026-02-28 04:25:19.270 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "10", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:19.280 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:19.281 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:19.381 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:19.381 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/10" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:19.384 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"10","version":0,"timestamp":1772252719270669906,"ephemeral":false}]'
+2026-02-28 04:25:19.385 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 11
+2026-02-28 04:25:19.385 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "11", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:19.396 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:19.396 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:19.496 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:19.497 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/11" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:19.499 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"11","version":0,"timestamp":1772252719385819544,"ephemeral":false}]'
+2026-02-28 04:25:19.500 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 12
+2026-02-28 04:25:19.501 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "12", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:19.511 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:19.512 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:19.612 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:19.612 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/12" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:19.615 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"12","version":0,"timestamp":1772252719501214835,"ephemeral":false}]'
+2026-02-28 04:25:19.616 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 13
+2026-02-28 04:25:19.617 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "13", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:19.627 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:19.628 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:19.728 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:19.728 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/13" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:19.731 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"13","version":0,"timestamp":1772252719617065134,"ephemeral":false}]'
+2026-02-28 04:25:19.732 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 14
+2026-02-28 04:25:19.732 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "14", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:19.743 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:19.743 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:19.843 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:19.844 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/14" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:19.846 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"14","version":0,"timestamp":1772252719732729844,"ephemeral":false}]'
+2026-02-28 04:25:19.848 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 15
+2026-02-28 04:25:19.848 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "15", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:19.858 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:19.858 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:19.959 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:19.959 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/15" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:19.962 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"15","version":0,"timestamp":1772252719848391657,"ephemeral":false}]'
+2026-02-28 04:25:19.963 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 16
+2026-02-28 04:25:19.964 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "16", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:19.974 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:19.974 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:20.074 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:20.075 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/16" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:20.077 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"16","version":0,"timestamp":1772252719963859270,"ephemeral":false}]'
+2026-02-28 04:25:20.079 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 17
+2026-02-28 04:25:20.079 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "17", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:20.089 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:20.090 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:20.190 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:20.190 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/17" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:20.193 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"17","version":0,"timestamp":1772252720079540120,"ephemeral":false}]'
+2026-02-28 04:25:20.194 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 18
+2026-02-28 04:25:20.195 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "18", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:20.205 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:20.205 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:20.305 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:20.306 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/18" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:20.308 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"18","version":0,"timestamp":1772252720195039842,"ephemeral":false}]'
+2026-02-28 04:25:20.310 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 19
+2026-02-28 04:25:20.310 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "19", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:20.321 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:20.321 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:20.421 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:20.421 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/19" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:20.424 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"19","version":0,"timestamp":1772252720310477870,"ephemeral":false}]'
+2026-02-28 04:25:20.425 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 20
+2026-02-28 04:25:20.426 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "20", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:20.436 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:20.436 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:20.536 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:20.537 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/20" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:20.539 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"20","version":0,"timestamp":1772252720426054201,"ephemeral":false}]'
+2026-02-28 04:25:20.540 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 21
+2026-02-28 04:25:20.541 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "21", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:20.551 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:20.551 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:20.652 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:20.652 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/21" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:20.654 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"21","version":0,"timestamp":1772252720541191385,"ephemeral":false}]'
+2026-02-28 04:25:20.656 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 22
+2026-02-28 04:25:20.656 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "22", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:20.666 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:20.667 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:20.767 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:20.768 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/22" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:20.770 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"22","version":0,"timestamp":1772252720656613268,"ephemeral":false}]'
+2026-02-28 04:25:20.772 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 23
+2026-02-28 04:25:20.772 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "23", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:20.782 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:20.782 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:20.882 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:20.883 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/23" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:20.885 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"23","version":0,"timestamp":1772252720772240701,"ephemeral":false}]'
+2026-02-28 04:25:20.887 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 24
+2026-02-28 04:25:20.887 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "24", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:20.897 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:20.898 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:20.998 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:20.998 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/24" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:21.001 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"24","version":0,"timestamp":1772252720887509086,"ephemeral":false}]'
+2026-02-28 04:25:21.002 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 25
+2026-02-28 04:25:21.003 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "25", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:21.014 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:21.014 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:21.114 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:21.114 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/25" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:21.117 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"25","version":0,"timestamp":1772252721003214015,"ephemeral":false}]'
+2026-02-28 04:25:21.118 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 26
+2026-02-28 04:25:21.118 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "26", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:21.128 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:21.129 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:21.229 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:21.229 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/26" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:21.232 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"26","version":0,"timestamp":1772252721118832030,"ephemeral":false}]'
+2026-02-28 04:25:21.233 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 27
+2026-02-28 04:25:21.234 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "27", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:21.244 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:21.244 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:21.345 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:21.345 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/27" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:21.348 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"27","version":0,"timestamp":1772252721233952481,"ephemeral":false}]'
+2026-02-28 04:25:21.349 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 28
+2026-02-28 04:25:21.349 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:57973/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "28", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:21.359 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:21.360 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:21.460 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:21.460 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:12006/filter/v2/messages/28" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:21.463 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"28","version":0,"timestamp":1772252721349706825,"ephemeral":false}]'
+2026-02-28 04:25:21.464 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:12006/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["rate limited"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:21.477 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:21.507 DEBUG [tests.conftest] Running fixture teardown: test_setup
+2026-02-28 04:25:21.507 DEBUG [tests.conftest] Running fixture teardown: close_open_nodes
+2026-02-28 04:25:21.507 DEBUG [src.node.waku_node] Stopping container with id 9fd8fc94b4c7
+2026-02-28 04:25:21.993 DEBUG [src.node.waku_node] Container stopped.
+2026-02-28 04:25:21.995 DEBUG [src.node.waku_node] Stopping container with id 7192f833c37c
+2026-02-28 04:25:22.485 DEBUG [src.node.waku_node] Container stopped.
+2026-02-28 04:25:22.487 DEBUG [tests.conftest] Running fixture teardown: check_waku_log_errors
+2026-02-28 04:25:22.508 DEBUG [src.node.docker_mananger] No errors found in the waku logs.
+2026-02-28 04:25:22.527 DEBUG [src.node.docker_mananger] No errors found in the waku logs.
+2026-02-28 04:25:22.528 DEBUG [tests.conftest] Running fixture teardown: attach_logs_on_fail
+2026-02-28 04:25:22.528 DEBUG [tests.conftest] Test failed, attempting to attach logs to the allure reports
+2026-02-28 04:25:22.529 DEBUG [src.libs.common] Attaching file ./log/docker/node1_2026-02-28_04-25-15__e26ba36c-c474-4ab8-8a7c-f8e43f2a6c5a__wakuorg_nwaku:latest.log
+2026-02-28 04:25:22.530 DEBUG [src.libs.common] Attaching file ./log/docker/node2_2026-02-28_04-25-15__e26ba36c-c474-4ab8-8a7c-f8e43f2a6c5a__wakuorg_nwaku:latest.log
+2026-02-28 04:25:22.537 DEBUG [tests.conftest] Running fixture setup: test_id
+2026-02-28 04:25:22.537 DEBUG [tests.conftest] Running test: test_filter_subscribe_to_29_content_topics_in_separate_calls with id: 2026-02-28_04-25-22__9ea2001f-4308-4d1a-b83e-1dc7fe1ec7e5
+2026-02-28 04:25:22.537 DEBUG [src.steps.common] Running fixture setup: common_setup
+2026-02-28 04:25:22.537 DEBUG [src.steps.filter] Running fixture setup: filter_setup
+2026-02-28 04:25:22.538 DEBUG [src.steps.filter] Running fixture setup: setup_main_relay_node
+2026-02-28 04:25:22.544 DEBUG [src.node.docker_mananger] Docker client initialized with image wakuorg/nwaku:latest
+2026-02-28 04:25:22.544 DEBUG [src.node.waku_node] WakuNode instance initialized with log path ./log/docker/node1_2026-02-28_04-25-22__9ea2001f-4308-4d1a-b83e-1dc7fe1ec7e5__wakuorg_nwaku:latest.log
+2026-02-28 04:25:22.544 DEBUG [src.node.waku_node] Starting Node...
+2026-02-28 04:25:22.544 DEBUG [src.node.docker_mananger] Attempting to create or retrieve network waku
+2026-02-28 04:25:22.545 DEBUG [src.node.docker_mananger] Network waku already exists
+2026-02-28 04:25:22.545 DEBUG [src.node.docker_mananger] Generated random external IP 172.18.230.224
+2026-02-28 04:25:22.546 DEBUG [src.node.docker_mananger] Generated ports ['60718', '60719', '60720', '60721', '60722']
+2026-02-28 04:25:22.546 DEBUG [src.node.waku_node] RLN credentials were not set
+2026-02-28 04:25:22.546 INFO [src.node.waku_node] RLN credentials not set or credential store not available, starting without RLN
+2026-02-28 04:25:22.546 DEBUG [src.node.waku_node] Using volumes []
+2026-02-28 04:25:22.546 DEBUG [src.node.docker_mananger] docker run -i -t -p 60718:60718 -p 60719:60719 -p 60720:60720 -p 60721:60721 -p 60722:60722 wakuorg/nwaku:latest --listen-address=0.0.0.0 --rest=true --rest-admin=true --websocket-support=true --log-level=TRACE --rest-relay-cache-capacity=100 --websocket-port=60720 --rest-port=60718 --tcp-port=60719 --discv5-udp-port=60721 --rest-address=0.0.0.0 --nat=extip:172.18.230.224 --peer-exchange=true --discv5-discovery=true --cluster-id=3 --nodekey=aadca3b1815f585f7e36a4cef2e2eece8902feeaefafdd86b6e8bb2fbd1e2c38 --shard=0 --metrics-server=true --metrics-server-address=0.0.0.0 --metrics-server-port=60722 --metrics-logging=true --relay=true --filter=true
+2026-02-28 04:25:22.704 DEBUG [src.node.docker_mananger] docker network connect --ip 172.18.230.224 waku b5fa2e259f6f63828a7071747f6808dc09031185880cec52a032be5e7ac2237d
+2026-02-28 04:25:22.731 DEBUG [src.node.docker_mananger] Container started with ID b5fa2e259f6f. Setting up logs at ./log/docker/node1_2026-02-28_04-25-22__9ea2001f-4308-4d1a-b83e-1dc7fe1ec7e5__wakuorg_nwaku:latest.log
+2026-02-28 04:25:22.731 DEBUG [src.node.waku_node] Started container from image wakuorg/nwaku:latest. REST: 60718
+2026-02-28 04:25:22.732 DEBUG [src.libs.common] Sleeping for 1 seconds
+2026-02-28 04:25:22.811 ERROR [src.node.docker_mananger] Max retries reached for container 9fd8fc94b4c7. Exiting log stream.
+2026-02-28 04:25:23.320 ERROR [src.node.docker_mananger] Max retries reached for container 7192f833c37c. Exiting log stream.
+2026-02-28 04:25:23.732 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:60718/health" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:23.735 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"nodeHealth":"READY","connectionStatus":"Disconnected","protocolsHealth":[{"Relay":"NOT_READY","desc":"No connected peers"},{"Lightpush":"NOT_MOUNTED"},{"Legacy Lightpush":"NOT_MOUNTED"},{"Filter":"NOT_READY","desc":"Relay is not ready, filter will not be able to sort out messages"},{"Store":"NOT_MOUNTED"},{"Legacy Store":"NOT_MOUNTED"},{"Peer Exchange":"READY"},{"Rendezvous":"NOT_READY","desc":"No Rendezvous peers are available yet"},{"Mix":"NOT_MOUNTED"},{"Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Legacy Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Store Client":"NOT_READY","desc":"No Store service peer available yet, neither Store service set up for the node"},{"Legacy Store Client":"NOT_READY","desc":"No Legacy Store service peers are available yet, neither Store service set up for the node"},{"Filter Client":"NOT_READY","desc":"No Filter service peer available yet"},{"Rln Relay":"NOT_MOUNTED"}]}'
+2026-02-28 04:25:23.735 INFO [src.node.waku_node] Node protocols are initialized !!
+2026-02-28 04:25:23.735 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:60718/debug/v1/info" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:23.738 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"listenAddresses":["/ip4/172.18.230.224/tcp/60719/p2p/16Uiu2HAmNE1ygUahRamqpjw5CDaocLPF4SJTksVwPiXAweuZ8CFi","/ip4/172.18.230.224/tcp/60720/ws/p2p/16Uiu2HAmNE1ygUahRamqpjw5CDaocLPF4SJTksVwPiXAweuZ8CFi"],"enrUri":"enr:-L24QKZdnZJDjXnWP_cJim62Ku2FdTHHMrKbi8c5Y8Y_T4A0N35Q07tqd_Gi9UVfEiw-9bOcuiIO4Bnt9Sh7_kDQwV8CgmlkgnY0gmlwhKwS5uCKbXVsdGlhZGRyc5YACASsEubgBu0vAAoErBLm4AbtMN0DgnJzhQADAQAAiXNlY3AyNTZrMaEDji8wbro2QofwmyZCO2lC2xAubLz8ckujrSw7UcO4-LmDdGNwgu0vg3VkcILtMYV3YWt1MgU"}'
+2026-02-28 04:25:23.738 INFO [src.node.waku_node] REST service is ready !!
+2026-02-28 04:25:23.738 DEBUG [src.steps.filter] Running fixture setup: setup_main_filter_node
+2026-02-28 04:25:23.744 DEBUG [src.node.docker_mananger] Docker client initialized with image wakuorg/nwaku:latest
+2026-02-28 04:25:23.744 DEBUG [src.node.waku_node] WakuNode instance initialized with log path ./log/docker/node2_2026-02-28_04-25-22__9ea2001f-4308-4d1a-b83e-1dc7fe1ec7e5__wakuorg_nwaku:latest.log
+2026-02-28 04:25:23.745 DEBUG [src.node.waku_node] Starting Node...
+2026-02-28 04:25:23.745 DEBUG [src.node.docker_mananger] Attempting to create or retrieve network waku
+2026-02-28 04:25:23.746 DEBUG [src.node.docker_mananger] Network waku already exists
+2026-02-28 04:25:23.746 DEBUG [src.node.docker_mananger] Generated random external IP 172.18.159.3
+2026-02-28 04:25:23.746 DEBUG [src.node.docker_mananger] Generated ports ['52049', '52050', '52051', '52052', '52053']
+2026-02-28 04:25:23.746 DEBUG [src.node.waku_node] RLN credentials were not set
+2026-02-28 04:25:23.747 INFO [src.node.waku_node] RLN credentials not set or credential store not available, starting without RLN
+2026-02-28 04:25:23.747 DEBUG [src.node.waku_node] Using volumes []
+2026-02-28 04:25:23.747 DEBUG [src.node.docker_mananger] docker run -i -t -p 52049:52049 -p 52050:52050 -p 52051:52051 -p 52052:52052 -p 52053:52053 wakuorg/nwaku:latest --listen-address=0.0.0.0 --rest=true --rest-admin=true --websocket-support=true --log-level=TRACE --rest-relay-cache-capacity=100 --websocket-port=52051 --rest-port=52049 --tcp-port=52050 --discv5-udp-port=52052 --rest-address=0.0.0.0 --nat=extip:172.18.159.3 --peer-exchange=true --discv5-discovery=true --cluster-id=3 --nodekey=b0e1edc1f1e7e8c6b3e133ca4a9315d41dbfa6644aeb6d7fce4bfc939ac3f198 --shard=0 --metrics-server=true --metrics-server-address=0.0.0.0 --metrics-server-port=52053 --metrics-logging=true --relay=false --discv5-bootstrap-node=enr:-L24QKZdnZJDjXnWP_cJim62Ku2FdTHHMrKbi8c5Y8Y_T4A0N35Q07tqd_Gi9UVfEiw-9bOcuiIO4Bnt9Sh7_kDQwV8CgmlkgnY0gmlwhKwS5uCKbXVsdGlhZGRyc5YACASsEubgBu0vAAoErBLm4AbtMN0DgnJzhQADAQAAiXNlY3AyNTZrMaEDji8wbro2QofwmyZCO2lC2xAubLz8ckujrSw7UcO4-LmDdGNwgu0vg3VkcILtMYV3YWt1MgU --filternode=/ip4/172.18.230.224/tcp/60719/p2p/16Uiu2HAmNE1ygUahRamqpjw5CDaocLPF4SJTksVwPiXAweuZ8CFi
+2026-02-28 04:25:23.902 DEBUG [src.node.docker_mananger] docker network connect --ip 172.18.159.3 waku 06c6a9dc34bd99d6cc14a0914ac1a57a3c02bdb2e5d93971a1a55658241640eb
+2026-02-28 04:25:23.926 DEBUG [src.node.docker_mananger] Container started with ID 06c6a9dc34bd. Setting up logs at ./log/docker/node2_2026-02-28_04-25-22__9ea2001f-4308-4d1a-b83e-1dc7fe1ec7e5__wakuorg_nwaku:latest.log
+2026-02-28 04:25:23.926 DEBUG [src.node.waku_node] Started container from image wakuorg/nwaku:latest. REST: 52049
+2026-02-28 04:25:23.928 DEBUG [src.libs.common] Sleeping for 1 seconds
+2026-02-28 04:25:24.928 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/health" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:24.931 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"nodeHealth":"READY","connectionStatus":"Disconnected","protocolsHealth":[{"Relay":"NOT_MOUNTED"},{"Lightpush":"NOT_MOUNTED"},{"Legacy Lightpush":"NOT_MOUNTED"},{"Filter":"NOT_MOUNTED"},{"Store":"NOT_MOUNTED"},{"Legacy Store":"NOT_MOUNTED"},{"Peer Exchange":"READY"},{"Rendezvous":"NOT_READY","desc":"No Rendezvous peers are available yet"},{"Mix":"NOT_MOUNTED"},{"Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Legacy Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Store Client":"NOT_READY","desc":"No Store service peer available yet, neither Store service set up for the node"},{"Legacy Store Client":"NOT_READY","desc":"No Legacy Store service peers are available yet, neither Store service set up for the node"},{"Filter Client":"NOT_READY","desc":"No Filter service peer available yet"},{"Rln Relay":"NOT_MOUNTED"}]}'
+2026-02-28 04:25:24.931 INFO [src.node.waku_node] Node protocols are initialized !!
+2026-02-28 04:25:24.931 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/debug/v1/info" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:24.934 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"listenAddresses":["/ip4/172.18.159.3/tcp/52050/p2p/16Uiu2HAm9jvgHehJucMUZwHFQ1U8p1QZ8RGcihnikz5XjLUnzyH5","/ip4/172.18.159.3/tcp/52051/ws/p2p/16Uiu2HAm9jvgHehJucMUZwHFQ1U8p1QZ8RGcihnikz5XjLUnzyH5"],"enrUri":"enr:-L24QKbh3io-9zCZDRE9lw9n1j1fmOUjKpociMFY8LjhoWtlGuFiMEUb_mKcMyoVH-MfV728MN8oV3MiTgmJUg0L5_ICgmlkgnY0gmlwhKwSnwOKbXVsdGlhZGRyc5YACASsEp8DBstSAAoErBKfAwbLU90DgnJzhQADAQAAiXNlY3AyNTZrMaEC1LCw2VCx0xCIZArbO254ipawaQzoLyEqzv8EtgLyq9yDdGNwgstSg3VkcILLVIV3YWt1MgA"}'
+2026-02-28 04:25:24.934 INFO [src.node.waku_node] REST service is ready !!
+2026-02-28 04:25:24.934 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/admin/v1/peers" -H "Content-Type: application/json" -d '["/ip4/172.18.230.224/tcp/60719/p2p/16Uiu2HAmNE1ygUahRamqpjw5CDaocLPF4SJTksVwPiXAweuZ8CFi"]'
+2026-02-28 04:25:24.963 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:24.964 DEBUG [src.steps.filter] Running fixture setup: subscribe_main_nodes
+2026-02-28 04:25:24.964 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/subscriptions" -H "Content-Type: application/json" -d '["/waku/2/rs/3/1"]'
+2026-02-28 04:25:24.983 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:24.986 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "0828fee1-bd39-4907-a1c7-6edf8d8c35db", "contentFilters": ["/test/1/waku-filter/proto"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:24.997 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"0828fee1-bd39-4907-a1c7-6edf8d8c35db","statusDesc":"OK"}'
+2026-02-28 04:25:24.998 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["0"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.006 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.007 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["1"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.014 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.015 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["2"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.023 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.023 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["3"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.031 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.032 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["4"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.040 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.040 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["5"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.048 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.049 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["6"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.057 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.057 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["7"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.066 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.066 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["8"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.075 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.075 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["9"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.085 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.085 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["10"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.094 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.095 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["11"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.104 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.104 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["12"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.113 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.113 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["13"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.123 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.124 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["14"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.133 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.134 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["15"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.144 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.144 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["16"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.154 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.155 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["17"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.165 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.165 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["18"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.175 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.175 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["19"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.186 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.186 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["20"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.197 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.197 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["21"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.208 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.208 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["22"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.220 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.220 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["23"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.232 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.232 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["24"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.243 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.244 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["25"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.255 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.256 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["26"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.267 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.268 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["27"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.280 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.280 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["28"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:25.292 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:25.292 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 0
+2026-02-28 04:25:25.293 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "0", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:25.305 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:25.305 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:25.406 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:25.406 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/0" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:25.409 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"0","version":0,"timestamp":1772252725293024673,"ephemeral":false}]'
+2026-02-28 04:25:25.410 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 1
+2026-02-28 04:25:25.411 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "1", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:25.421 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:25.421 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:25.521 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:25.522 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/1" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:25.524 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"1","version":0,"timestamp":1772252725410879539,"ephemeral":false}]'
+2026-02-28 04:25:25.526 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 2
+2026-02-28 04:25:25.526 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "2", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:25.537 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:25.537 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:25.637 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:25.638 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/2" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:25.640 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"2","version":0,"timestamp":1772252725526639929,"ephemeral":false}]'
+2026-02-28 04:25:25.642 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 3
+2026-02-28 04:25:25.642 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "3", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:25.652 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:25.652 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:25.753 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:25.753 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/3" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:25.755 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"3","version":0,"timestamp":1772252725642225791,"ephemeral":false}]'
+2026-02-28 04:25:25.757 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 4
+2026-02-28 04:25:25.757 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "4", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:25.768 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:25.768 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:25.868 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:25.868 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/4" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:25.871 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"4","version":0,"timestamp":1772252725757659297,"ephemeral":false}]'
+2026-02-28 04:25:25.872 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 5
+2026-02-28 04:25:25.873 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "5", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:25.883 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:25.883 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:25.983 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:25.984 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/5" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:25.986 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"5","version":0,"timestamp":1772252725873024258,"ephemeral":false}]'
+2026-02-28 04:25:25.988 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 6
+2026-02-28 04:25:25.988 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "6", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:25.999 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:25.999 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:26.100 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:26.100 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/6" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:26.103 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"6","version":0,"timestamp":1772252725988504585,"ephemeral":false}]'
+2026-02-28 04:25:26.104 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 7
+2026-02-28 04:25:26.104 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "7", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:26.115 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:26.115 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:26.215 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:26.216 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/7" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:26.218 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"7","version":0,"timestamp":1772252726104852780,"ephemeral":false}]'
+2026-02-28 04:25:26.219 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 8
+2026-02-28 04:25:26.220 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "8", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:26.230 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:26.230 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:26.330 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:26.331 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/8" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:26.333 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"8","version":0,"timestamp":1772252726220041875,"ephemeral":false}]'
+2026-02-28 04:25:26.335 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 9
+2026-02-28 04:25:26.335 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "9", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:26.346 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:26.346 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:26.446 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:26.447 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/9" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:26.449 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"9","version":0,"timestamp":1772252726335702048,"ephemeral":false}]'
+2026-02-28 04:25:26.451 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 10
+2026-02-28 04:25:26.451 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "10", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:26.462 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:26.462 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:26.562 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:26.563 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/10" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:26.565 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"10","version":0,"timestamp":1772252726451674986,"ephemeral":false}]'
+2026-02-28 04:25:26.567 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 11
+2026-02-28 04:25:26.567 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "11", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:26.577 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:26.578 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:26.678 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:26.679 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/11" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:26.682 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"11","version":0,"timestamp":1772252726567573594,"ephemeral":false}]'
+2026-02-28 04:25:26.684 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 12
+2026-02-28 04:25:26.684 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "12", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:26.695 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:26.695 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:26.795 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:26.796 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/12" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:26.798 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"12","version":0,"timestamp":1772252726684528733,"ephemeral":false}]'
+2026-02-28 04:25:26.800 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 13
+2026-02-28 04:25:26.800 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "13", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:26.810 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:26.811 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:26.911 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:26.912 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/13" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:26.914 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"13","version":0,"timestamp":1772252726800421708,"ephemeral":false}]'
+2026-02-28 04:25:26.916 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 14
+2026-02-28 04:25:26.916 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "14", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:26.926 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:26.926 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:27.027 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:27.027 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/14" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:27.030 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"14","version":0,"timestamp":1772252726916409928,"ephemeral":false}]'
+2026-02-28 04:25:27.031 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 15
+2026-02-28 04:25:27.032 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "15", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:27.042 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:27.042 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:27.143 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:27.143 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/15" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:27.146 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"15","version":0,"timestamp":1772252727032022204,"ephemeral":false}]'
+2026-02-28 04:25:27.147 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 16
+2026-02-28 04:25:27.148 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "16", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:27.158 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:27.158 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:27.259 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:27.259 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/16" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:27.261 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"16","version":0,"timestamp":1772252727147883786,"ephemeral":false}]'
+2026-02-28 04:25:27.263 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 17
+2026-02-28 04:25:27.263 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "17", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:27.274 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:27.274 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:27.374 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:27.375 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/17" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:27.377 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"17","version":0,"timestamp":1772252727263567350,"ephemeral":false}]'
+2026-02-28 04:25:27.378 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 18
+2026-02-28 04:25:27.379 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "18", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:27.389 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:27.390 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:27.490 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:27.490 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/18" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:27.493 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"18","version":0,"timestamp":1772252727379181336,"ephemeral":false}]'
+2026-02-28 04:25:27.494 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 19
+2026-02-28 04:25:27.495 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "19", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:27.505 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:27.505 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:27.606 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:27.606 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/19" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:27.608 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"19","version":0,"timestamp":1772252727495004729,"ephemeral":false}]'
+2026-02-28 04:25:27.610 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 20
+2026-02-28 04:25:27.610 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "20", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:27.621 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:27.621 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:27.721 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:27.722 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/20" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:27.724 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"20","version":0,"timestamp":1772252727610738518,"ephemeral":false}]'
+2026-02-28 04:25:27.726 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 21
+2026-02-28 04:25:27.726 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "21", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:27.737 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:27.737 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:27.838 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:27.838 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/21" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:27.841 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"21","version":0,"timestamp":1772252727726553559,"ephemeral":false}]'
+2026-02-28 04:25:27.842 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 22
+2026-02-28 04:25:27.842 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "22", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:27.853 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:27.853 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:27.953 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:27.953 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/22" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:27.956 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"22","version":0,"timestamp":1772252727842853571,"ephemeral":false}]'
+2026-02-28 04:25:27.957 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 23
+2026-02-28 04:25:27.958 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "23", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:27.968 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:27.969 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:28.069 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:28.069 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/23" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:28.072 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"23","version":0,"timestamp":1772252727958262976,"ephemeral":false}]'
+2026-02-28 04:25:28.073 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 24
+2026-02-28 04:25:28.074 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "24", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:28.084 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:28.084 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:28.185 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:28.185 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/24" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:28.188 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"24","version":0,"timestamp":1772252728074098695,"ephemeral":false}]'
+2026-02-28 04:25:28.189 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 25
+2026-02-28 04:25:28.189 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "25", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:28.200 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:28.200 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:28.300 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:28.301 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/25" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:28.303 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"25","version":0,"timestamp":1772252728189618960,"ephemeral":false}]'
+2026-02-28 04:25:28.305 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 26
+2026-02-28 04:25:28.305 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "26", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:28.316 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:28.316 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:28.416 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:28.417 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/26" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:28.419 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"26","version":0,"timestamp":1772252728305452389,"ephemeral":false}]'
+2026-02-28 04:25:28.421 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 27
+2026-02-28 04:25:28.421 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "27", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:28.432 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:28.432 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:28.532 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:28.532 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/27" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:28.535 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"27","version":0,"timestamp":1772252728421327025,"ephemeral":false}]'
+2026-02-28 04:25:28.536 DEBUG [tests.filter.test_subscribe_create] Running test with content topic 28
+2026-02-28 04:25:28.537 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:60718/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F1" -H "Content-Type: application/json" -d '{"payload": "RmlsdGVyIHdvcmtzISE=", "contentTopic": "28", "timestamp": '$(date +%s%N)'}'
+2026-02-28 04:25:28.547 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-02-28 04:25:28.548 DEBUG [src.libs.common] Sleeping for 0.1 seconds
+2026-02-28 04:25:28.648 DEBUG [src.steps.filter] Checking that peer NODE_2:wakuorg/nwaku:latest can find the published message
+2026-02-28 04:25:28.648 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:52049/filter/v2/messages/28" -H "Content-Type: application/json" -d 'None'
+2026-02-28 04:25:28.651 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"RmlsdGVyIHdvcmtzISE=","contentTopic":"28","version":0,"timestamp":1772252728537230489,"ephemeral":false}]'
+2026-02-28 04:25:28.653 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:52049/filter/v2/subscriptions" -H "Content-Type: application/json" -d '{"requestId": "1", "contentFilters": ["rate limited"], "pubsubTopic": "/waku/2/rs/3/1"}'
+2026-02-28 04:25:28.666 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"requestId":"1","statusDesc":"OK"}'
+2026-02-28 04:25:28.673 DEBUG [tests.conftest] Running fixture teardown: test_setup
+2026-02-28 04:25:28.674 DEBUG [tests.conftest] Running fixture teardown: close_open_nodes
+2026-02-28 04:25:28.674 DEBUG [src.node.waku_node] Stopping container with id b5fa2e259f6f
+2026-02-28 04:25:29.158 DEBUG [src.node.waku_node] Container stopped.
+2026-02-28 04:25:29.158 DEBUG [src.node.waku_node] Stopping container with id 06c6a9dc34bd
+2026-02-28 04:25:29.663 DEBUG [src.node.waku_node] Container stopped.
+2026-02-28 04:25:29.664 DEBUG [tests.conftest] Running fixture teardown: check_waku_log_errors
+2026-02-28 04:25:29.687 DEBUG [src.node.docker_mananger] No errors found in the waku logs.
+2026-02-28 04:25:29.705 DEBUG [src.node.docker_mananger] No errors found in the waku logs.
+2026-02-28 04:25:29.706 DEBUG [tests.conftest] Running fixture teardown: attach_logs_on_fail
+2026-02-28 04:25:29.706 DEBUG [tests.conftest] Test failed, attempting to attach logs to the allure reports
+2026-02-28 04:25:29.707 DEBUG [src.libs.common] Attaching file ./log/docker/node1_2026-02-28_04-25-22__9ea2001f-4308-4d1a-b83e-1dc7fe1ec7e5__wakuorg_nwaku:latest.log
+2026-02-28 04:25:29.708 DEBUG [src.libs.common] Attaching file ./log/docker/node2_2026-02-28_04-25-22__9ea2001f-4308-4d1a-b83e-1dc7fe1ec7e5__wakuorg_nwaku:latest.log
