@@ -14,7 +14,7 @@ def get_env_var(var_name, default=None):
 
 
 # Configuration constants. Need to be upercase to appear in reports
-DEFAULT_NWAKU = "harbor.status.im/wakuorg/nwaku:v0.38.0-rc.0"
+DEFAULT_NWAKU = "harbor.status.im/wakuorg/nwaku:v0.38.0-beta"
 STRESS_ENABLED = False
 NODE_1 = get_env_var("NODE_1", DEFAULT_NWAKU)
 NODE_2 = get_env_var("NODE_2", DEFAULT_NWAKU)
