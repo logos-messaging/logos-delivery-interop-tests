@@ -1,0 +1,868 @@
+2026-03-05 15:11:58.929 DEBUG [tests.conftest] Running fixture setup: test_id
+2026-03-05 15:11:58.930 DEBUG [tests.conftest] Running test: test_max_page_size with id: 2026-03-05_15-11-58__718b9f9e-227c-4ae2-bded-46691658221f
+2026-03-05 15:11:58.930 DEBUG [src.steps.common] Running fixture setup: common_setup
+2026-03-05 15:11:58.930 DEBUG [src.steps.store] Running fixture setup: store_setup
+2026-03-05 15:11:58.930 DEBUG [src.steps.store] Running fixture setup: node_setup
+2026-03-05 15:11:58.938 DEBUG [src.node.docker_mananger] Docker client initialized with image harbor.status.im/wakuorg/nwaku:v0.38.0-beta
+2026-03-05 15:11:58.938 DEBUG [src.node.waku_node] WakuNode instance initialized with log path ./log/docker/publishing_node1_2026-03-05_15-11-58__718b9f9e-227c-4ae2-bded-46691658221f__harbor.status.im_wakuorg_nwaku:v0.38.0-beta.log
+2026-03-05 15:11:58.938 DEBUG [src.node.waku_node] Starting Node...
+2026-03-05 15:11:58.938 DEBUG [src.node.docker_mananger] Attempting to create or retrieve network waku
+2026-03-05 15:11:58.940 DEBUG [src.node.docker_mananger] Network waku already exists
+2026-03-05 15:11:58.940 DEBUG [src.node.docker_mananger] Generated random external IP 172.18.119.121
+2026-03-05 15:11:58.940 DEBUG [src.node.docker_mananger] Generated ports ['53976', '53977', '53978', '53979', '53980']
+2026-03-05 15:11:58.940 DEBUG [src.node.waku_node] RLN credentials were not set
+2026-03-05 15:11:58.940 INFO [src.node.waku_node] RLN credentials not set or credential store not available, starting without RLN
+2026-03-05 15:11:58.940 DEBUG [src.node.waku_node] Using volumes []
+2026-03-05 15:11:58.941 DEBUG [src.node.docker_mananger] docker run -i -t -p 53976:53976 -p 53977:53977 -p 53978:53978 -p 53979:53979 -p 53980:53980 harbor.status.im/wakuorg/nwaku:v0.38.0-beta --listen-address=0.0.0.0 --rest=true --rest-admin=true --websocket-support=true --log-level=TRACE --rest-relay-cache-capacity=100 --websocket-port=53978 --rest-port=53976 --tcp-port=53977 --discv5-udp-port=53979 --rest-address=0.0.0.0 --nat=extip:172.18.119.121 --peer-exchange=true --discv5-discovery=true --cluster-id=3 --nodekey=f3c2a1c35bc6d286ebc08fdd58ed2dc825ba554f6f17b00a5474afed541fdb07 --shard=0 --metrics-server=true --metrics-server-address=0.0.0.0 --metrics-server-port=53980 --metrics-logging=true --store=true --relay=true
+2026-03-05 15:11:59.135 DEBUG [src.node.docker_mananger] docker network connect --ip 172.18.119.121 waku 81a2a6a3e3e5f85f57004ed98aa526660f0aba19b0cc632d718179fc2d69f3ae
+2026-03-05 15:11:59.171 DEBUG [src.node.docker_mananger] Container started with ID 81a2a6a3e3e5. Setting up logs at ./log/docker/publishing_node1_2026-03-05_15-11-58__718b9f9e-227c-4ae2-bded-46691658221f__harbor.status.im_wakuorg_nwaku:v0.38.0-beta.log
+2026-03-05 15:11:59.171 DEBUG [src.node.waku_node] Started container from image harbor.status.im/wakuorg/nwaku:v0.38.0-beta. REST: 53976
+2026-03-05 15:11:59.172 DEBUG [src.libs.common] Sleeping for 1 seconds
+2026-03-05 15:11:59.183 ERROR [src.node.docker_mananger] Max retries reached for container 96a7d0962bdc. Exiting log stream.
+2026-03-05 15:11:59.725 ERROR [src.node.docker_mananger] Max retries reached for container 2fcd577b1312. Exiting log stream.
+2026-03-05 15:12:00.172 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:53976/health" -H "Content-Type: application/json" -d 'None'
+2026-03-05 15:12:00.175 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"nodeHealth":"READY","connectionStatus":"Disconnected","protocolsHealth":[{"Relay":"NOT_READY","desc":"No connected peers"},{"Lightpush":"NOT_MOUNTED"},{"Legacy Lightpush":"NOT_MOUNTED"},{"Filter":"NOT_MOUNTED"},{"Store":"READY"},{"Legacy Store":"NOT_MOUNTED"},{"Peer Exchange":"READY"},{"Rendezvous":"NOT_READY","desc":"No Rendezvous peers are available yet"},{"Mix":"NOT_MOUNTED"},{"Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Legacy Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Store Client":"READY"},{"Legacy Store Client":"NOT_READY","desc":"No Legacy Store service peers are available yet, neither Store service set up for the node"},{"Filter Client":"NOT_READY","desc":"No Filter service peer available yet"},{"Rln Relay":"NOT_MOUNTED"}]}'
+2026-03-05 15:12:00.175 INFO [src.node.waku_node] Node protocols are initialized !!
+2026-03-05 15:12:00.176 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:53976/debug/v1/info" -H "Content-Type: application/json" -d 'None'
+2026-03-05 15:12:00.178 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"listenAddresses":["/ip4/172.18.119.121/tcp/53977/p2p/16Uiu2HAkxWA7mDcSVppAzqfvd5uyptu1yjSK5M1EzKbnh6ZpDT3D","/ip4/172.18.119.121/tcp/53978/ws/p2p/16Uiu2HAkxWA7mDcSVppAzqfvd5uyptu1yjSK5M1EzKbnh6ZpDT3D"],"enrUri":"enr:-L24QHqnEod1w3USrrwrkfH2_LKnhirc9dn_txD27pjOr03TNHxNbFksS5QsIej8KK_9a2d967288JUCU4EXN0YJAHYCgmlkgnY0gmlwhKwSd3mKbXVsdGlhZGRyc5YACASsEnd5BtLZAAoErBJ3eQbS2t0DgnJzhQADAQAAiXNlY3AyNTZrMaECLbky9y0NDqMl94DdKbv8BVKWGpSOcmHfuv1fckwjrjiDdGNwgtLZg3VkcILS24V3YWt1MgM"}'
+2026-03-05 15:12:00.178 INFO [src.node.waku_node] REST service is ready !!
+2026-03-05 15:12:00.186 DEBUG [src.node.docker_mananger] Docker client initialized with image harbor.status.im/wakuorg/nwaku:v0.38.0-beta
+2026-03-05 15:12:00.186 DEBUG [src.node.waku_node] WakuNode instance initialized with log path ./log/docker/store_node1_2026-03-05_15-11-58__718b9f9e-227c-4ae2-bded-46691658221f__harbor.status.im_wakuorg_nwaku:v0.38.0-beta.log
+2026-03-05 15:12:00.186 DEBUG [src.node.waku_node] Starting Node...
+2026-03-05 15:12:00.186 DEBUG [src.node.docker_mananger] Attempting to create or retrieve network waku
+2026-03-05 15:12:00.188 DEBUG [src.node.docker_mananger] Network waku already exists
+2026-03-05 15:12:00.188 DEBUG [src.node.docker_mananger] Generated random external IP 172.18.182.13
+2026-03-05 15:12:00.188 DEBUG [src.node.docker_mananger] Generated ports ['29828', '29829', '29830', '29831', '29832']
+2026-03-05 15:12:00.188 DEBUG [src.node.waku_node] RLN credentials were not set
+2026-03-05 15:12:00.188 INFO [src.node.waku_node] RLN credentials not set or credential store not available, starting without RLN
+2026-03-05 15:12:00.189 DEBUG [src.node.waku_node] Using volumes []
+2026-03-05 15:12:00.189 DEBUG [src.node.docker_mananger] docker run -i -t -p 29828:29828 -p 29829:29829 -p 29830:29830 -p 29831:29831 -p 29832:29832 harbor.status.im/wakuorg/nwaku:v0.38.0-beta --listen-address=0.0.0.0 --rest=true --rest-admin=true --websocket-support=true --log-level=TRACE --rest-relay-cache-capacity=100 --websocket-port=29830 --rest-port=29828 --tcp-port=29829 --discv5-udp-port=29831 --rest-address=0.0.0.0 --nat=extip:172.18.182.13 --peer-exchange=true --discv5-discovery=true --cluster-id=3 --nodekey=665383a10adc7def541a4fba879fef65d819b3d7e12f25285c6d1ff5c3c5fdbe --shard=0 --metrics-server=true --metrics-server-address=0.0.0.0 --metrics-server-port=29832 --metrics-logging=true --discv5-bootstrap-node=enr:-L24QHqnEod1w3USrrwrkfH2_LKnhirc9dn_txD27pjOr03TNHxNbFksS5QsIej8KK_9a2d967288JUCU4EXN0YJAHYCgmlkgnY0gmlwhKwSd3mKbXVsdGlhZGRyc5YACASsEnd5BtLZAAoErBJ3eQbS2t0DgnJzhQADAQAAiXNlY3AyNTZrMaECLbky9y0NDqMl94DdKbv8BVKWGpSOcmHfuv1fckwjrjiDdGNwgtLZg3VkcILS24V3YWt1MgM --storenode=/ip4/172.18.119.121/tcp/53977/p2p/16Uiu2HAkxWA7mDcSVppAzqfvd5uyptu1yjSK5M1EzKbnh6ZpDT3D --store=true --relay=true
+2026-03-05 15:12:00.382 DEBUG [src.node.docker_mananger] docker network connect --ip 172.18.182.13 waku 9f9fb2a167ee4ea8986c8115b1f9e0be3b36121a5586082d20109fd4cd5735d7
+2026-03-05 15:12:00.418 DEBUG [src.node.docker_mananger] Container started with ID 9f9fb2a167ee. Setting up logs at ./log/docker/store_node1_2026-03-05_15-11-58__718b9f9e-227c-4ae2-bded-46691658221f__harbor.status.im_wakuorg_nwaku:v0.38.0-beta.log
+2026-03-05 15:12:00.418 DEBUG [src.node.waku_node] Started container from image harbor.status.im/wakuorg/nwaku:v0.38.0-beta. REST: 29828
+2026-03-05 15:12:00.418 DEBUG [src.libs.common] Sleeping for 1 seconds
+2026-03-05 15:12:01.419 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:29828/health" -H "Content-Type: application/json" -d 'None'
+2026-03-05 15:12:01.422 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"nodeHealth":"READY","connectionStatus":"PartiallyConnected","protocolsHealth":[{"Relay":"READY"},{"Lightpush":"NOT_MOUNTED"},{"Legacy Lightpush":"NOT_MOUNTED"},{"Filter":"NOT_MOUNTED"},{"Store":"READY"},{"Legacy Store":"NOT_MOUNTED"},{"Peer Exchange":"READY"},{"Rendezvous":"NOT_READY","desc":"No Rendezvous peers are available yet"},{"Mix":"NOT_MOUNTED"},{"Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Legacy Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Store Client":"READY"},{"Legacy Store Client":"NOT_READY","desc":"No Legacy Store service peers are available yet, neither Store service set up for the node"},{"Filter Client":"NOT_READY","desc":"No Filter service peer available yet"},{"Rln Relay":"NOT_MOUNTED"}]}'
+2026-03-05 15:12:01.422 INFO [src.node.waku_node] Node protocols are initialized !!
+2026-03-05 15:12:01.422 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:29828/debug/v1/info" -H "Content-Type: application/json" -d 'None'
+2026-03-05 15:12:01.425 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"listenAddresses":["/ip4/172.18.182.13/tcp/29829/p2p/16Uiu2HAmA8bJLhth4bVZj5G8mF2zFwUYkPyQbawkwPyMDQBBi9Ya","/ip4/172.18.182.13/tcp/29830/ws/p2p/16Uiu2HAmA8bJLhth4bVZj5G8mF2zFwUYkPyQbawkwPyMDQBBi9Ya"],"enrUri":"enr:-L24QB6CCnnynsjfb4-gSijTlVgNnwb6tI0qOlgKVxMKF66pQntvoH7sG_Ge88kgj3FyIuYoNlgqp6a50sjhT3mWtAcCgmlkgnY0gmlwhKwStg2KbXVsdGlhZGRyc5YACASsErYNBnSFAAoErBK2DQZ0ht0DgnJzhQADAQAAiXNlY3AyNTZrMaEC2n8jYMfiBHz_4WeV8X9C5sdbRx65MMkrjQyNFRpeRU-DdGNwgnSFg3VkcIJ0h4V3YWt1MgM"}'
+2026-03-05 15:12:01.425 INFO [src.node.waku_node] REST service is ready !!
+2026-03-05 15:12:01.426 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:29828/admin/v1/peers" -H "Content-Type: application/json" -d '["/ip4/172.18.119.121/tcp/53977/p2p/16Uiu2HAkxWA7mDcSVppAzqfvd5uyptu1yjSK5M1EzKbnh6ZpDT3D"]'
+2026-03-05 15:12:01.429 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:01.429 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/subscriptions" -H "Content-Type: application/json" -d '["/waku/2/rs/3/0"]'
+2026-03-05 15:12:01.432 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:01.432 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:29828/relay/v1/subscriptions" -H "Content-Type: application/json" -d '["/waku/2/rs/3/0"]'
+2026-03-05 15:12:01.434 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:01.435 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:01.436 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8w", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:01.442 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:01.443 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:01.644 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:01.644 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8x", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:01.650 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:01.650 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:01.851 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:01.851 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8y", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:01.857 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:01.858 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:02.058 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:02.059 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8z", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:02.065 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:02.066 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:02.267 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:02.267 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV80", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:02.273 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:02.274 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:02.474 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:02.475 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV81", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:02.481 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:02.481 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:02.682 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:02.682 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV82", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:02.687 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:02.687 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:02.889 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:02.890 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV83", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:02.895 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:02.895 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:03.096 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:03.096 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV84", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:03.102 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:03.103 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:03.304 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:03.304 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV85", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:03.310 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:03.311 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:03.512 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:03.512 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:03.519 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:03.519 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:03.720 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:03.720 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:03.726 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:03.727 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:03.928 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:03.928 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMg==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:03.934 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:03.935 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:04.135 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:04.135 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:04.141 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:04.141 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:04.342 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:04.342 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:04.349 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:04.349 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:04.550 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:04.550 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:04.557 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:04.558 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:04.759 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:04.759 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNg==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:04.769 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:04.769 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:04.970 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:04.970 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:04.976 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:04.977 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:05.178 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:05.178 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xOA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:05.184 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:05.184 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:05.385 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:05.385 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xOQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:05.391 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:05.392 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:05.592 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:05.593 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8yMA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:05.602 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:05.602 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:05.803 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:05.803 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8yMQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:05.810 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:05.810 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:06.011 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:06.011 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8yMg==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:06.017 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:06.018 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:06.219 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:06.219 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8yMw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:06.225 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:06.226 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:06.426 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:06.426 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8yNA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:06.432 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:06.432 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:06.633 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:06.633 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8yNQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:06.639 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:06.640 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:06.841 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:06.842 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8yNg==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:06.848 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:06.848 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:07.049 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:07.049 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8yNw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:07.055 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:07.055 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:07.256 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:07.256 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8yOA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:07.262 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:07.262 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:07.463 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:07.464 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8yOQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:07.469 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:07.469 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:07.670 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:07.670 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8zMA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:07.676 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:07.677 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:07.878 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:07.878 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8zMQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:07.884 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:07.885 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:08.085 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:08.086 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8zMg==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:08.092 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:08.092 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:08.293 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:08.294 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8zMw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:08.299 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:08.299 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:08.501 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:08.501 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8zNA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:08.508 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:08.508 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:08.709 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:08.709 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8zNQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:08.715 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:08.715 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:08.917 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:08.917 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8zNg==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:08.923 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:08.923 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:09.124 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:09.125 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8zNw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:09.130 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:09.131 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:09.332 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:09.332 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8zOA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:09.338 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:09.338 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:09.539 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:09.539 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8zOQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:09.545 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:09.546 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:09.747 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:09.747 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV80MA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:09.752 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:09.753 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:09.954 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:09.954 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV80MQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:09.959 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:09.960 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:10.161 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:10.162 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV80Mg==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:10.168 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:10.168 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:10.369 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:10.370 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV80Mw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:10.375 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:10.376 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:10.576 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:10.577 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV80NA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:10.583 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:10.583 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:10.784 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:10.784 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV80NQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:10.790 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:10.791 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:10.992 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:10.992 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV80Ng==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:10.997 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:10.999 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:11.200 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:11.200 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV80Nw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:11.205 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:11.206 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:11.407 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:11.407 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV80OA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:11.413 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:11.414 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:11.615 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:11.615 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV80OQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:11.621 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:11.621 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:11.822 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:11.822 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV81MA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:11.828 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:11.828 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:12.029 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:12.030 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV81MQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:12.036 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:12.036 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:12.237 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:12.237 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV81Mg==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:12.243 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:12.243 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:12.444 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:12.444 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV81Mw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:12.450 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:12.451 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:12.651 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:12.652 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV81NA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:12.658 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:12.659 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:12.860 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:12.860 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV81NQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:12.867 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:12.868 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:13.069 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:13.069 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV81Ng==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:13.074 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:13.075 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:13.275 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:13.276 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV81Nw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:13.281 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:13.282 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:13.482 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:13.483 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV81OA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:13.488 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:13.489 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:13.690 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:13.690 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV81OQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:13.696 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:13.696 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:13.897 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:13.898 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV82MA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:13.932 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:13.933 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:14.134 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:14.134 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV82MQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:14.140 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:14.141 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:14.342 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:14.343 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV82Mg==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:14.349 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:14.350 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:14.550 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:14.551 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV82Mw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:14.556 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:14.556 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:14.757 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:14.757 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV82NA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:14.763 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:14.764 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:14.964 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:14.965 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV82NQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:14.971 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:14.971 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:15.172 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:15.173 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV82Ng==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:15.178 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:15.178 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:15.379 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:15.379 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV82Nw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:15.385 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:15.386 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:15.587 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:15.588 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV82OA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:15.594 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:15.595 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:15.796 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:15.796 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV82OQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:15.802 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:15.802 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:16.003 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:16.004 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV83MA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:16.010 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:16.010 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:16.212 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:16.212 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV83MQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:16.217 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:16.217 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:16.419 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:16.419 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV83Mg==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:16.425 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:16.425 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:16.626 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:16.627 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV83Mw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:16.632 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:16.633 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:16.834 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:16.834 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV83NA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:16.840 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:16.840 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:17.041 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:17.041 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV83NQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:17.047 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:17.047 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:17.248 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:17.249 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV83Ng==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:17.255 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:17.255 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:17.456 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:17.457 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV83Nw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:17.463 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:17.463 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:17.664 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:17.664 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV83OA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:17.671 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:17.671 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:17.872 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:17.873 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV83OQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:17.878 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:17.878 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:18.079 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:18.079 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV84MA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:18.086 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:18.086 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:18.287 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:18.287 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV84MQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:18.293 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:18.293 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:18.494 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:18.495 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV84Mg==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:18.500 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:18.500 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:18.701 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:18.701 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV84Mw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:18.707 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:18.708 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:18.909 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:18.909 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV84NA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:18.915 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:18.915 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:19.116 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:19.116 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV84NQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:19.122 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:19.123 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:19.324 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:19.324 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV84Ng==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:19.329 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:19.330 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:19.530 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:19.530 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV84Nw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:19.536 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:19.536 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:19.738 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:19.738 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV84OA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:19.744 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:19.745 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:19.946 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:19.946 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV84OQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:19.952 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:19.952 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:20.153 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:20.153 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV85MA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:20.159 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:20.159 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:20.360 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:20.360 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV85MQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:20.367 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:20.368 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:20.568 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:20.569 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV85Mg==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:20.575 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:20.575 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:20.776 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:20.776 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV85Mw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:20.782 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:20.783 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:20.984 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:20.984 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV85NA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:20.990 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:20.991 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:21.191 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:21.191 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV85NQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:21.198 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:21.198 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:21.399 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:21.399 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV85Ng==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:21.406 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:21.407 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:21.607 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:21.608 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV85Nw==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:21.614 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:21.614 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:21.815 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:21.816 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV85OA==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:21.822 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:21.823 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:22.023 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:22.024 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV85OQ==", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:22.029 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:22.030 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:22.230 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:22.231 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMDA=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:22.237 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:22.238 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:22.439 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:22.440 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMDE=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:22.446 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:22.446 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:22.647 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:22.647 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMDI=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:22.653 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:22.654 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:22.855 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:22.855 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMDM=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:22.860 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:22.861 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:23.061 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:23.062 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMDQ=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:23.068 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:23.068 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:23.269 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:23.269 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMDU=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:23.275 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:23.275 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:23.476 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:23.476 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMDY=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:23.482 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:23.482 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:23.683 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:23.683 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMDc=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:23.689 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:23.689 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:23.891 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:23.891 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMDg=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:23.897 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:23.897 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:24.098 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:24.098 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMDk=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:24.105 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:24.105 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:24.306 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:24.306 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMTA=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:24.312 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:24.312 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:24.513 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:24.513 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMTE=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:24.519 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:24.519 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:24.720 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:24.720 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMTI=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:24.726 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:24.727 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:24.928 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:24.928 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMTM=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:24.934 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:24.934 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:25.135 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:25.135 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMTQ=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:25.141 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:25.142 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:25.343 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:25.343 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMTU=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:25.348 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:25.348 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:25.549 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:25.550 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMTY=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:25.557 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:25.557 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:25.758 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:25.758 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMTc=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:25.764 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:25.764 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:25.965 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:25.966 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMTg=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:25.971 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:25.972 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:26.173 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:26.173 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMTk=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:26.179 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:26.180 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:26.381 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:26.381 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMjA=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:26.387 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:26.387 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:26.588 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:26.588 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMjE=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:26.594 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:26.595 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:26.795 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:26.796 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMjI=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:26.802 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:26.802 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:27.003 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:27.003 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMjM=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:27.010 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:27.010 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:27.211 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:27.211 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMjQ=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:27.218 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:27.218 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:27.419 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:27.419 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMjU=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:27.427 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:27.428 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:27.629 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:27.629 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMjY=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:27.635 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:27.635 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:27.835 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:27.836 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMjc=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:27.842 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:27.842 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:28.043 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:28.044 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMjg=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:28.050 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:28.050 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:28.251 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:28.251 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMjk=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:28.257 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:28.258 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:28.458 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:28.459 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMzA=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:28.464 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:28.465 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:28.666 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:28.667 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMzE=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:28.673 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:28.673 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:28.874 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:28.874 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMzI=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:28.880 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:28.880 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:29.081 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:29.081 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMzM=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:29.087 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:29.087 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:29.288 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:29.289 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMzQ=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:29.294 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:29.294 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:29.495 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:29.495 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMzU=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:29.501 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:29.502 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:29.703 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:29.703 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMzY=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:29.709 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:29.709 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:29.910 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:29.910 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMzc=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:29.917 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:29.917 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:30.118 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:30.118 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMzg=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:30.124 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:30.125 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:30.325 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:30.326 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xMzk=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:30.331 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:30.332 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:30.532 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:30.533 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNDA=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:30.538 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:30.538 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:30.739 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:30.739 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNDE=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:30.745 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:30.746 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:30.947 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:30.948 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNDI=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:30.983 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:30.984 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:31.185 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:31.185 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNDM=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:31.191 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:31.192 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:31.393 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:31.393 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNDQ=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:31.399 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:31.399 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:31.600 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:31.600 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNDU=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:31.606 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:31.606 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:31.807 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:31.807 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNDY=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:31.813 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:31.814 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:32.015 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:32.015 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNDc=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:32.021 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:32.021 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:32.222 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:32.223 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNDg=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:32.228 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:32.228 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:32.429 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:32.429 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNDk=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:32.435 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:32.436 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:32.637 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:32.637 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNTA=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:32.643 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:32.643 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:32.844 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:32.845 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNTE=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:32.851 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:32.851 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:33.052 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:33.053 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNTI=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:33.059 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:33.060 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:33.260 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:33.261 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNTM=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:33.267 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:33.267 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:33.468 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:33.468 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNTQ=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:33.478 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:33.478 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:33.679 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:33.680 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNTU=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:33.685 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:33.685 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:33.886 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:33.886 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNTY=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:33.893 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:33.893 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:34.094 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:34.094 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNTc=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:34.100 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:34.101 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:34.301 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:34.302 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNTg=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:34.332 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:34.333 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:34.534 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:34.534 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNTk=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:34.540 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:34.542 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:34.742 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:34.743 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNjA=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:34.748 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:34.749 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:34.950 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:34.950 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNjE=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:34.955 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:34.956 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:35.157 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:35.157 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNjI=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:35.162 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:35.163 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:35.364 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:35.364 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNjM=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:35.370 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:35.370 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:35.571 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:35.572 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNjQ=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:35.578 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:35.579 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:35.779 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:35.780 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNjU=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:35.786 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:35.786 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:35.988 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:35.988 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNjY=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:35.994 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:35.995 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:36.196 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:36.196 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNjc=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:36.202 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:36.202 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:36.403 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:36.403 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNjg=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:36.410 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:36.410 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:36.611 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:36.611 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNjk=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:36.617 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:36.617 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:36.818 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:36.818 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNzA=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:36.825 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:36.825 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:37.026 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:37.026 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNzE=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:37.032 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:37.033 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:37.233 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:37.234 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNzI=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:37.241 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:37.242 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:37.442 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:37.443 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNzM=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:37.448 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:37.449 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:37.650 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:37.651 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNzQ=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:37.658 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:37.658 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:37.859 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:37.859 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNzU=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:37.865 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:37.865 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:38.066 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:38.067 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNzY=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:38.073 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:38.073 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:38.274 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:38.274 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNzc=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:38.280 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:38.280 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:38.481 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:38.481 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNzg=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:38.487 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:38.488 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:38.688 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:38.689 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xNzk=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:38.695 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:38.695 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:38.896 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:38.896 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xODA=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:38.903 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:38.903 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:39.104 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:39.104 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xODE=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:39.111 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:39.111 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:39.312 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:39.313 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xODI=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:39.318 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:39.319 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:39.520 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:39.520 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xODM=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:39.526 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:39.526 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:39.728 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:39.728 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xODQ=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:39.734 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:39.734 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:39.935 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:39.935 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xODU=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:39.942 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:39.942 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:40.143 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:40.143 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xODY=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:40.149 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:40.150 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:40.351 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:40.351 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xODc=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:40.357 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:40.357 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:40.558 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:40.559 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xODg=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:40.565 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:40.567 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:40.767 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:40.768 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xODk=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:40.774 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:40.774 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:40.975 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:40.975 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xOTA=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:40.981 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:40.982 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:41.182 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:41.183 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xOTE=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:41.189 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:41.189 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:41.390 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:41.390 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xOTI=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:41.396 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:41.397 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:41.597 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:41.598 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xOTM=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:41.603 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:41.604 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:41.805 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:41.806 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xOTQ=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:41.812 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:41.812 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:42.013 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:42.013 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xOTU=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:42.019 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:42.020 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:42.220 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:42.221 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xOTY=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:42.226 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:42.227 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:42.428 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:42.428 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xOTc=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:42.434 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:42.435 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:42.636 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:42.636 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xOTg=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:42.642 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:42.643 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:42.843 DEBUG [src.steps.store] Relaying message
+2026-03-05 15:12:42.844 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:53976/relay/v1/messages/%2Fwaku%2F2%2Frs%2F3%2F0" -H "Content-Type: application/json" -d '{"payload": "TWVzc2FnZV8xOTk=", "contentTopic": "/myapp/1/latest/proto", "timestamp": '$(date +%s%N)'}'
+2026-03-05 15:12:42.849 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-03-05 15:12:42.850 DEBUG [src.libs.common] Sleeping for 0.2 seconds
+2026-03-05 15:12:43.051 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:53976/store/v3/messages?pubsubTopic=%2Fwaku%2F2%2Frs%2F3%2F0&pageSize=200&ascending=true" -H "Content-Type: application/json" -d 'None'
+2026-03-05 15:12:43.057 INFO [src.node.api_clients.base_client] Log line was discarded because it's longer than max_log_line_length=5000
+2026-03-05 15:12:43.057 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:29828/store/v3/messages?pubsubTopic=%2Fwaku%2F2%2Frs%2F3%2F0&pageSize=200&ascending=true" -H "Content-Type: application/json" -d 'None'
+2026-03-05 15:12:43.063 INFO [src.node.api_clients.base_client] Log line was discarded because it's longer than max_log_line_length=5000
+2026-03-05 15:12:43.065 DEBUG [tests.conftest] Running fixture teardown: test_setup
+2026-03-05 15:12:43.066 DEBUG [tests.conftest] Running fixture teardown: close_open_nodes
+2026-03-05 15:12:43.066 DEBUG [src.node.waku_node] Stopping container with id 81a2a6a3e3e5
+2026-03-05 15:12:43.659 DEBUG [src.node.waku_node] Container stopped.
+2026-03-05 15:12:43.660 DEBUG [src.node.waku_node] Stopping container with id 9f9fb2a167ee
+2026-03-05 15:12:44.261 DEBUG [src.node.waku_node] Container stopped.
+2026-03-05 15:12:44.264 DEBUG [tests.conftest] Running fixture teardown: check_waku_log_errors
+2026-03-05 15:12:44.322 DEBUG [src.node.docker_mananger] No errors found in the waku logs.
+2026-03-05 15:12:44.384 DEBUG [src.node.docker_mananger] No errors found in the waku logs.
