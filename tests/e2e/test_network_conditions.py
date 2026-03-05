@@ -770,3 +770,51 @@ class TestNetworkConditions(StepsRelay):
         logger.info(f"{len(msgs)} messages were delivered")
         self.tc.clear(self.node1)
         self.tc.clear(self.node2)
+
+    @pytest.mark.timeout(60)
+    def test_relay_with_latency_except_rest(self):
+        logger.info("Starting node1 and node2 with relay enabled")
+        self.node1.start(relay="true")
+        self.node2.start(relay="true", discv5_bootstrap_node=self.node1.get_enr_uri())
+
+        logger.info("Subscribing both nodes to relay topic")
+        self.node1.set_relay_subscriptions([self.test_pubsub_topic])
+        self.node2.set_relay_subscriptions([self.test_pubsub_topic])
+
+        logger.info("Waiting for autoconnection")
+        self.wait_for_autoconnection([self.node1, self.node2], hard_wait=10)
+
+        latency_ms = 9000
+
+        logger.info(f"Applying latency to node1 except REST")
+        self.tc.add_latency_except_rest(
+            self.node1,
+            ms=latency_ms,
+            rest_port=self.node1.start_args["rest-port"],
+            metrics_port=self.node1.start_args.get("metrics-server-port"),
+        )
+
+        _ = self.node2.get_relay_messages(self.test_pubsub_topic)
+
+        logger.info("Publishing message from node1")
+        t0 = time()
+        self.node1.send_relay_message(self.create_message(), self.test_pubsub_topic)
+        self.tc.log_tc_stats(self.node1)
+        deadline = t0 + 4.0
+        msg_received = False
+        arrival_time = 0
+        while time() < deadline:
+            msgs = self.node2.get_relay_messages(self.test_pubsub_topic) or []
+            if msgs:
+                arrival_time = time() - t0
+                msg_received = True
+                break
+            delay(0.2)
+
+        assert msg_received, "node2 did not receive message under latency"
+
+        expected_s = latency_ms / 1000.0
+        assert arrival_time >= expected_s - 0.5, f"Expected >= {expected_s - 0.5}s, got {arrival_time}s"
+        logger.info(f" arrival delay: {arrival_time:.2f}s")
+
+        self.tc.clear(self.node2)

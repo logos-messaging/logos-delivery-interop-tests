@@ -133,3 +133,194 @@ class TrafficController:
             ],
             iface=iface,
         )
+
+    def _setup_prio_root(self, node, iface: str = "eth0"):
+        self.clear(node, iface=iface)
+        self._exec(
+            node,
+            [
+                "qdisc",
+                "add",
+                "dev",
+                iface,
+                "root",
+                "handle",
+                "1:",
+                "prio",
+                "bands",
+                "3",
+                "priomap",
+                "1",
+                "1",
+                "1",
+                "1",
+                "1",
+                "1",
+                "1",
+                "1",
+                "1",
+                "1",
+                "1",
+                "1",
+                "1",
+                "1",
+                "1",
+                "1",
+            ],
+            iface=iface,
+        )
+
+    def _attach_netem_default_band(self, node, netem_args: list[str], iface: str = "eth0"):
+        self._exec(
+            node,
+            ["qdisc", "replace", "dev", iface, "parent", "1:1", "handle", "10:", "netem"] + netem_args,
+            iface=iface,
+        )
+
+    def _exempt_tcp_sport(self, node, port: int, band: int = 2, iface: str = "eth0"):
+        self._exec(
+            node,
+            [
+                "filter",
+                "add",
+                "dev",
+                iface,
+                "protocol",
+                "ip",
+                "parent",
+                "1:",
+                "prio",
+                "1",
+                "u32",
+                "match",
+                "ip",
+                "protocol",
+                "6",
+                "0xff",
+                "match",
+                "ip",
+                "sport",
+                str(int(port)),
+                "0xffff",
+                "flowid",
+                f"1:{int(band)}",
+            ],
+            iface=iface,
+        )
+
+    def _apply_netem_except_control_plane(
+        self,
+        node,
+        netem_args: list[str],
+        rest_port: int,
+        metrics_port: int | None = None,
+        iface: str = "eth0",
+    ):
+        self._setup_prio_root(node, iface=iface)
+        self._attach_netem_default_band(node, netem_args, iface=iface)
+        self._exempt_tcp_sport(node, rest_port, band=2, iface=iface)
+        if metrics_port is not None:
+            self._exempt_tcp_sport(node, metrics_port, band=2, iface=iface)
+        self.log_tc_stats(node, iface=iface)
+
+    def add_latency_except_rest(
+        self,
+        node,
+        ms: int,
+        rest_port: int,
+        metrics_port: int | None = None,
+        iface: str = "eth0",
+    ):
+        self._apply_netem_except_control_plane(
+            node,
+            netem_args=["delay", f"{int(ms)}ms"],
+            rest_port=rest_port,
+            metrics_port=metrics_port,
+            iface=iface,
+        )
+
+    def add_packet_loss_except_rest(
+        self,
+        node,
+        percent: float,
+        rest_port: int,
+        metrics_port: int | None = None,
+        iface: str = "eth0",
+    ):
+        self._apply_netem_except_control_plane(
+            node,
+            netem_args=["loss", f"{float(percent)}%"],
+            rest_port=rest_port,
+            metrics_port=metrics_port,
+            iface=iface,
+        )
+
+    def add_packet_loss_correlated_except_rest(
+        self,
+        node,
+        percent: float,
+        correlation: float,
+        rest_port: int,
+        metrics_port: int | None = None,
+        iface: str = "eth0",
+    ):
+        self._apply_netem_except_control_plane(
+            node,
+            netem_args=["loss", f"{float(percent)}%", f"{float(correlation)}%"],
+            rest_port=rest_port,
+            metrics_port=metrics_port,
+            iface=iface,
+        )
+
+    def add_packet_reordering_except_rest(
+        self,
+        node,
+        rest_port: int,
+        metrics_port: int | None = None,
+        percent: int = 25,
+        correlation: int = 50,
+        delay_ms: int = 10,
+        iface: str = "eth0",
+    ):
+        self._apply_netem_except_control_plane(
+            node,
+            netem_args=["delay", f"{int(delay_ms)}ms", "reorder", f"{int(percent)}%", f"{int(correlation)}%"],
+            rest_port=rest_port,
+            metrics_port=metrics_port,
+            iface=iface,
+        )
+
+    def add_bandwidth_except_rest(
+        self,
+        node,
+        rate: str,
+        rest_port: int,
+        metrics_port: int | None = None,
+        iface: str = "eth0",
+    ):
+        self._setup_prio_root(node, iface=iface)
+        self._exec(
+            node,
+            [
+                "qdisc",
+                "replace",
+                "dev",
+                iface,
+                "parent",
+                "1:1",
+                "handle",
+                "20:",
+                "tbf",
+                "rate",
+                rate,
+                "burst",
+                "32kbit",
+                "limit",
+                "12500",
+            ],
+            iface=iface,
+        )
+        self._exempt_tcp_sport(node, rest_port, band=2, iface=iface)
+        if metrics_port is not None:
+            self._exempt_tcp_sport(node, metrics_port, band=2, iface=iface)
+        self.log_tc_stats(node, iface=iface)
