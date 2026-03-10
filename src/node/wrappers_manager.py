@@ -47,3 +47,29 @@ def wrapper_unsubscribe(node, content_topic, timeout_s=20.0):
         content_topic=content_topic,
         timeout_s=timeout_s,
     )
+
+
+def wrapper_send_message(node, message, timeout_s=20.0):
+    return node.send_message(
+        message=message,
+        timeout_s=timeout_s,
+    )
+
+
+def wrapper_get_available_node_info_ids(node, timeout_s=20.0):
+    return node.get_available_node_info_ids(
+        timeout_s=timeout_s,
+    )
+
+
+def wrapper_get_node_info(node, node_info_id, timeout_s=20.0):
+    return node.get_node_info(
+        node_info_id=node_info_id,
+        timeout_s=timeout_s,
+    )
+
+
+def wrapper_get_available_configs(node, timeout_s=20.0):
+    return node.get_available_configs(
+        timeout_s=timeout_s,
+    )
