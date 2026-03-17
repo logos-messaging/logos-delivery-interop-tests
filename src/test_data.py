@@ -96,7 +96,7 @@ CONTENT_TOPICS_SHARD_7 = [
     "/newsService/4.0/updates/yaml",
 ]
 
-DEFAULT_CLUSTER_ID = "3"
+DEFAULT_CLUSTER_ID = "198"
 VALID_PUBSUB_TOPICS = [
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/0",
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/1",
