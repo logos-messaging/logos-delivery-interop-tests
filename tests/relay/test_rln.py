@@ -13,7 +13,6 @@ from src.test_data import SAMPLE_INPUTS
 logger = get_custom_logger(__name__)
 
 
-@pytest.mark.skip(reason="RLN functional changes. To be updated by Roman Zajic")
 @pytest.mark.xdist_group(name="RLN serial tests")
 class TestRelayRLN(StepsRLN, StepsRelay):
     SAMPLE_INPUTS_RLN = SAMPLE_INPUTS + SAMPLE_INPUTS + SAMPLE_INPUTS
