@@ -17,6 +17,9 @@ logger = get_custom_logger(__name__)
 class TestRelayRLN(StepsRLN, StepsRelay):
     SAMPLE_INPUTS_RLN = SAMPLE_INPUTS + SAMPLE_INPUTS + SAMPLE_INPUTS
 
+    def test_single_node_registration(self, pytestconfig):
+        pytestconfig.cache.set("keystore-prefixes", self.register_rln_relay_nodes(1, []))
+
     @pytest.mark.smoke
     def test_valid_payloads_lightpush_at_spam_rate(self, pytestconfig):
         message_limit = 1
