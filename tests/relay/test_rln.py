@@ -17,14 +17,18 @@ logger = get_custom_logger(__name__)
 class TestRelayRLN(StepsRLN, StepsRelay):
     SAMPLE_INPUTS_RLN = SAMPLE_INPUTS + SAMPLE_INPUTS + SAMPLE_INPUTS
 
-    def test_single_node_registration(self, pytestconfig):
-        pytestconfig.cache.set("keystore-prefixes", self.register_rln_relay_nodes(1, []))
-
     @pytest.mark.smoke
     def test_valid_payloads_lightpush_at_spam_rate(self, pytestconfig):
         message_limit = 1
         epoch_sec = 1
-        pytestconfig.cache.set("keystore-prefixes", self.register_rln_relay_nodes(2, []))
+        rln_state = self.register_rln_relay_nodes(2, [])
+        pytestconfig.cache.set(
+            "keystore-prefixes",
+            {
+                "keystore_prefixes": rln_state["keystore_prefixes"],
+                "rln_membership_indexes": rln_state["rln_membership_indexes"],
+            },
+        )
         self.setup_first_rln_relay_node(lightpush="true", rln_relay_user_message_limit=message_limit, rln_relay_epoch_sec=epoch_sec)
         self.setup_second_rln_lightpush_node(rln_relay_user_message_limit=message_limit, rln_relay_epoch_sec=epoch_sec)
         self.subscribe_main_relay_nodes()
@@ -43,7 +47,14 @@ class TestRelayRLN(StepsRLN, StepsRelay):
 
     def test_valid_payloads_at_slow_rate(self, pytestconfig):
         message_limit = 20
-        self.register_rln_relay_nodes(0, pytestconfig.cache.get("keystore-prefixes", []))
+        rln_state = self.register_rln_relay_nodes(2, [])
+        pytestconfig.cache.set(
+            "keystore-prefixes",
+            {
+                "keystore_prefixes": rln_state["keystore_prefixes"],
+                "rln_membership_indexes": rln_state["rln_membership_indexes"],
+            },
+        )
         self.setup_main_rln_relay_nodes(rln_relay_user_message_limit=message_limit, rln_relay_epoch_sec=600)
         self.subscribe_main_relay_nodes()
         failed_payloads = []
@@ -65,7 +76,10 @@ class TestRelayRLN(StepsRLN, StepsRelay):
     def test_valid_payloads_at_spam_rate(self, pytestconfig):
         message_limit = 20
         epoch_sec = 600
-        self.register_rln_relay_nodes(0, pytestconfig.cache.get("keystore-prefixes", []))
+        self.register_rln_relay_nodes(
+            0,
+            pytestconfig.cache.get("keystore-prefixes", {"keystore_prefixes": [], "rln_membership_indexes": []}),
+        )
         self.setup_main_rln_relay_nodes(rln_relay_user_message_limit=message_limit, rln_relay_epoch_sec=epoch_sec)
         self.subscribe_main_relay_nodes()
         start = math.trunc(time())
@@ -82,7 +96,10 @@ class TestRelayRLN(StepsRLN, StepsRelay):
                 assert "RLN validation failed" or "NonceLimitReached" in str(e)
 
     def test_valid_payload_at_variable_rate(self, pytestconfig):
-        self.register_rln_relay_nodes(0, pytestconfig.cache.get("keystore-prefixes", []))
+        self.register_rln_relay_nodes(
+            0,
+            pytestconfig.cache.get("keystore-prefixes", {"keystore_prefixes": [], "rln_membership_indexes": []}),
+        )
         self.setup_main_rln_relay_nodes(rln_relay_user_message_limit=1, rln_relay_epoch_sec=1)
         self.subscribe_main_relay_nodes()
         payload_desc = SAMPLE_INPUTS[0]["description"]
@@ -107,7 +124,10 @@ class TestRelayRLN(StepsRLN, StepsRelay):
 
     def test_valid_payloads_random_epoch_at_slow_rate(self, pytestconfig):
         epoch_sec = random.randint(2, 5)
-        self.register_rln_relay_nodes(0, pytestconfig.cache.get("keystore-prefixes", []))
+        self.register_rln_relay_nodes(
+            0,
+            pytestconfig.cache.get("keystore-prefixes", {"keystore_prefixes": [], "rln_membership_indexes": []}),
+        )
         self.setup_main_rln_relay_nodes(rln_relay_user_message_limit=1, rln_relay_epoch_sec=epoch_sec)
         self.subscribe_main_relay_nodes()
         failed_payloads = []
@@ -124,7 +144,10 @@ class TestRelayRLN(StepsRLN, StepsRelay):
 
     def test_valid_payloads_random_user_message_limit(self, pytestconfig):
         user_message_limit = random.randint(2, 4)
-        self.register_rln_relay_nodes(0, pytestconfig.cache.get("keystore-prefixes", []))
+        self.register_rln_relay_nodes(
+            0,
+            pytestconfig.cache.get("keystore-prefixes", {"keystore_prefixes": [], "rln_membership_indexes": []}),
+        )
         self.setup_main_rln_relay_nodes(rln_relay_user_message_limit=user_message_limit, rln_relay_epoch_sec=1)
         self.subscribe_main_relay_nodes()
         failed_payloads = []
@@ -143,7 +166,14 @@ class TestRelayRLN(StepsRLN, StepsRelay):
     def test_valid_payloads_dynamic_at_spam_rate(self, pytestconfig):
         message_limit = 100
         epoch_sec = 600
-        pytestconfig.cache.set("keystore-prefixes", self.register_rln_relay_nodes(2, []))
+        rln_state = self.register_rln_relay_nodes(2, [])
+        pytestconfig.cache.set(
+            "keystore-prefixes",
+            {
+                "keystore_prefixes": rln_state["keystore_prefixes"],
+                "rln_membership_indexes": rln_state["rln_membership_indexes"],
+            },
+        )
         self.setup_main_rln_relay_nodes(
             rln_relay_user_message_limit=message_limit,
             rln_relay_epoch_sec=epoch_sec,
@@ -168,7 +198,14 @@ class TestRelayRLN(StepsRLN, StepsRelay):
     @pytest.mark.timeout(600)
     def test_valid_payloads_dynamic_at_slow_rate(self, pytestconfig):
         message_limit = 100
-        pytestconfig.cache.set("keystore-prefixes", self.register_rln_relay_nodes(2, []))
+        rln_state = self.register_rln_relay_nodes(2, [])
+        pytestconfig.cache.set(
+            "keystore-prefixes",
+            {
+                "keystore_prefixes": rln_state["keystore_prefixes"],
+                "rln_membership_indexes": rln_state["rln_membership_indexes"],
+            },
+        )
         self.setup_main_rln_relay_nodes(
             rln_relay_user_message_limit=message_limit,
             rln_relay_epoch_sec=600,
@@ -194,7 +231,10 @@ class TestRelayRLN(StepsRLN, StepsRelay):
     def test_valid_payloads_n1_with_rln_n2_without_rln_at_spam_rate(self, pytestconfig):
         message_limit = 1
         epoch_sec = 1
-        self.register_rln_relay_nodes(0, pytestconfig.cache.get("keystore-prefixes", []))
+        self.register_rln_relay_nodes(
+            0,
+            pytestconfig.cache.get("keystore-prefixes", {"keystore_prefixes": [], "rln_membership_indexes": []}),
+        )
         self.setup_first_rln_relay_node(rln_relay_user_message_limit=message_limit, rln_relay_epoch_sec=epoch_sec)
         self.setup_second_relay_node()
         self.subscribe_main_relay_nodes()
@@ -211,7 +251,14 @@ class TestRelayRLN(StepsRLN, StepsRelay):
                 assert "RLN validation failed" or "NonceLimitReached" in str(e)
 
     def test_valid_payloads_with_optional_nodes_at_slow_rate(self, pytestconfig):
-        pytestconfig.cache.set("keystore-prefixes", self.register_rln_relay_nodes(5, []))
+        rln_state = self.register_rln_relay_nodes(5, [])
+        pytestconfig.cache.set(
+            "keystore-prefixes",
+            {
+                "keystore_prefixes": rln_state["keystore_prefixes"],
+                "rln_membership_indexes": rln_state["rln_membership_indexes"],
+            },
+        )
         self.setup_main_rln_relay_nodes(rln_relay_user_message_limit=1, rln_relay_epoch_sec=1)
         self.setup_optional_rln_relay_nodes(rln_relay_user_message_limit=1, rln_relay_epoch_sec=1)
         self.subscribe_main_relay_nodes()
@@ -230,7 +277,10 @@ class TestRelayRLN(StepsRLN, StepsRelay):
             assert not failed_payloads, f"Payloads failed: {failed_payloads}"
 
     def test_valid_payloads_with_optional_nodes_at_spam_rate(self, pytestconfig):
-        self.register_rln_relay_nodes(0, pytestconfig.cache.get("keystore-prefixes", []))
+        self.register_rln_relay_nodes(
+            0,
+            pytestconfig.cache.get("keystore-prefixes", {"keystore_prefixes": [], "rln_membership_indexes": []}),
+        )
         self.setup_main_rln_relay_nodes(rln_relay_user_message_limit=1, rln_relay_epoch_sec=1)
         self.setup_optional_rln_relay_nodes(rln_relay_user_message_limit=1, rln_relay_epoch_sec=1)
         self.subscribe_main_relay_nodes()

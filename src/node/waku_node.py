@@ -37,8 +37,23 @@ def sanitize_docker_flags(input_flags):
 
 
 @retry(stop=stop_after_delay(180), wait=wait_fixed(0.5), reraise=True)
-def rln_credential_store_ready(creds_file_path, single_check=False):
+def rln_credential_store_ready(creds_file_path, single_check=False, require_credentials=False):
     if os.path.exists(creds_file_path):
+        if require_credentials:
+            try:
+                with open(creds_file_path, "r", encoding="utf-8") as creds_file:
+                    keystore_data = json.load(creds_file)
+            except (OSError, json.JSONDecodeError) as ex:
+                if single_check:
+                    return False
+                raise ValueError(f"Failed to parse RLN keystore at {creds_file_path}: {ex}")
+
+            credentials = keystore_data.get("credentials", {}) if isinstance(keystore_data, dict) else {}
+            if not credentials:
+                if single_check:
+                    return False
+                raise ValueError(f"RLN keystore exists but has no credentials yet: {creds_file_path}")
+
         return True
     elif not single_check:
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), creds_file_path)
@@ -82,6 +97,7 @@ class WakuNode:
         self._log_path = os.path.join(DOCKER_LOG_DIR, f"{docker_log_prefix}__{self._image_name.replace('/', '_')}.log")
         self._docker_manager = DockerManager(self._image_name)
         self._container = None
+        self.rln_membership_index = None
         self.start_args = {}
         logger.debug(f"WakuNode instance initialized with log path {self._log_path}")
 
@@ -170,7 +186,7 @@ class WakuNode:
         default_args.pop("rln-keystore-prefix", None)
 
         if rln_creds_set:
-            rln_credential_store_ready(keystore_path)
+            rln_credential_store_ready(keystore_path, require_credentials=True)
             default_args.update(rln_args)
         else:
             logger.info(f"RLN credentials not set or credential store not available, starting without RLN")
@@ -221,12 +237,31 @@ class WakuNode:
 
             logger.debug(f"Waiting for keystore {keystore_path}")
             try:
-                rln_credential_store_ready(keystore_path)
+                rln_credential_store_ready(keystore_path, require_credentials=True)
+                self.rln_membership_index = str(self.get_rln_membership_index_from_log())
+                logger.debug(f"Detected RLN membership index from registration logs: {self.rln_membership_index}")
+                self.stop()
             except Exception as ex:
                 logger.error(f"File {keystore_path} with RLN credentials did not become available in time {ex}")
                 raise
         else:
             logger.warn("RLN credentials not set, no action performed")
+
+        return self.rln_membership_index
+
+    @retry(stop=stop_after_delay(10), wait=wait_fixed(0.2), reraise=True)
+    def get_rln_membership_index_from_log(self):
+        if not os.path.exists(self._log_path):
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), self._log_path)
+
+        with open(self._log_path, "r", encoding="utf-8", errors="ignore") as log_file:
+            log_data = log_file.read()
+
+        matches = re.findall(r"membershipIndex=(\d+)", log_data)
+        if not matches:
+            raise ValueError("Could not infer RLN membership index from registration logs")
+
+        return int(matches[-1])
 
     @retry(stop=stop_after_delay(5), wait=wait_fixed(0.1), reraise=True)
     def stop(self):
@@ -428,6 +463,21 @@ class WakuNode:
     def is_nwaku(self):
         return "nwaku" in self.image
 
+    def prepare_rln_storage_paths(self, cwd, keystore_prefix, selected_id, reset_existing=False):
+        keystore_dir = os.path.join(cwd, f"keystore_{keystore_prefix}_{selected_id}")
+        rln_tree_dir = os.path.join(cwd, f"rln_tree_{keystore_prefix}_{selected_id}")
+
+        if reset_existing:
+            for path, path_name in [(keystore_dir, "keystore"), (rln_tree_dir, "rln tree")]:
+                if os.path.exists(path):
+                    logger.warning(f"Resetting existing RLN {path_name} directory before registration: {path}")
+                    shutil.rmtree(path, ignore_errors=True)
+
+        os.makedirs(keystore_dir, exist_ok=True)
+        os.makedirs(rln_tree_dir, exist_ok=True)
+
+        return keystore_dir, rln_tree_dir
+
     def parse_rln_credentials(self, default_args, is_registration):
         rln_args = {}
         keystore_path = None
@@ -440,6 +490,7 @@ class WakuNode:
             return rln_args, False, keystore_path
 
         imported_creds = json.loads(rln_creds_source)
+        rln_chain_id = str(imported_creds.get("rln-relay-chain-id", "59141"))
 
         if len(imported_creds) < 4 or any(value is None for value in imported_creds.values()):
             logger.warn(f"One or more of required RLN credentials were not set properly")
@@ -448,6 +499,13 @@ class WakuNode:
         eth_private_key = select_private_key(imported_creds, selected_id)
 
         cwd = os.getcwd()
+        keystore_prefix = default_args.get("rln-keystore-prefix")
+
+        if not keystore_prefix:
+            logger.warn("rln-keystore-prefix is missing, cannot mount RLN state and keystore")
+            return rln_args, False, keystore_path
+
+        keystore_dir, rln_tree_dir = self.prepare_rln_storage_paths(cwd, keystore_prefix, selected_id, reset_existing=is_registration)
 
         if self.is_nwaku():
             if is_registration:
@@ -470,6 +528,9 @@ class WakuNode:
                     {
                         "rln-relay-cred-path": "/keystore/keystore.json",
                         "rln-relay-cred-password": imported_creds["rln-relay-cred-password"],
+                        "rln-relay-chain-id": rln_chain_id,
+                        "rln-relay-eth-client-address": imported_creds["rln-relay-eth-client-address"],
+                        "rln-relay-eth-contract-address": imported_creds["rln-relay-eth-contract-address"],
                     }
                 )
             else:
@@ -477,18 +538,19 @@ class WakuNode:
                     {
                         "rln-relay-cred-path": "/keystore/keystore.json",
                         "rln-relay-cred-password": imported_creds["rln-relay-cred-password"],
+                        "rln-relay-chain-id": rln_chain_id,
                         "rln-relay-eth-client-address": imported_creds["rln-relay-eth-client-address"],
                         "rln-relay-eth-contract-address": imported_creds["rln-relay-eth-contract-address"],
                         "rln-relay-eth-private-key": imported_creds[eth_private_key],
                     }
                 )
 
-            keystore_path = cwd + "/keystore_" + default_args["rln-keystore-prefix"] + "_" + selected_id + "/keystore.json"
+            keystore_path = os.path.join(keystore_dir, "keystore.json")
 
             self._volumes.extend(
                 [
-                    cwd + "/rln_tree_" + default_args["rln-keystore-prefix"] + "_" + selected_id + ":/etc/rln_tree",
-                    cwd + "/keystore_" + default_args["rln-keystore-prefix"] + "_" + selected_id + ":/keystore",
+                    f"{rln_tree_dir}:/etc/rln_tree",
+                    f"{keystore_dir}:/keystore",
                 ]
             )
 
