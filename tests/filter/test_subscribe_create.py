@@ -75,9 +75,10 @@ class TestFilterSubscribeCreate(StepsFilter):
         assert not failed_content_topics, f"ContentTopics failed: {failed_content_topics}"
         try:
             self.create_filter_subscription({"requestId": "1", "contentFilters": ["rate limited"], "pubsubTopic": self.test_pubsub_topic})
-            raise AssertionError("The 30th subscribe call was not rate limited!!!")
         except Exception as ex:
             assert "subscription failed" in str(ex) or "rate limit exceeded" in str(ex)
+        else:
+            raise AssertionError("Expected extra filter subscription to be rate limited, but it succeeded")
 
     def test_filter_subscribe_to_101_content_topics(self, subscribe_main_nodes):
         try:

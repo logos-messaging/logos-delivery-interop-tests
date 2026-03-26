@@ -5,6 +5,7 @@ import random
 import re
 import shutil
 import string
+import time
 import pytest
 import requests
 from src.libs.common import delay
@@ -295,6 +296,30 @@ class WakuNode:
             check_healthy()
         check_ready()
 
+    def wait_for_connected(self, timeout=30):
+        deadline = time.time() + timeout
+
+        while time.time() < deadline:
+            try:
+                raw = self.health()
+                health = json.loads(raw) if isinstance(raw, (str, bytes)) else raw
+                status = health.get("connectionStatus", "")
+
+                if status == "Connected":
+                    logger.debug("Node reached connectionStatus=Connected")
+                    return
+
+            except Exception as exc:
+                logger.debug("Health poll failed ")
+
+            time.sleep(1)
+
+        raise TimeoutError(f"Node did not reach connectionStatus='Connected' within {timeout}s.")
+
+    def get_node_health(self):
+        raw = self.health()
+        return json.loads(raw) if isinstance(raw, (str, bytes)) else raw
+
     def get_id(self):
         try:
             return self.info_response["listenAddresses"][0].split("/")[-1]
@@ -517,7 +542,6 @@ class WakuNode:
         return self._container
 
     def generate_random_nodekey(self):
-        # Define the set of hexadecimal characters
         hex_chars = string.hexdigits.lower()
         # Generate a random 64-character string from the hex characters
         random_key = "".join(random.choice(hex_chars) for _ in range(64))

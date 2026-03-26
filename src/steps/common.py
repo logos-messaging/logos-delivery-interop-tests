@@ -23,11 +23,16 @@ class StepsCommon:
             self.test_content_topic = "/test/1/default/proto"
 
     @allure.step
+    def wait_for_node_connected(self, node, timeout=30):
+        node.wait_for_connected(timeout=timeout)
+
+    @allure.step
     @retry(stop=stop_after_delay(20), wait=wait_fixed(0.5), reraise=True)
     def add_node_peer(self, node, multiaddr_list, shards=[0, 1, 2, 3, 4, 5, 6, 7, 8]):
         if node.is_nwaku():
             for multiaddr in multiaddr_list:
                 node.add_peers([multiaddr])
+        self.wait_for_node_connected(node)
 
     @allure.step
     @retry(stop=stop_after_delay(70), wait=wait_fixed(1), reraise=True)
