@@ -277,8 +277,19 @@ class WakuNode:
             except Exception as ex:
                 raise AttributeError(f"Unknown health response format {ex}")
 
-            if self.health_response.get("nodeHealth") != "READY":
-                raise AssertionError("Waiting for the node health status: READY")
+            health = self.health_response
+
+            if health.get("nodeHealth") != "READY":
+                raise AssertionError("Waiting for nodeHealth READY")
+
+            if health.get("connectionStatus") == "Disconnected":
+                raise AssertionError("Waiting for node connection")
+
+            protocols = health.get("protocolsHealth", [])
+            relay_ready = any(p.get("Relay") == "READY" for p in protocols)
+
+            if not relay_ready:
+                raise AssertionError("Waiting for Relay to be READY")
 
             # for p in self.health_response.get("protocolsHealth"):
             #     if p.get("Rln Relay") != "READY":
