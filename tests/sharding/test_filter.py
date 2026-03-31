@@ -32,8 +32,10 @@ class TestFilterAutoSharding(StepsSharding):
         self.setup_first_relay_node_with_filter(
             cluster_id=self.auto_cluster, content_topic=self.test_content_topic, pubsub_topic=self.test_pubsub_topic, num_shards_in_network=1
         )
+        self.setup_third_relay_node(cluster_id=self.auto_cluster, content_topic=self.test_content_topic, num_shards_in_network=1)
         self.setup_second_node_as_filter(cluster_id=self.auto_cluster, content_topic=self.test_content_topic, pubsub_topic=self.test_pubsub_topic)
         self.subscribe_first_relay_node(content_topics=[self.test_content_topic])
+        self.subscribe_optional_relay_nodes(content_topics=[self.test_content_topic])
         self.subscribe_filter_node(self.node2, content_topics=[self.test_content_topic], pubsub_topic=self.test_pubsub_topic)
         self.check_published_message_reaches_filter_peer(content_topic=self.test_content_topic)
 
@@ -44,10 +46,16 @@ class TestFilterAutoSharding(StepsSharding):
             pubsub_topic=PUBSUB_TOPICS_SAME_CLUSTER,
             num_shards_in_network=8,
         )
+        self.setup_third_relay_node(
+            cluster_id=self.auto_cluster,
+            content_topic=CONTENT_TOPICS_DIFFERENT_SHARDS,
+            num_shards_in_network=8,
+        )
         self.setup_second_node_as_filter(
             cluster_id=self.auto_cluster, content_topic=CONTENT_TOPICS_DIFFERENT_SHARDS, pubsub_topic=self.test_pubsub_topic
         )
         self.subscribe_first_relay_node(content_topics=CONTENT_TOPICS_DIFFERENT_SHARDS)
+        self.subscribe_optional_relay_nodes(content_topics=CONTENT_TOPICS_DIFFERENT_SHARDS)
         for content_topic, pubsub_topic in zip(CONTENT_TOPICS_DIFFERENT_SHARDS, PUBSUB_TOPICS_SAME_CLUSTER):
             self.subscribe_filter_node(self.node2, content_topics=[content_topic], pubsub_topic=pubsub_topic)
         for content_topic in CONTENT_TOPICS_DIFFERENT_SHARDS:

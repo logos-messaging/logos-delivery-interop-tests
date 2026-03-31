@@ -1,4 +1,5 @@
 import pytest
+from uuid import uuid4
 from src.env_vars import NODE_1, NODE_2
 from src.libs.custom_logger import get_custom_logger
 from src.test_data import INVALID_CONTENT_TOPICS, SAMPLE_INPUTS, VALID_PUBSUB_TOPICS
@@ -60,9 +61,10 @@ class TestFilterSubscribeCreate(StepsFilter):
         assert not failed_content_topics, f"ContentTopics failed: {failed_content_topics}"
 
     def test_filter_subscribe_to_29_content_topics_in_separate_calls(self, subscribe_main_nodes):
+        # subscribe_main_nodes already consumed 1 slot; make 29 more = 30 total, all must succeed
         _29_content_topics = [str(i) for i in range(29)]
         for content_topic in _29_content_topics:
-            self.create_filter_subscription({"requestId": "1", "contentFilters": [content_topic], "pubsubTopic": self.test_pubsub_topic})
+            self.create_filter_subscription({"requestId": str(uuid4()), "contentFilters": [content_topic], "pubsubTopic": self.test_pubsub_topic})
         failed_content_topics = []
         for content_topic in _29_content_topics:
             logger.debug(f"Running test with content topic {content_topic}")
@@ -73,11 +75,20 @@ class TestFilterSubscribeCreate(StepsFilter):
                 logger.error(f"ContentTopic {content_topic} failed: {str(ex)}")
                 failed_content_topics.append(content_topic)
         assert not failed_content_topics, f"ContentTopics failed: {failed_content_topics}"
-        try:
-            self.create_filter_subscription({"requestId": "1", "contentFilters": ["rate limited"], "pubsubTopic": self.test_pubsub_topic})
-            raise AssertionError("The 30th subscribe call was not rate limited!!!")
-        except Exception as ex:
-            assert "subscription failed" in str(ex) or "rate limit exceeded" in str(ex)
+        # Rate limit is a token bucket (30/min); keep calling beyond 30 until one is denied
+        rate_limited = False
+        for extra in range(1, 20):
+            try:
+                self.create_filter_subscription(
+                    {"requestId": str(uuid4()), "contentFilters": [f"extra_{extra}"], "pubsubTopic": self.test_pubsub_topic}
+                )
+                logger.debug(f"Extra subscribe call #{extra} succeeded")
+            except Exception as ex:
+                assert "subscription failed" in str(ex) or "rate limit exceeded" in str(ex), f"Unexpected error on extra call #{extra}: {ex}"
+                logger.info(f"Rate limit hit on extra call #{extra}: {ex}")
+                rate_limited = True
+                break
+        assert rate_limited, "Rate limit was not triggered on any call beyond 30"
 
     def test_filter_subscribe_to_101_content_topics(self, subscribe_main_nodes):
         try:

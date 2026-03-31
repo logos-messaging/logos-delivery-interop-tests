@@ -622,9 +622,13 @@ class TestNetworkConditions(StepsRelay):
 
     @pytest.mark.timeout(60 * 8)
     def test_relay_2_nodes_bandwidth_low_vs_high_drain_time(self):
-        msg_count = 200
-        cache = "250"
-        poll_sleep = 0.5
+        # large payload (~16KB) so 50 msgs = ~800KB total,
+        # making 256kbit meaningfully slower than 10mbit on loopback
+        msg_count = 50
+        large_payload = to_base64("x" * 16_000)
+        cache = "100"
+        # fine-grained poll so sub-second differences are measurable
+        poll_sleep = 0.05
         max_wait = 200
 
         self.node1 = WakuNode(NODE_1, f"node1_{self.test_id}")
@@ -642,12 +646,14 @@ class TestNetworkConditions(StepsRelay):
 
         self.wait_for_autoconnection([self.node1, self.node2], hard_wait=10)
 
+        # apply tc to both nodes so intra-host loopback fast-path is throttled
         self.tc.add_bandwidth(self.node1, rate="256kbit")
+        self.tc.add_bandwidth(self.node2, rate="256kbit")
 
         _ = self.node2.get_relay_messages(self.test_pubsub_topic)
 
         for _ in range(msg_count):
-            self.node1.send_relay_message(self.create_message(), self.test_pubsub_topic)
+            self.node1.send_relay_message(self.create_message(payload=large_payload), self.test_pubsub_topic)
 
         total_low_msgs = 0
         t0 = time()
@@ -657,12 +663,15 @@ class TestNetworkConditions(StepsRelay):
             sleep(poll_sleep)
         low_rate_t = time() - t0
 
+        # upgrade both nodes to high bandwidth
         self.tc.add_bandwidth(self.node1, rate="10mbit")
+        self.tc.add_bandwidth(self.node2, rate="10mbit")
 
         _ = self.node2.get_relay_messages(self.test_pubsub_topic)
+        sleep(1)  # let the phase-1 shaper queue fully drain before phase 2
 
         for _ in range(msg_count):
-            self.node1.send_relay_message(self.create_message(), self.test_pubsub_topic)
+            self.node1.send_relay_message(self.create_message(payload=large_payload), self.test_pubsub_topic)
 
         total_high_msgs = 0
         t1 = time()
@@ -680,7 +689,9 @@ class TestNetworkConditions(StepsRelay):
 
         assert total_low_msgs >= msg_count
         assert total_high_msgs >= msg_count
-        assert high_rate_t < low_rate_t
+        # Assert high bandwidth was meaningfully faster, not just marginally so,
+        # to absorb scheduling jitter on localhost Docker
+        assert high_rate_t < low_rate_t / 2
 
     @pytest.mark.timeout(60 * 6)
     def test_relay_2_nodes_packet_reordering(self):
