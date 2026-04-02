@@ -71,3 +71,6 @@ class WrapperManager:
 
     def get_node_info(self, node_info_id: str, *, timeout_s: float = 20.0) -> Result[dict, str]:
         return self._node.get_node_info(node_info_id, timeout_s=timeout_s)
+
+    def get_available_configs(self, *, timeout_s: float = 20.0) -> Result[dict, str]:
+        return self._node.get_available_configs(timeout_s=timeout_s)
