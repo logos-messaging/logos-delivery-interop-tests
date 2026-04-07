@@ -12,15 +12,14 @@ def _free_port():
 def build_node_config(**overrides):
     config = {
         "logLevel": "DEBUG",
-        "mode": "Core",
         "listenAddress": "0.0.0.0",
         "tcpPort": _free_port(),
-        "udpPort": _free_port(),
+        "discv5UdpPort": _free_port(),
         "restPort": _free_port(),
         "restAddress": "0.0.0.0",
         "clusterId": DEFAULT_CLUSTER_ID,
-        "relay": False,
-        "store": False,
+        "relay": True,
+        "store": True,
         "filter": False,
         "lightpush": False,
         "peerExchange": False,
