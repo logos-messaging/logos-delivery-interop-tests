@@ -1,12 +1,10 @@
 import pytest
-import logging
 from time import time, sleep
 from src.libs.custom_logger import get_custom_logger
 from src.env_vars import NODE_1, NODE_2
 from src.node.waku_node import WakuNode
 from src.steps.relay import StepsRelay
 from src.libs.common import delay
-from src.steps.common import StepsCommon
 from src.steps.network_conditions import TrafficController
 from src.libs.common import to_base64
 
@@ -426,7 +424,7 @@ class TestNetworkConditions(StepsRelay):
         window_s = 30.0
         loss = 50.0
 
-        self.tc.add_packet_loss(self.node1, percent=loss)
+        self.tc.add_packet_loss_p2p_only(self.node1, percent=loss)
         _ = self.node4.get_relay_messages(self.test_pubsub_topic)
 
         for _ in range(total_msgs):
@@ -436,7 +434,7 @@ class TestNetworkConditions(StepsRelay):
         uncorrelated = len(self.node4.get_relay_messages(self.test_pubsub_topic) or [])
         self.tc.clear(self.node1)
 
-        self.tc.add_packet_loss_correlated(self.node1, percent=loss, correlation=75.0)
+        self.tc.add_packet_loss_correlated_p2p_only(self.node1, percent=loss, correlation=75.0)
         _ = self.node4.get_relay_messages(self.test_pubsub_topic)
 
         for _ in range(total_msgs):

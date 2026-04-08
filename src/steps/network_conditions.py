@@ -133,3 +133,99 @@ class TrafficController:
             ],
             iface=iface,
         )
+
+    def _install_rest_bypass_prio(self, node, iface: str, netem_args: list[str]):
+        """
+        Build a prio qdisc where REST API traffic bypasses netem.
+
+        Layout:
+            root 1: prio (3 bands)
+              |-- 1:1  unshaped (REST traffic lands here via u32 filter)
+              |-- 1:2  leaf -> netem (default band per priomap; everything else)
+              `-- 1:3  unshaped (unused)
+
+        The filter matches packets whose TCP source OR destination port equals
+        the node's REST port, so both incoming requests and outgoing responses
+        bypass the netem queue. Libp2p and other traffic hits netem.
+        """
+        rest_port = str(node._rest_port)
+
+        self._exec(node, ["qdisc", "add", "dev", iface, "root", "handle", "1:", "prio"], iface=iface)
+        self._exec(
+            node,
+            ["qdisc", "add", "dev", iface, "parent", "1:2", "handle", "20:", "netem"] + netem_args,
+            iface=iface,
+        )
+        self._exec(
+            node,
+            [
+                "filter",
+                "add",
+                "dev",
+                iface,
+                "protocol",
+                "ip",
+                "parent",
+                "1:",
+                "prio",
+                "1",
+                "u32",
+                "match",
+                "ip",
+                "sport",
+                rest_port,
+                "0xffff",
+                "flowid",
+                "1:1",
+            ],
+            iface=iface,
+        )
+        self._exec(
+            node,
+            [
+                "filter",
+                "add",
+                "dev",
+                iface,
+                "protocol",
+                "ip",
+                "parent",
+                "1:",
+                "prio",
+                "1",
+                "u32",
+                "match",
+                "ip",
+                "dport",
+                rest_port,
+                "0xffff",
+                "flowid",
+                "1:1",
+            ],
+            iface=iface,
+        )
+
+    def add_packet_loss_p2p_only(self, node, percent: float, iface: str = "eth0"):
+        """
+        Apply packet loss to all traffic EXCEPT the node's REST API port.
+
+        Use this instead of add_packet_loss when measuring Waku protocol
+        behavior under loss, to avoid contaminating the test harness's
+        control plane (REST requests/responses between pytest and the node).
+        """
+        self.clear(node, iface=iface)
+        self._install_rest_bypass_prio(node, iface, ["loss", f"{percent}%"])
+
+    def add_packet_loss_correlated_p2p_only(
+        self,
+        node,
+        percent: float,
+        correlation: float,
+        iface: str = "eth0",
+    ):
+        """
+        Correlated packet loss variant that leaves REST API traffic untouched.
+        See add_packet_loss_p2p_only for the rationale.
+        """
+        self.clear(node, iface=iface)
+        self._install_rest_bypass_prio(node, iface, ["loss", f"{percent}%", f"{correlation}%"])
