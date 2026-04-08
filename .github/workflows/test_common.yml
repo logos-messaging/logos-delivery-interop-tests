@@ -74,6 +74,23 @@ jobs:
     - name: Remove unwanted software
       uses: ./.github/actions/prune-vm
 
+    - name: Debug Python import paths
+      run: |
+        pwd
+        echo "PYTHONPATH=$PYTHONPATH"
+        find . -maxdepth 5 | grep wrapper || true
+        python - <<'PY'
+        import sys
+        print("sys.path:")
+        for p in sys.path:
+            print(p)
+        try:
+            import wrapper
+            print("wrapper import OK:", wrapper)
+        except Exception as e:
+            print("wrapper import failed:", e)
+        PY
+        
     - uses: actions/setup-python@v4
       with:
         python-version: '3.12'
