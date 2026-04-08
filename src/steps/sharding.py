@@ -20,9 +20,9 @@ logger = get_custom_logger(__name__)
 
 class StepsSharding(StepsRelay):
     test_content_topic = "/myapp/1/latest/proto"
-    test_pubsub_topic = "/waku/2/rs/2/0"
+    test_pubsub_topic = "/waku/2/rs/199/0"
     test_payload = "Sharding works!!"
-    auto_cluster = 2
+    auto_cluster = 199
     num_shards_in_network = 8
 
     @pytest.fixture(scope="function", autouse=True)

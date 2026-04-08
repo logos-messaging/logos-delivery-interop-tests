@@ -96,7 +96,7 @@ CONTENT_TOPICS_SHARD_7 = [
     "/newsService/4.0/updates/yaml",
 ]
 
-DEFAULT_CLUSTER_ID = "3"
+DEFAULT_CLUSTER_ID = "198"
 VALID_PUBSUB_TOPICS = [
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/0",
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/1",
@@ -130,14 +130,14 @@ PUBSUB_TOPICS_DIFFERENT_CLUSTERS = [
 ]
 
 PUBSUB_TOPICS_SAME_CLUSTER = [
-    "/waku/2/rs/2/0",
-    "/waku/2/rs/2/1",
-    "/waku/2/rs/2/2",
-    "/waku/2/rs/2/3",
-    "/waku/2/rs/2/4",
-    "/waku/2/rs/2/5",
-    "/waku/2/rs/2/6",
-    "/waku/2/rs/2/7",
+    "/waku/2/rs/199/0",
+    "/waku/2/rs/199/1",
+    "/waku/2/rs/199/2",
+    "/waku/2/rs/199/3",
+    "/waku/2/rs/199/4",
+    "/waku/2/rs/199/5",
+    "/waku/2/rs/199/6",
+    "/waku/2/rs/199/7",
 ]
 
 PUBSUB_TOPICS_WRONG_FORMAT = [
