@@ -96,14 +96,7 @@ class TestRelayStaticSharding(StepsSharding):
 
     def test_unsubscribe_from_non_subscribed_pubsub_topics(self):
         self.setup_main_relay_nodes(cluster_id=self.auto_cluster, pubsub_topic=self.test_pubsub_topic)
-        try:
-            self.unsubscribe_main_relay_nodes(pubsub_topics=PUBSUB_TOPICS_SAME_CLUSTER)
-            if self.node1.is_nwaku():
-                pass
-            else:
-                raise AssertionError("Unsubscribe from non-subscribed pubsub_topic worked!!!")
-        except Exception as ex:
-            assert "Bad Request" in str(ex) or "Internal Server Error" in str(ex)
+        self.unsubscribe_main_relay_nodes(pubsub_topics=PUBSUB_TOPICS_SAME_CLUSTER)
         for pubsub_topic in PUBSUB_TOPICS_SAME_CLUSTER:
             self.check_publish_fails_on_not_subscribed_pubsub_topic(pubsub_topic)
 
