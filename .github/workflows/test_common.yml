@@ -107,9 +107,40 @@ jobs:
             iproute2 \
             sudo \
             ca-certificates \
-            curl
+            curl \
+            make \
+            gcc \
+            g++
 
       - run: pip install -r requirements.txt
+
+      - name: Build liblogosdelivery.so for python bindings
+        run: |
+          set -euo pipefail
+
+          BINDINGS_DIR="$(pwd)/vendor/logos-delivery-python-bindings"
+          DELIVERY_DIR="$BINDINGS_DIR/vendor/logos-delivery"
+
+          mkdir -p "$BINDINGS_DIR/lib"
+
+          cd "$DELIVERY_DIR"
+          make liblogosdelivery
+
+          SO_PATH="$(find . -type f -name 'liblogosdelivery.so' | head -n 1)"
+
+          if [ -z "$SO_PATH" ]; then
+            echo "liblogosdelivery.so was not built"
+            exit 1
+          fi
+
+          cp "$SO_PATH" "$BINDINGS_DIR/lib/liblogosdelivery.so"
+
+          echo "Built library:"
+          ls -l "$BINDINGS_DIR/lib/liblogosdelivery.so"
+
+      - name: Verify wrapper library
+        run: |
+          test -f vendor/logos-delivery-python-bindings/lib/liblogosdelivery.so
 
       - name: Run tests
         run: |
