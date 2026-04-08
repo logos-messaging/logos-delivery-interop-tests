@@ -149,61 +149,12 @@ class TrafficController:
         bypass the netem queue. Libp2p and other traffic hits netem.
         """
         rest_port = str(node._rest_port)
+        filter_prefix = f"filter add dev {iface} protocol ip parent 1: prio 1 u32 match ip"
 
-        self._exec(node, ["qdisc", "add", "dev", iface, "root", "handle", "1:", "prio"], iface=iface)
-        self._exec(
-            node,
-            ["qdisc", "add", "dev", iface, "parent", "1:2", "handle", "20:", "netem"] + netem_args,
-            iface=iface,
-        )
-        self._exec(
-            node,
-            [
-                "filter",
-                "add",
-                "dev",
-                iface,
-                "protocol",
-                "ip",
-                "parent",
-                "1:",
-                "prio",
-                "1",
-                "u32",
-                "match",
-                "ip",
-                "sport",
-                rest_port,
-                "0xffff",
-                "flowid",
-                "1:1",
-            ],
-            iface=iface,
-        )
-        self._exec(
-            node,
-            [
-                "filter",
-                "add",
-                "dev",
-                iface,
-                "protocol",
-                "ip",
-                "parent",
-                "1:",
-                "prio",
-                "1",
-                "u32",
-                "match",
-                "ip",
-                "dport",
-                rest_port,
-                "0xffff",
-                "flowid",
-                "1:1",
-            ],
-            iface=iface,
-        )
+        self._exec(node, f"qdisc add dev {iface} root handle 1: prio".split(), iface=iface)
+        self._exec(node, f"qdisc add dev {iface} parent 1:2 handle 20: netem".split() + netem_args, iface=iface)
+        self._exec(node, f"{filter_prefix} sport {rest_port} 0xffff flowid 1:1".split(), iface=iface)
+        self._exec(node, f"{filter_prefix} dport {rest_port} 0xffff flowid 1:1".split(), iface=iface)
 
     def add_packet_loss_p2p_only(self, node, percent: float, iface: str = "eth0"):
         """
