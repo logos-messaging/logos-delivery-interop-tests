@@ -139,19 +139,23 @@ class TrafficController:
         Build a prio qdisc where REST API traffic bypasses netem.
 
         Layout:
-            root 1: prio (3 bands)
+            root 1: prio (3 bands, priomap forces everything to band 1)
               |-- 1:1  unshaped (REST traffic lands here via u32 filter)
-              |-- 1:2  leaf -> netem (default band per priomap; everything else)
-              `-- 1:3  unshaped (unused)
+              |-- 1:2  leaf -> netem (all other traffic)
+              `-- 1:3  unused
 
-        The filter matches packets whose TCP source OR destination port equals
-        the node's REST port, so both incoming requests and outgoing responses
-        bypass the netem queue. Libp2p and other traffic hits netem.
+        The priomap is pinned to `1 1 1 1 ...` so any value of SO_PRIORITY on a
+        socket maps to band 1 (netem). Without this, libp2p/gossipsub packets
+        with SO_PRIORITY >= 6 would silently land in band 0 (1:1) via the
+        default priomap and escape the impairment. The u32 filter is the only
+        path into band 1:1, matching TCP source OR destination port equal to
+        the node's REST port so both incoming requests and outgoing responses
+        bypass netem.
         """
         rest_port = str(node._rest_port)
         filter_prefix = f"filter add dev {iface} protocol ip parent 1: prio 1 u32 match ip"
 
-        self._exec(node, f"qdisc add dev {iface} root handle 1: prio".split(), iface=iface)
+        self._exec(node, f"qdisc add dev {iface} root handle 1: prio bands 3 priomap 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1".split(), iface=iface)
         self._exec(node, f"qdisc add dev {iface} parent 1:2 handle 20: netem".split() + netem_args, iface=iface)
         self._exec(node, f"{filter_prefix} sport {rest_port} 0xffff flowid 1:1".split(), iface=iface)
         self._exec(node, f"{filter_prefix} dport {rest_port} 0xffff flowid 1:1".split(), iface=iface)
