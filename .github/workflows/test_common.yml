@@ -123,9 +123,10 @@ jobs:
           DELIVERY_DIR="$BINDINGS_DIR/vendor/logos-delivery"
 
           mkdir -p "$BINDINGS_DIR/lib"
-
           cd "$DELIVERY_DIR"
-          make liblogosdelivery NIMBLE_SETUP_SKIP=1
+          mkdir -p nimbledeps
+          touch nimbledeps/.nimble-setup
+          make liblogosdelivery
 
           SO_PATH="$(find . -type f -name 'liblogosdelivery.so' | head -n 1)"
 
