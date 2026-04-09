@@ -82,23 +82,6 @@ jobs:
       - name: Add python bindings to PYTHONPATH
         run: echo "PYTHONPATH=$(pwd)/vendor/logos-delivery-python-bindings/waku:$PYTHONPATH" >> $GITHUB_ENV
 
-      - name: Debug Python import paths
-        run: |
-          pwd
-          echo "PYTHONPATH=$PYTHONPATH"
-          find . -maxdepth 5 | grep wrapper || true
-          python - <<'PY'
-          import sys
-          print("sys.path:")
-          for p in sys.path:
-              print(p)
-          try:
-              import wrapper
-              print("wrapper import OK:", wrapper)
-          except Exception as e:
-              print("wrapper import failed:", e)
-          PY
-
       - name: Install system deps for tc / nsenter
         run: |
           sudo apt-get update
@@ -110,8 +93,17 @@ jobs:
             curl \
             make \
             gcc \
-            g++ \
-            nim
+            g++
+
+      - name: Install Nim 2.x
+        run: |
+          set -euo pipefail
+          curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y
+          echo "$HOME/.nimble/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.nimble/bin:$PATH"
+          choosenim stable
+          nim --version
+          nimble --version
 
       - run: pip install -r requirements.txt
 
@@ -119,15 +111,21 @@ jobs:
         run: |
           set -euo pipefail
 
+          export PATH="$HOME/.nimble/bin:$PATH"
+
           BINDINGS_DIR="$(pwd)/vendor/logos-delivery-python-bindings"
           DELIVERY_DIR="$BINDINGS_DIR/vendor/logos-delivery"
 
           mkdir -p "$BINDINGS_DIR/lib"
+
           cd "$DELIVERY_DIR"
+
           ln -sf waku.nimble waku.nims
-          nimble install -y
+
+          # satisfy Makefile prerequisite without calling broken setup task
           mkdir -p nimbledeps
           touch nimbledeps/.nimble-setup
+
           make liblogosdelivery
 
           SO_PATH="$(find . -type f -name 'liblogosdelivery.so' | head -n 1)"
@@ -146,8 +144,27 @@ jobs:
         run: |
           test -f vendor/logos-delivery-python-bindings/lib/liblogosdelivery.so
 
+      - name: Debug Python import paths
+        run: |
+          pwd
+          echo "PYTHONPATH=$PYTHONPATH"
+          find . -maxdepth 5 | grep wrapper || true
+          python - <<'PY'
+          import sys
+          print("sys.path:")
+          for p in sys.path:
+              print(p)
+          try:
+              import wrapper
+              print("wrapper import OK:", wrapper)
+          except Exception as e:
+              print("wrapper import failed:", e)
+              raise
+          PY
+
       - name: Run tests
         run: |
+          export PATH="$HOME/.nimble/bin:$PATH"
           export PYTHONPATH="$(pwd)/vendor/logos-delivery-python-bindings/waku:$PYTHONPATH"
 
           if [ "${{ matrix.shard }}" == "16" ]; then
