@@ -432,7 +432,7 @@ class TestNetworkConditions(StepsRelay):
 
         delay(window_s)
         uncorrelated = len(self.node4.get_relay_messages(self.test_pubsub_topic) or [])
-        self.tc.clear(self.node1)
+        self.tc.clear_p2p(self.node1)
 
         self.tc.add_packet_loss_correlated_p2p_only(self.node1, percent=loss, correlation=75.0)
         _ = self.node4.get_relay_messages(self.test_pubsub_topic)
@@ -442,7 +442,7 @@ class TestNetworkConditions(StepsRelay):
 
         delay(window_s)
         correlated = len(self.node4.get_relay_messages(self.test_pubsub_topic) or [])
-        self.tc.clear(self.node1)
+        self.tc.clear_p2p(self.node1)
 
         logger.debug(f"uncorrelated={uncorrelated} correlated={correlated}")
         assert uncorrelated >= correlated

@@ -1,4 +1,5 @@
 import subprocess
+from src.env_vars import NETWORK_NAME
 from src.libs.custom_logger import get_custom_logger
 
 logger = get_custom_logger(__name__)
@@ -134,53 +135,67 @@ class TrafficController:
             iface=iface,
         )
 
-    def _install_rest_bypass_prio(self, node, iface: str, netem_args: list[str]):
+    def _p2p_iface(self, node) -> str:
         """
-        Build a prio qdisc where REST API traffic bypasses netem.
+        Return the name of the container interface attached to the waku
+        network (where libp2p traffic flows).
 
-        Layout:
-            root 1: prio (3 bands, priomap forces everything to band 1)
-              |-- 1:1  unshaped (REST traffic lands here via u32 filter)
-              |-- 1:2  leaf -> netem (all other traffic)
-              `-- 1:3  unused
+        DockerManager attaches each node to two networks: the default bridge
+        (where host-published ports land, typically `eth0`) and the waku
+        network (where inter-container libp2p/gossipsub traffic flows, typically
+        `eth1`). tc on the default bridge only affects REST control plane; for
+        a packet loss test targeting libp2p we need the waku interface.
 
-        The priomap is pinned to `1 1 1 1 ...` so any value of SO_PRIORITY on a
-        socket maps to band 1 (netem). Without this, libp2p/gossipsub packets
-        with SO_PRIORITY >= 6 would silently land in band 0 (1:1) via the
-        default priomap and escape the impairment. The u32 filter is the only
-        path into band 1:1, matching TCP source OR destination port equal to
-        the node's REST port so both incoming requests and outgoing responses
-        bypass netem.
+        This helper resolves the correct interface by looking up the node's
+        waku-network IP via Docker and matching it against `ip -o -4 addr`
+        output from inside the container.
         """
-        rest_port = str(node._rest_port)
-        filter_prefix = f"filter add dev {iface} protocol ip parent 1: prio 1 u32 match ip"
+        if not node.container:
+            raise RuntimeError("Node container not started yet")
+        node.container.reload()
+        networks = node.container.attrs.get("NetworkSettings", {}).get("Networks", {})
+        waku_net = networks.get(NETWORK_NAME)
+        if not waku_net or not waku_net.get("IPAddress"):
+            raise RuntimeError(f"Container is not attached to the '{NETWORK_NAME}' docker network")
+        waku_ip = waku_net["IPAddress"]
 
-        self._exec(node, f"qdisc add dev {iface} root handle 1: prio bands 3 priomap 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1".split(), iface=iface)
-        self._exec(node, f"qdisc add dev {iface} parent 1:2 handle 20: netem".split() + netem_args, iface=iface)
-        self._exec(node, f"{filter_prefix} sport {rest_port} 0xffff flowid 1:1".split(), iface=iface)
-        self._exec(node, f"{filter_prefix} dport {rest_port} 0xffff flowid 1:1".split(), iface=iface)
+        exit_code, output = node.container.exec_run(["ip", "-o", "-4", "addr"])
+        if exit_code != 0:
+            raise RuntimeError(f"ip addr failed inside container: {output}")
+        for line in output.decode().splitlines():
+            if f" {waku_ip}/" in line:
+                tokens = line.split()
+                if len(tokens) >= 2:
+                    return tokens[1]
+        raise RuntimeError(f"No interface inside container holds waku IP {waku_ip}")
 
-    def add_packet_loss_p2p_only(self, node, percent: float, iface: str = "eth0"):
+    def clear_p2p(self, node):
         """
-        Apply packet loss to all traffic EXCEPT the node's REST API port.
-
-        Use this instead of add_packet_loss when measuring Waku protocol
-        behavior under loss, to avoid contaminating the test harness's
-        control plane (REST requests/responses between pytest and the node).
+        Remove any tc rule previously installed on the node's waku (libp2p)
+        interface. Paired with add_packet_loss_p2p_only /
+        add_packet_loss_correlated_p2p_only.
         """
+        self.clear(node, iface=self._p2p_iface(node))
+
+    def add_packet_loss_p2p_only(self, node, percent: float):
+        """
+        Apply uncorrelated packet loss to the waku (libp2p) network interface
+        of a node. REST API traffic rides a separate docker interface and is
+        not affected, so the test harness's control plane stays reliable.
+        """
+        iface = self._p2p_iface(node)
         self.clear(node, iface=iface)
-        self._install_rest_bypass_prio(node, iface, ["loss", f"{percent}%"])
+        self._exec(node, f"qdisc add dev {iface} root netem loss {percent}%".split(), iface=iface)
 
-    def add_packet_loss_correlated_p2p_only(
-        self,
-        node,
-        percent: float,
-        correlation: float,
-        iface: str = "eth0",
-    ):
+    def add_packet_loss_correlated_p2p_only(self, node, percent: float, correlation: float):
         """
-        Correlated packet loss variant that leaves REST API traffic untouched.
-        See add_packet_loss_p2p_only for the rationale.
+        Correlated packet loss on the waku (libp2p) network interface. See
+        add_packet_loss_p2p_only for why REST stays unaffected.
         """
+        iface = self._p2p_iface(node)
         self.clear(node, iface=iface)
-        self._install_rest_bypass_prio(node, iface, ["loss", f"{percent}%", f"{correlation}%"])
+        self._exec(
+            node,
+            f"qdisc add dev {iface} root netem loss {percent}% {correlation}%".split(),
+            iface=iface,
+        )
