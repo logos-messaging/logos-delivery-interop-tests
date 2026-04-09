@@ -64,19 +64,36 @@ class TestPeerStore(StepsRelay, StepsStore):
 
         peers_multiaddr = collect_multiaddrs()
 
-        # Add peers one by one excluding self for Nodes 2-5
+        # Group multiaddrs by peer ID. libp2p identify can leak observed (ephemeral
+        # source) addresses into the peer store alongside the real listen address;
+        # those observed addrs are unreachable when dialed back, so we try every
+        # known address for a peer until one succeeds.
+        addrs_by_peer = {}
+        for peer in peers_multiaddr:
+            addrs_by_peer.setdefault(multiaddr2id(peer), []).append(peer)
+
+        # For each of nodes 2-5, add every other peer via the add_peers API.
         for i in range(1, 5):
-            for peer in list(peers_multiaddr):
-                if nodes[i].get_id() != multiaddr2id(peer):
+            self_id = nodes[i].get_id()
+            for peer_id, addrs in addrs_by_peer.items():
+                if peer_id == self_id:
+                    continue
+                last_err = None
+                for addr in addrs:
                     try:
                         if nodes[i].is_nwaku():
-                            nodes[i].add_peers([peer])
+                            nodes[i].add_peers([addr])
                         else:
-                            peer_info = {"multiaddr": peer, "shards": [0], "protocols": ["/vac/waku/relay/2.0.0"]}
+                            peer_info = {"multiaddr": addr, "shards": [0], "protocols": ["/vac/waku/relay/2.0.0"]}
                             nodes[i].add_peers(peer_info)
+                        last_err = None
+                        break
                     except Exception as ex:
-                        logger.error(f"Failed to add peer to Node {i} peer store: {ex}")
-                        raise
+                        last_err = ex
+                        logger.warning(f"Node {i} failed to add peer {peer_id} via {addr}: {ex}")
+                if last_err is not None:
+                    logger.error(f"Node {i} could not add peer {peer_id} via any known address")
+                    raise last_err
 
     @pytest.mark.skip(reason="waiting for https://github.com/waku-org/nwaku/issues/1549 resolution")
     def test_get_peers_two_protocols(self):
