@@ -95,13 +95,13 @@ jobs:
             gcc \
             g++
 
-      - name: Install Nim 2.x
+      - name: Install Nim 2.2.4
         run: |
           set -euo pipefail
           curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y
           echo "$HOME/.nimble/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.nimble/bin:$PATH"
-          choosenim stable
+          choosenim 2.2.4
           nim --version
           nimble --version
 
@@ -139,9 +139,6 @@ jobs:
           fi
 
           cp "$SO_PATH" "$BINDINGS_DIR/lib/liblogosdelivery.so"
-
-          echo "Built library:"
-          ls -l "$BINDINGS_DIR/lib/liblogosdelivery.so"
 
           echo "Built library:"
           ls -l "$BINDINGS_DIR/lib/liblogosdelivery.so"
