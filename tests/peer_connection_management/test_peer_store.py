@@ -1,4 +1,5 @@
 import pytest
+from tenacity import retry, stop_after_delay, wait_fixed
 
 from src.env_vars import NODE_1, NODE_2
 from src.libs.common import delay
@@ -25,14 +26,20 @@ class TestPeerStore(StepsRelay, StepsStore):
             logger.debug(f"Node {i} peer ID {node_id}")
             ids.append(node_id)
 
-        for i in range(5):
-            others = []
-            for peer_info in nodes[i].get_peers():
-                logger.debug(f"Node {i} peer info {peer_info}")
-                peer_id = peer_info2id(peer_info, nodes[i].is_nwaku())
-                others.append(peer_id)
+        # Discv5 discovery is eventually-consistent; poll until every node's peer
+        # store reflects the expected mesh, or fail after the timeout.
+        @retry(stop=stop_after_delay(60), wait=wait_fixed(2), reraise=True)
+        def check_peer_stores():
+            for i in range(5):
+                others = []
+                for peer_info in nodes[i].get_peers():
+                    logger.debug(f"Node {i} peer info {peer_info}")
+                    peer_id = peer_info2id(peer_info, nodes[i].is_nwaku())
+                    others.append(peer_id)
 
-            assert (i == 0 and len(others) == 4) or (i > 0 and len(others) >= 1), f"Some nodes missing in the peer store of Node ID {ids[i]}"
+                assert (i == 0 and len(others) == 4) or (i > 0 and len(others) >= 1), f"Some nodes missing in the peer store of Node ID {ids[i]}"
+
+        check_peer_stores()
 
     def test_add_peers(self):
         self.setup_main_nodes()
@@ -41,27 +48,52 @@ class TestPeerStore(StepsRelay, StepsStore):
         nodes = [self.node1, self.node2]
         nodes.extend(self.optional_nodes)
         delay(10)
-        peers_multiaddr = set()
-        for i in range(2):
-            for peer_info in nodes[i].get_peers():
-                multiaddr = peer_info2multiaddr(peer_info, nodes[i].is_nwaku())
-                peers_multiaddr.add(multiaddr)
 
-        assert len(peers_multiaddr) >= 5, "At least 5 multi addresses are expected"
+        # Discv5 discovery is eventually-consistent; poll node1 and node2's peer
+        # stores until the union contains >=5 multiaddrs, or fail after the timeout.
+        @retry(stop=stop_after_delay(60), wait=wait_fixed(2), reraise=True)
+        def collect_multiaddrs():
+            peers_multiaddr = set()
+            for i in range(2):
+                for peer_info in nodes[i].get_peers():
+                    multiaddr = peer_info2multiaddr(peer_info, nodes[i].is_nwaku())
+                    peers_multiaddr.add(multiaddr)
 
-        # Add peers one by one excluding self for Nodes 2-5
+            assert len(peers_multiaddr) >= 5, f"At least 5 multi addresses are expected, got {len(peers_multiaddr)}: {peers_multiaddr}"
+            return peers_multiaddr
+
+        peers_multiaddr = collect_multiaddrs()
+
+        # Group multiaddrs by peer ID. libp2p identify can leak observed (ephemeral
+        # source) addresses into the peer store alongside the real listen address;
+        # those observed addrs are unreachable when dialed back, so we try every
+        # known address for a peer until one succeeds.
+        addrs_by_peer = {}
+        for peer in peers_multiaddr:
+            addrs_by_peer.setdefault(multiaddr2id(peer), []).append(peer)
+
+        # For each of nodes 2-5, add every other peer via the add_peers API.
         for i in range(1, 5):
-            for peer in list(peers_multiaddr):
-                if nodes[i].get_id() != multiaddr2id(peer):
+            self_id = nodes[i].get_id()
+            for peer_id, addrs in addrs_by_peer.items():
+                if peer_id == self_id:
+                    continue
+                last_err = None
+                for addr in addrs:
                     try:
                         if nodes[i].is_nwaku():
-                            nodes[i].add_peers([peer])
+                            nodes[i].add_peers([addr])
                         else:
-                            peer_info = {"multiaddr": peer, "shards": [0], "protocols": ["/vac/waku/relay/2.0.0"]}
+                            peer_info = {"multiaddr": addr, "shards": [0], "protocols": ["/vac/waku/relay/2.0.0"]}
                             nodes[i].add_peers(peer_info)
+                        last_err = None
+                        break
                     except Exception as ex:
-                        logger.error(f"Failed to add peer to Node {i} peer store: {ex}")
-                        raise
+                        last_err = ex
+                        logger.warning(f"Node {i} failed to add peer {peer_id} via {addr}: {ex}")
+                if last_err is not None:
+                    logger.error(f"Node {i} could not add peer {peer_id} via any known address")
+                    raise last_err
 
     @pytest.mark.skip(reason="waiting for https://github.com/waku-org/nwaku/issues/1549 resolution")
     def test_get_peers_two_protocols(self):
