@@ -121,10 +121,14 @@ jobs:
           cd "$DELIVERY_DIR"
 
           ln -sf waku.nimble waku.nims
-          nimble install -y
-          mkdir -p nimbledeps
-          touch nimbledeps/.nimble-setup
 
+          # install Nim deps
+          nimble install -y
+
+          # do the real setup, do not fake .nimble-setup
+          make setup
+
+          # now build the shared library
           make liblogosdelivery
 
           SO_PATH="$(find . -type f -name 'liblogosdelivery.so' | head -n 1)"
@@ -135,6 +139,9 @@ jobs:
           fi
 
           cp "$SO_PATH" "$BINDINGS_DIR/lib/liblogosdelivery.so"
+
+          echo "Built library:"
+          ls -l "$BINDINGS_DIR/lib/liblogosdelivery.so"
 
           echo "Built library:"
           ls -l "$BINDINGS_DIR/lib/liblogosdelivery.so"
