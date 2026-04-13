@@ -490,7 +490,7 @@ class WakuNode:
             return rln_args, False, keystore_path
 
         imported_creds = json.loads(rln_creds_source)
-        rln_chain_id = str(imported_creds.get("rln-relay-chain-id", "59141"))
+        rln_chain_id = imported_creds.get("rln-relay-chain-id")
 
         if len(imported_creds) < 4 or any(value is None for value in imported_creds.values()):
             logger.warn(f"One or more of required RLN credentials were not set properly")
@@ -528,7 +528,6 @@ class WakuNode:
                     {
                         "rln-relay-cred-path": "/keystore/keystore.json",
                         "rln-relay-cred-password": imported_creds["rln-relay-cred-password"],
-                        "rln-relay-chain-id": rln_chain_id,
                         "rln-relay-eth-client-address": imported_creds["rln-relay-eth-client-address"],
                         "rln-relay-eth-contract-address": imported_creds["rln-relay-eth-contract-address"],
                     }
@@ -538,12 +537,14 @@ class WakuNode:
                     {
                         "rln-relay-cred-path": "/keystore/keystore.json",
                         "rln-relay-cred-password": imported_creds["rln-relay-cred-password"],
-                        "rln-relay-chain-id": rln_chain_id,
                         "rln-relay-eth-client-address": imported_creds["rln-relay-eth-client-address"],
                         "rln-relay-eth-contract-address": imported_creds["rln-relay-eth-contract-address"],
                         "rln-relay-eth-private-key": imported_creds[eth_private_key],
                     }
                 )
+
+            if rln_chain_id is not None:
+                rln_args["rln-relay-chain-id"] = str(rln_chain_id)
 
             keystore_path = os.path.join(keystore_dir, "keystore.json")
 
