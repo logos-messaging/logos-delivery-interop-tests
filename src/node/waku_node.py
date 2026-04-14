@@ -491,6 +491,12 @@ class WakuNode:
 
         imported_creds = json.loads(rln_creds_source)
         rln_chain_id = imported_creds.get("rln-relay-chain-id")
+        if rln_chain_id is None:
+            eth_client_address = imported_creds.get("rln-relay-eth-client-address", "")
+            if "linea" in eth_client_address:
+                rln_chain_id = "59141"
+            elif "sepolia" in eth_client_address:
+                rln_chain_id = "11155111"
 
         if len(imported_creds) < 4 or any(value is None for value in imported_creds.values()):
             logger.warn(f"One or more of required RLN credentials were not set properly")
