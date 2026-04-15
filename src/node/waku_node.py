@@ -92,7 +92,6 @@ class WakuNode:
         return self._wrapper_node is not None
 
     @retry(stop=stop_after_delay(60), wait=wait_fixed(0.1), reraise=True)
-    @retry(stop=stop_after_delay(60), wait=wait_fixed(0.1), reraise=True)
     def start(self, wait_for_node_sec=20, use_wrapper=False, **kwargs):
         logger.debug("Starting Node...")
         default_args, remove_container = self._prepare_start_context(**kwargs)
