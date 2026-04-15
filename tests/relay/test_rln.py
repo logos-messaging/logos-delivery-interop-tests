@@ -161,7 +161,6 @@ class TestRelayRLN(StepsRLN, StepsRelay):
                 failed_payloads.append(payload["description"])
             assert not failed_payloads, f"Payloads failed: {failed_payloads}"
 
-    @pytest.mark.skip(reason="Waiting for issue resolution https://github.com/waku-org/nwaku/issues/3208")
     @pytest.mark.timeout(600)
     def test_valid_payloads_dynamic_at_spam_rate(self, pytestconfig):
         message_limit = 100
@@ -194,7 +193,6 @@ class TestRelayRLN(StepsRLN, StepsRelay):
             except Exception as e:
                 assert "RLN validation failed" or "NonceLimitReached" in str(e)
 
-    @pytest.mark.skip(reason="Waiting for issue resolution https://github.com/waku-org/nwaku/issues/3208")
     @pytest.mark.timeout(600)
     def test_valid_payloads_dynamic_at_slow_rate(self, pytestconfig):
         message_limit = 100
