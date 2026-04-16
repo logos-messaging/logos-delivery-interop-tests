@@ -50,13 +50,9 @@ class TestRelayRLN(StepsRLN, StepsRelay):
 
     def test_valid_payloads_at_slow_rate(self, pytestconfig):
         message_limit = 20
-        rln_state = self.register_rln_relay_nodes(2, [])
-        pytestconfig.cache.set(
-            "keystore-prefixes",
-            {
-                "keystore_prefixes": rln_state["keystore_prefixes"],
-                "rln_membership_indexes": rln_state["rln_membership_indexes"],
-            },
+        self.register_rln_relay_nodes(
+            0,
+            pytestconfig.cache.get("keystore-prefixes", {"keystore_prefixes": [], "rln_membership_indexes": []}),
         )
         self.setup_main_rln_relay_nodes(rln_relay_user_message_limit=message_limit, rln_relay_epoch_sec=600)
         self.subscribe_main_relay_nodes()
