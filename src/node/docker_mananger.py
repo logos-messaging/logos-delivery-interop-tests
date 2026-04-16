@@ -1,7 +1,6 @@
 import os
 import re
 import time
-from collections import deque
 from src.libs.custom_logger import get_custom_logger
 import random
 import threading
@@ -49,24 +48,12 @@ class DockerManager:
         cli_args_str_for_log = " ".join(cli_args)
         logger.debug(f"docker run -i -t {port_bindings_for_log} {image_name} {cli_args_str_for_log}")
         container = self._client.containers.run(
-            image_name,
-            command=cli_args,
-            ports=port_bindings,
-            detach=True,
-            auto_remove=False,
-            volumes=volumes,
+            image_name, command=cli_args, ports=port_bindings, detach=True, remove=remove_container, auto_remove=remove_container, volumes=volumes
         )
 
         network = self._client.networks.get(NETWORK_NAME)
         logger.debug(f"docker network connect --ip {container_ip} {NETWORK_NAME} {container.id}")
-        try:
-            network.connect(container, ipv4_address=container_ip)
-        except APIError as ex:
-            recent_logs = self.get_container_logs(container, tail=120)
-            if recent_logs.startswith("<could not fetch container logs"):
-                recent_logs = self.get_log_file_tail(log_path, tail=120)
-            logger.error(f"Failed to connect container {container.short_id} to network. Recent container logs:\n{recent_logs}")
-            raise
+        network.connect(container, ipv4_address=container_ip)
 
         logger.debug(f"Container started with ID {container.short_id}. Setting up logs at {log_path}")
         log_thread = threading.Thread(target=self._log_container_output, args=(container, log_path))
@@ -74,27 +61,6 @@ class DockerManager:
         log_thread.start()
 
         return container
-
-    def get_container_logs(self, container, tail=200):
-        try:
-            raw = container.logs(tail=tail)
-            if isinstance(raw, bytes):
-                return raw.decode("utf-8", errors="ignore")
-            return str(raw)
-        except Exception as ex:
-            return f"<could not fetch container logs: {ex}>"
-
-    def get_log_file_tail(self, log_path, tail=200):
-        try:
-            if not os.path.exists(log_path):
-                return f"<log file not found: {log_path}>"
-
-            with open(log_path, "r", encoding="utf-8", errors="ignore") as log_file:
-                lines = deque(log_file, maxlen=tail)
-
-            return "".join(lines) if lines else "<log file is empty>"
-        except Exception as ex:
-            return f"<could not read log file tail: {ex}>"
 
     def _log_container_output(self, container, log_path):
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
@@ -120,10 +86,6 @@ class DockerManager:
                     except (APIError, IOError) as e:
                         retry_count += 1
                         if retry_count >= 5:
-                            recent_logs = self.get_container_logs(container, tail=120)
-                            if recent_logs.startswith("<could not fetch container logs"):
-                                recent_logs = self.get_log_file_tail(log_path, tail=120)
-                            logger.error(f"Recent container logs for {container.short_id}:\n{recent_logs}")
                             logger.error(f"Max retries reached for container {container.short_id}. Exiting log stream.")
                             return
                         time.sleep(0.2)
