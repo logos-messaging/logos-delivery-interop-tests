@@ -43,7 +43,10 @@ class TestRelayRLN(StepsRLN, StepsRelay):
                 if i > message_limit and (now - start) <= epoch_sec:
                     raise AssertionError("Publish with RLN enabled at spam rate worked!!!")
             except Exception as e:
-                assert "RLN validation failed" or "NonceLimitReached" in str(e)
+                error_str = str(e)
+                assert "RLN validation failed" in error_str or "NonceLimitReached" in error_str
+                if "NonceLimitReached" in error_str:
+                    assert "500" in error_str, f"Expected HTTP 500 for NonceLimitReached, got: {error_str}"
 
     def test_valid_payloads_at_slow_rate(self, pytestconfig):
         message_limit = 20
@@ -93,7 +96,10 @@ class TestRelayRLN(StepsRLN, StepsRelay):
                 if i > message_limit and (now - start) <= epoch_sec:
                     raise AssertionError("Publish with RLN enabled at spam rate worked!!!")
             except Exception as e:
-                assert "RLN validation failed" or "NonceLimitReached" in str(e)
+                error_str = str(e)
+                assert "RLN validation failed" in error_str or "NonceLimitReached" in error_str
+                if "NonceLimitReached" in error_str:
+                    assert "500" in error_str, f"Expected HTTP 500 for NonceLimitReached, got: {error_str}"
 
     def test_valid_payload_at_variable_rate(self, pytestconfig):
         self.register_rln_relay_nodes(
@@ -120,7 +126,10 @@ class TestRelayRLN(StepsRLN, StepsRelay):
                 else:
                     previous = now
             except Exception as e:
-                assert "RLN validation failed" or "NonceLimitReached" in str(e)
+                error_str = str(e)
+                assert "RLN validation failed" in error_str or "NonceLimitReached" in error_str
+                if "NonceLimitReached" in error_str:
+                    assert "500" in error_str, f"Expected HTTP 500 for NonceLimitReached, got: {error_str}"
 
     def test_valid_payloads_random_epoch_at_slow_rate(self, pytestconfig):
         epoch_sec = random.randint(2, 5)
@@ -191,7 +200,10 @@ class TestRelayRLN(StepsRLN, StepsRelay):
                 if i > message_limit and (now - start) <= epoch_sec:
                     raise AssertionError("Publish with RLN enabled at spam rate worked!!!")
             except Exception as e:
-                assert "RLN validation failed" or "NonceLimitReached" in str(e)
+                error_str = str(e)
+                assert "RLN validation failed" in error_str or "NonceLimitReached" in error_str
+                if "NonceLimitReached" in error_str:
+                    assert "500" in error_str, f"Expected HTTP 500 for NonceLimitReached, got: {error_str}"
 
     @pytest.mark.timeout(600)
     def test_valid_payloads_dynamic_at_slow_rate(self, pytestconfig):
@@ -246,7 +258,10 @@ class TestRelayRLN(StepsRLN, StepsRelay):
                 if i > message_limit and (now - start) <= epoch_sec:
                     raise AssertionError("Publish with RLN enabled at spam rate worked!!!")
             except Exception as e:
-                assert "RLN validation failed" or "NonceLimitReached" in str(e)
+                error_str = str(e)
+                assert "RLN validation failed" in error_str or "NonceLimitReached" in error_str
+                if "NonceLimitReached" in error_str:
+                    assert "500" in error_str, f"Expected HTTP 500 for NonceLimitReached, got: {error_str}"
 
     def test_valid_payloads_with_optional_nodes_at_slow_rate(self, pytestconfig):
         rln_state = self.register_rln_relay_nodes(5, [])
@@ -296,4 +311,7 @@ class TestRelayRLN(StepsRLN, StepsRelay):
                 else:
                     previous = now
             except Exception as e:
-                assert "RLN validation failed" or "NonceLimitReached" in str(e)
+                error_str = str(e)
+                assert "RLN validation failed" in error_str or "NonceLimitReached" in error_str
+                if "NonceLimitReached" in error_str:
+                    assert "500" in error_str, f"Expected HTTP 500 for NonceLimitReached, got: {error_str}"
