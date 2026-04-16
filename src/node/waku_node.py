@@ -207,7 +207,7 @@ class WakuNode:
         DS.waku_nodes.append(self)
         delay(1)  # if we fire requests to soon after starting the node will sometimes fail to start correctly
         try:
-            self.ensure_ready(timeout_duration=wait_for_node_sec)
+            self.ensure_ready(timeout_duration=wait_for_node_sec, rln_required=rln_creds_set)
         except Exception as ex:
             logger.error(f"REST service did not become ready in time: {ex}")
             raise
@@ -302,7 +302,7 @@ class WakuNode:
             logger.debug(f"Unpause container with id {self._container.short_id}")
             self._container.unpause()
 
-    def ensure_ready(self, timeout_duration=10):
+    def ensure_ready(self, timeout_duration=10, rln_required=False):
         @retry(stop=stop_after_delay(timeout_duration), wait=wait_fixed(0.1), reraise=True)
         def check_healthy(node=self):
             self.health_response = node.health()
@@ -316,11 +316,11 @@ class WakuNode:
                 raise AssertionError("Waiting for the node health status: READY")
 
             for p in self.health_response.get("protocolsHealth"):
-                if "Rln Relay" in p:
+                if rln_required and "Rln Relay" in p:
                     if p["Rln Relay"] != "READY":
                         raise AssertionError("Waiting for the Rln relay status: READY")
                     # TODO: Remove once Rln Relay reflects true RLN status
-                    sleep(10)
+                    sleep(20)
 
             logger.info("Node protocols are initialized !!")
 
