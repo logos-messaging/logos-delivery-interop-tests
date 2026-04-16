@@ -56,7 +56,6 @@ class TestRelayRLN(StepsRLN, StepsRelay):
         )
         self.setup_main_rln_relay_nodes(rln_relay_user_message_limit=message_limit, rln_relay_epoch_sec=600)
         self.subscribe_main_relay_nodes()
-        delay(10)  # wait for on-chain Merkle sync + gossipsub mesh — see issue #3779
         failed_payloads = []
         for i, payload in enumerate(self.SAMPLE_INPUTS_RLN):
             logger.debug(f'Running test with payload {payload["description"]}')
