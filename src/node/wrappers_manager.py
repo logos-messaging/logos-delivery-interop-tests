@@ -8,6 +8,11 @@ if str(_THIRD_PARTY) not in sys.path:
 
 from wrapper import NodeWrapper as _NodeWrapper  # type: ignore[import]
 
+""""
+thin manager/wrapper layer around NodeWrapper from the bindings.
+It simplifies  create, start, and interaction with a Waku node while returning consistent Result objects (Ok / Err).
+"""
+
 
 class WrapperManager:
     def __init__(self, node: _NodeWrapper):
