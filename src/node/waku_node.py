@@ -316,8 +316,11 @@ class WakuNode:
                 raise AssertionError("Waiting for the node health status: READY")
 
             for p in self.health_response.get("protocolsHealth"):
-                if "Rln Relay" in p and p["Rln Relay"] != "READY":
-                    raise AssertionError("Waiting for the Rln relay status: READY")
+                if "Rln Relay" in p:
+                    if p["Rln Relay"] != "READY":
+                        raise AssertionError("Waiting for the Rln relay status: READY")
+                    # TODO: Remove once Rln Relay reflects true RLN status
+                    sleep(10)
 
             logger.info("Node protocols are initialized !!")
 
