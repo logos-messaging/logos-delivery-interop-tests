@@ -46,7 +46,7 @@ class TestRelayRLN(StepsRLN, StepsRelay):
                 error_str = str(e)
                 assert "RLN validation failed" in error_str or "NonceLimitReached" in error_str
                 if "NonceLimitReached" in error_str:
-                    assert "500" in error_str, f"Expected HTTP 500 for NonceLimitReached, got: {error_str}"
+                    assert "503" in error_str, f"Expected HTTP 503 for NonceLimitReached, got: {error_str}"
 
     def test_valid_payloads_at_slow_rate(self, pytestconfig):
         message_limit = 20
