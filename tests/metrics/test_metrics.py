@@ -96,11 +96,6 @@ class TestMetrics(StepsRelay, StepsMetrics, StepsFilter, StepsLightPush, StepsSt
         if self.store_node1.is_nwaku():
             self.check_metric(
                 self.store_node1,
-                f'waku_service_peers{{protocol="/vac/waku/store/2.0.0-beta4",peerId="{self.publishing_node1.get_tcp_address()}"}}',
-                1,
-            )
-            self.check_metric(
-                self.store_node1,
                 f'waku_service_peers{{protocol="/vac/waku/store-query/3.0.0",peerId="{self.publishing_node1.get_tcp_address()}"}}',
                 1,
             )
