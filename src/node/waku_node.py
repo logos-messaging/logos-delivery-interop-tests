@@ -9,7 +9,7 @@ import pytest
 import requests
 from src.libs.common import delay
 from src.libs.custom_logger import get_custom_logger
-from tenacity import retry, stop_after_delay, wait_fixed
+from tenacity import retry, stop_after_delay, wait_fixed, sleep
 from src.node.api_clients.rest import REST
 from src.node.docker_mananger import DockerManager
 from src.env_vars import DOCKER_LOG_DIR
@@ -315,9 +315,9 @@ class WakuNode:
             if self.health_response.get("nodeHealth") != "READY":
                 raise AssertionError("Waiting for the node health status: READY")
 
-            # for p in self.health_response.get("protocolsHealth"):
-            #     if p.get("Rln Relay") != "READY":
-            #         raise AssertionError("Waiting for the Rln relay status: READY")
+            for p in self.health_response.get("protocolsHealth"):
+                if "Rln Relay" in p and p["Rln Relay"] != "READY":
+                    raise AssertionError("Waiting for the Rln relay status: READY")
 
             logger.info("Node protocols are initialized !!")
 
