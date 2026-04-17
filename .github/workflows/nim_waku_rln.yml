@@ -1,0 +1,21 @@
+name: Test RLN Nim -> Nim Waku 
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+on:
+  push:
+    branches:
+      - chore-refactor-rln-tests
+  workflow_dispatch:
+
+jobs:
+  test-common:
+    uses: ./.github/workflows/test_common_rln.yml
+    secrets: inherit
+    with:
+      node1: "wakuorg/nwaku:v0.38.0"
+      node2: "wakuorg/nwaku:v0.38.0"
+      additional_nodes: "wakuorg/nwaku:v0.38.0,wakuorg/nwaku:v0.38.0,wakuorg/nwaku:v0.38.0"
+      caller: "nim"
