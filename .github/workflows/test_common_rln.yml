@@ -66,34 +66,111 @@ jobs:
       jobResult_16: ${{ steps.set_result.outputs.JOB_RESULT_16 }}
       jobResult_17: ${{ steps.set_result.outputs.JOB_RESULT_17 }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-    - uses: actions/checkout@v4
-      with:
-        submodules: recursive
+      - name: Remove unwanted software
+        uses: ./.github/actions/prune-vm
 
-    - name: Remove unwanted software
-      uses: ./.github/actions/prune-vm
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+          cache: "pip"
 
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-        cache: 'pip'
+      - name: Add python bindings to PYTHONPATH
+        run: echo "PYTHONPATH=$(pwd)/vendor/logos-delivery-python-bindings/waku:$PYTHONPATH" >> $GITHUB_ENV
 
-    - name: Install system deps for tc / nsenter
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          util-linux \
-          iproute2 \
-          sudo \
-          ca-certificates \
-          curl
+      - name: Install system deps for tc / nsenter
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            util-linux \
+            iproute2 \
+            sudo \
+            ca-certificates \
+            curl \
+            make \
+            gcc \
+            g++
 
-    - run: pip install -r requirements.txt
+      - name: Install Nim 2.2.4
+        run: |
+          set -euo pipefail
+          curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y
+          echo "$HOME/.nimble/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.nimble/bin:$PATH"
+          choosenim 2.2.4
+          nim --version
+          nimble --version
 
-    - name: Run tests
+      - run: pip install -r requirements.txt
 
-      run: |
-        if [ "${{ matrix.shard }}" == "16" ]; then
-            pytest tests/relay/test_rln.py 
-        fi
+      - name: Build liblogosdelivery.so for python bindings
+        run: |
+          set -euo pipefail
+
+          export PATH="$HOME/.nimble/bin:$PATH"
+
+          BINDINGS_DIR="$(pwd)/vendor/logos-delivery-python-bindings"
+          DELIVERY_DIR="$BINDINGS_DIR/vendor/logos-delivery"
+
+          mkdir -p "$BINDINGS_DIR/lib"
+
+          cd "$DELIVERY_DIR"
+
+          ln -sf waku.nimble waku.nims
+
+          # install Nim deps
+          nimble install -y
+
+          # do the real setup, do not fake .nimble-setup
+          make setup
+
+          # now build the shared library
+          make liblogosdelivery
+
+          SO_PATH="$(find . -type f -name 'liblogosdelivery.so' | head -n 1)"
+
+          if [ -z "$SO_PATH" ]; then
+            echo "liblogosdelivery.so was not built"
+            exit 1
+          fi
+
+          cp "$SO_PATH" "$BINDINGS_DIR/lib/liblogosdelivery.so"
+
+          echo "Built library:"
+          ls -l "$BINDINGS_DIR/lib/liblogosdelivery.so"
+
+      - name: Verify wrapper library
+        run: |
+          test -f vendor/logos-delivery-python-bindings/lib/liblogosdelivery.so
+
+      - name: Debug Python import paths
+        run: |
+          pwd
+          echo "PYTHONPATH=$PYTHONPATH"
+          find . -maxdepth 5 | grep wrapper || true
+          python - <<'PY'
+          import sys
+          print("sys.path:")
+          for p in sys.path:
+              print(p)
+          try:
+              import wrapper
+              print("wrapper import OK:", wrapper)
+          except Exception as e:
+              print("wrapper import failed:", e)
+              raise
+          PY
+
+      - name: Run tests
+        run: |
+          export PATH="$HOME/.nimble/bin:$PATH"
+          export PYTHONPATH="$(pwd)/vendor/logos-delivery-python-bindings/waku:$PYTHONPATH"
+
+          if [ "${{ matrix.shard }}" == "16" ]; then
+              pytest tests/relay/test_rln.py \
+                --ignore=vendor/logos-delivery-python-bindings/tests 
+          fi
+
