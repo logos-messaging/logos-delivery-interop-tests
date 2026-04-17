@@ -5,6 +5,7 @@ import random
 import re
 import shutil
 import string
+import subprocess
 import pytest
 import requests
 from src.libs.common import delay
@@ -44,6 +45,9 @@ def rln_credential_store_ready(creds_file_path, single_check=False, require_cred
                 with open(creds_file_path, "r", encoding="utf-8") as creds_file:
                     keystore_data = json.load(creds_file)
             except (OSError, json.JSONDecodeError) as ex:
+                if isinstance(ex, OSError) and ex.errno == errno.EACCES:
+                    logger.warning(f"Permission denied reading {creds_file_path}, attempting sudo chmod a+r")
+                    subprocess.run(["sudo", "-n", "chmod", "a+r", creds_file_path], check=False)
                 if single_check:
                     return False
                 raise ValueError(f"Failed to parse RLN keystore at {creds_file_path}: {ex}")
