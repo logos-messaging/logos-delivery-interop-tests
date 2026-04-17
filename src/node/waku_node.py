@@ -11,6 +11,7 @@ import requests
 from src.libs.common import delay
 from src.libs.custom_logger import get_custom_logger
 from tenacity import retry, stop_after_delay, wait_fixed, sleep
+from docker.errors import NotFound as DockerNotFound
 from src.node.api_clients.rest import REST
 from src.node.docker_mananger import DockerManager
 from src.env_vars import DOCKER_LOG_DIR
@@ -40,14 +41,12 @@ def sanitize_docker_flags(input_flags):
 @retry(stop=stop_after_delay(180), wait=wait_fixed(0.5), reraise=True)
 def rln_credential_store_ready(creds_file_path, single_check=False, require_credentials=False):
     if os.path.exists(creds_file_path):
+        subprocess.run(["sudo", "-n", "chmod", "a+r", creds_file_path], check=False)
         if require_credentials:
             try:
                 with open(creds_file_path, "r", encoding="utf-8") as creds_file:
                     keystore_data = json.load(creds_file)
             except (OSError, json.JSONDecodeError) as ex:
-                if isinstance(ex, OSError) and ex.errno == errno.EACCES:
-                    logger.warning(f"Permission denied reading {creds_file_path}, attempting sudo chmod a+r")
-                    subprocess.run(["sudo", "-n", "chmod", "a+r", creds_file_path], check=False)
                 if single_check:
                     return False
                 raise ValueError(f"Failed to parse RLN keystore at {creds_file_path}: {ex}")
@@ -271,7 +270,12 @@ class WakuNode:
     def stop(self):
         if self._container:
             logger.debug(f"Stopping container with id {self._container.short_id}")
-            self._container.stop()
+            try:
+                self._container.stop()
+            except DockerNotFound:
+                logger.debug(f"Container {self._container.short_id} already exited and removed, treating as stopped.")
+                self._container = None
+                return
             try:
                 self._container.remove()
             except:
