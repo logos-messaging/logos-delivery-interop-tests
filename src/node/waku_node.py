@@ -104,6 +104,7 @@ class WakuNode:
         self.rln_membership_index = None
         self.start_args = {}
         self._wrapper_node = None
+        self._rln_creds_set = False
         logger.debug(f"WakuNode instance initialized with log path {self._log_path}")
 
     @property
@@ -197,6 +198,7 @@ class WakuNode:
             del default_args["pubsub-topic"]
 
         rln_args, rln_creds_set, keystore_path = self.parse_rln_credentials(default_args, False)
+        self._rln_creds_set = rln_creds_set
 
         default_args.pop("rln-creds-id", None)
         default_args.pop("rln-creds-source", None)
@@ -227,7 +229,7 @@ class WakuNode:
         DS.waku_nodes.append(self)
         delay(1)
         try:
-            self.ensure_ready(timeout_duration=wait_for_node_sec, rln_required=rln_creds_set)
+            self.ensure_ready(timeout_duration=wait_for_node_sec, rln_required=self._rln_creds_set)
         except Exception as ex:
             logger.error(f"REST service did not become ready in time: {ex}")
             raise
