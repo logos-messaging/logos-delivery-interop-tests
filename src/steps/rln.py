@@ -47,13 +47,8 @@ class StepsRLN(StepsCommon):
                 membership_index = self.register_rln_single_node(prefix=prefix, rln_creds_source=RLN_CREDENTIALS, rln_creds_id=f"{i+1}")
                 self.rln_membership_indexes.append(membership_index)
         else:
-            # Backward-compatible support for legacy list-based cache values.
-            if isinstance(orig_prefixes, dict):
-                self.keystore_prefixes = orig_prefixes.get("keystore_prefixes", [])
-                self.rln_membership_indexes = orig_prefixes.get("rln_membership_indexes", [])
-            else:
-                self.keystore_prefixes = orig_prefixes
-                self.rln_membership_indexes = []
+            self.keystore_prefixes = orig_prefixes.get("keystore_prefixes", [])
+            self.rln_membership_indexes = orig_prefixes.get("rln_membership_indexes", [])
 
         return {
             "keystore_prefixes": self.keystore_prefixes,
