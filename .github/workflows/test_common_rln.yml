@@ -94,9 +94,3 @@ jobs:
       run: |
         if [ "${{ matrix.shard }}" == "16" ]; then
             pytest tests/relay/test_rln.py 
-        elif [ "${{ matrix.shard }}" == "17" ]; then
-            pytest tests/store/test_cursor_many_msgs.py 
-        elif [ "${{ matrix.shard }}" != "17" ]; then
-            pytest --ignore=tests/relay/test_rln.py --ignore=tests/store/test_cursor_many_msgs.py --reruns 2 --shard-id=${{ matrix.shard }} --num-shards=16 
-        fi
-
