@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 from result import Result, Ok, Err
 
-_THIRD_PARTY = Path(__file__).resolve().parents[2] / "third_party" / "logos-delivery-python-bindings" / "waku"
+_THIRD_PARTY = Path(__file__).resolve().parents[2] / "vendor" / "logos-delivery-python-bindings" / "waku"
 if str(_THIRD_PARTY) not in sys.path:
     sys.path.insert(0, str(_THIRD_PARTY))
 
