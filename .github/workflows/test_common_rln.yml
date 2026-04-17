@@ -32,39 +32,21 @@ env:
   RLN_CREDENTIALS: ${{ secrets.RLN_CREDENTIALS }}
 
 jobs:
-
   tests:
     name: tests
     strategy:
       fail-fast: false
       matrix:
         shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
-  # total number of shards =18 means tests will split into 18 thread and run in parallel to increase execution speed
-  # command for sharding :
-  # pytest --shard-id=<shard_number> --num-shards=<total_shards>
-  # shard 16 for test_rln.py file as they shall run sequentially
-  # shard 17 for test_cursor_many_msgs.py as it takes time >7 mins
+    # total number of shards =18 means tests will split into 18 thread and run in parallel to increase execution speed
+    # command for sharding :
+    # pytest --shard-id=<shard_number> --num-shards=<total_shards>
+    # shard 16 for test_rln.py file as they shall run sequentially
+    # shard 17 for test_cursor_many_msgs.py as it takes time >7 mins
+
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    outputs:
-      jobResult_0: ${{ steps.set_result.outputs.JOB_RESULT_0 }}
-      jobResult_1: ${{ steps.set_result.outputs.JOB_RESULT_1 }}
-      jobResult_2: ${{ steps.set_result.outputs.JOB_RESULT_2 }}
-      jobResult_3: ${{ steps.set_result.outputs.JOB_RESULT_3 }}
-      jobResult_4: ${{ steps.set_result.outputs.JOB_RESULT_4 }}
-      jobResult_5: ${{ steps.set_result.outputs.JOB_RESULT_5 }}
-      jobResult_6: ${{ steps.set_result.outputs.JOB_RESULT_6 }}
-      jobResult_7: ${{ steps.set_result.outputs.JOB_RESULT_7 }}
-      jobResult_8: ${{ steps.set_result.outputs.JOB_RESULT_8 }}
-      jobResult_9: ${{ steps.set_result.outputs.JOB_RESULT_9 }}
-      jobResult_10: ${{ steps.set_result.outputs.JOB_RESULT_10 }}
-      jobResult_11: ${{ steps.set_result.outputs.JOB_RESULT_11 }}
-      jobResult_12: ${{ steps.set_result.outputs.JOB_RESULT_12 }}
-      jobResult_13: ${{ steps.set_result.outputs.JOB_RESULT_13 }}
-      jobResult_14: ${{ steps.set_result.outputs.JOB_RESULT_14 }}
-      jobResult_15: ${{ steps.set_result.outputs.JOB_RESULT_15 }}
-      jobResult_16: ${{ steps.set_result.outputs.JOB_RESULT_16 }}
-      jobResult_17: ${{ steps.set_result.outputs.JOB_RESULT_17 }}
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -171,6 +153,20 @@ jobs:
 
           if [ "${{ matrix.shard }}" == "16" ]; then
               pytest tests/relay/test_rln.py \
-                --ignore=vendor/logos-delivery-python-bindings/tests 
+                --ignore=vendor/logos-delivery-python-bindings/tests \
+                --alluredir=allure-results-${{ matrix.shard }}
+          elif [ "${{ matrix.shard }}" == "17" ]; then
+              pytest tests/store/test_cursor_many_msgs.py \
+                --ignore=vendor/logos-delivery-python-bindings/tests \
+                --alluredir=allure-results-${{ matrix.shard }}
+          else
+              pytest \
+                --ignore=vendor/logos-delivery-python-bindings/tests \
+                --ignore=tests/relay/test_rln.py \
+                --ignore=tests/store/test_cursor_many_msgs.py \
+                --reruns 2 \
+                --shard-id=${{ matrix.shard }} \
+                --num-shards=16 \
+                --alluredir=allure-results-${{ matrix.shard }}
           fi
 
