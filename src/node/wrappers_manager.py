@@ -2,9 +2,9 @@ import sys
 from pathlib import Path
 from result import Result, Ok, Err
 
-_THIRD_PARTY = Path(__file__).resolve().parents[2] / "third_party" / "logos-delivery-python-bindings" / "waku"
-if str(_THIRD_PARTY) not in sys.path:
-    sys.path.insert(0, str(_THIRD_PARTY))
+_BINDINGS_PATH = Path(__file__).resolve().parents[2] / "vendor" / "logos-delivery-python-bindings" / "waku"
+if str(_BINDINGS_PATH) not in sys.path:
+    sys.path.insert(0, str(_BINDINGS_PATH))
 
 from wrapper import NodeWrapper as _NodeWrapper  # type: ignore[import]
 
@@ -76,6 +76,23 @@ class WrapperManager:
 
     def get_node_info(self, node_info_id: str, *, timeout_s: float = 20.0) -> Result[dict, str]:
         return self._node.get_node_info(node_info_id, timeout_s=timeout_s)
+
+    def get_node_info_raw(self, node_info_id: str, *, timeout_s: float = 20.0) -> Result[str, str]:
+        """Like get_node_info but returns the raw string without JSON parsing."""
+        from wrapper import lib, ffi, _new_cb_state, _wait_cb_raw  # type: ignore[import]
+
+        state = _new_cb_state()
+        cb = self._node._make_waiting_cb(state)
+        rc = lib.logosdelivery_get_node_info(self._node.ctx, cb, ffi.NULL, node_info_id.encode("utf-8"))
+        if rc != 0:
+            return Err(f"get_node_info_raw: immediate call failed (ret={rc})")
+        wait_result = _wait_cb_raw(state, "get_node_info_raw", timeout_s)
+        if wait_result.is_err():
+            return Err(wait_result.err())
+        cb_ret, cb_msg = wait_result.ok_value
+        if cb_ret != 0:
+            return Err(f"get_node_info_raw: callback failed (ret={cb_ret})")
+        return Ok(cb_msg.decode("utf-8") if cb_msg else "")
 
     def get_available_configs(self, *, timeout_s: float = 20.0) -> Result[dict, str]:
         return self._node.get_available_configs(timeout_s=timeout_s)

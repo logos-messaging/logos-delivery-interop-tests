@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import json
 import threading
 import time
+from typing import Optional
 
 
 class EventCollector:
@@ -29,16 +32,22 @@ class EventCollector:
             return [e for e in self.events if e.get("requestId") == request_id]
 
 
+# eventType values emitted by liblogosdelivery (node_api.nim:106–124)
+EVENT_PROPAGATED = "message_propagated"
+EVENT_SENT = "message_sent"
+EVENT_ERROR = "message_error"
+
+
 def is_propagated_event(event: dict) -> bool:
-    return "Propagated" in event.get("eventType", "")
+    return event.get("eventType") == EVENT_PROPAGATED
 
 
 def is_sent_event(event: dict) -> bool:
-    return "Sent" in event.get("eventType", "")
+    return event.get("eventType") == EVENT_SENT
 
 
 def is_error_event(event: dict) -> bool:
-    return "Error" in event.get("eventType", "")
+    return event.get("eventType") == EVENT_ERROR
 
 
 def wait_for_event(
@@ -47,7 +56,7 @@ def wait_for_event(
     predicate,
     timeout_s: float,
     poll_interval_s: float = 0.5,
-) -> dict | None:
+) -> Optional[dict]:
     """Poll until an event matching `predicate` arrives for `request_id`,
     or until `timeout_s` elapses.  Returns the matching event or None.
     """
@@ -62,41 +71,26 @@ def wait_for_event(
     return None
 
 
-def wait_for_propagated(collector: EventCollector, request_id: str, timeout_s: float) -> dict | None:
+def wait_for_propagated(collector: EventCollector, request_id: str, timeout_s: float) -> Optional[dict]:
     return wait_for_event(collector, request_id, is_propagated_event, timeout_s)
 
 
-def wait_for_sent(collector: EventCollector, request_id: str, timeout_s: float) -> dict | None:
+def wait_for_sent(collector: EventCollector, request_id: str, timeout_s: float) -> Optional[dict]:
     return wait_for_event(collector, request_id, is_sent_event, timeout_s)
 
 
-def wait_for_error(collector: EventCollector, request_id: str, timeout_s: float) -> dict | None:
+def wait_for_error(collector: EventCollector, request_id: str, timeout_s: float) -> Optional[dict]:
     return wait_for_event(collector, request_id, is_error_event, timeout_s)
 
 
 def get_node_multiaddr(node) -> str:
-    """Return the first TCP multiaddr (with peer-id) from a WrapperManager node.
+    """Return the first TCP multiaddr (with peer-id) from a WrapperManager node."""
+    result = node.get_node_info_raw("MyMultiaddresses")
+    if result.is_err():
+        raise RuntimeError(f"get_node_info_raw failed: {result.err()}")
 
-    Uses the existing get_available_node_info_ids / get_node_info APIs on
-    WrapperManager.  Raises RuntimeError if the address cannot be resolved.
-    """
-    ids_result = node.get_available_node_info_ids()
-    if ids_result.is_err():
-        raise RuntimeError(f"get_available_node_info_ids failed: {ids_result.err()}")
+    addr = result.ok_value.strip()
+    if not addr or not addr.startswith("/"):
+        raise RuntimeError(f"Unexpected multiaddr format: {addr!r}")
 
-    ids = ids_result.ok_value
-    if not ids:
-        raise RuntimeError("No node-info IDs returned")
-
-    info_result = node.get_node_info(ids[0])
-    if info_result.is_err():
-        raise RuntimeError(f"get_node_info failed: {info_result.err()}")
-
-    info = info_result.ok_value
-
-    for key in ("listenAddresses", "multiaddrs", "addresses"):
-        addresses = info.get(key)
-        if addresses:
-            return addresses[0]
-
-    raise RuntimeError(f"Could not find a listen address in node info: {info}")
+    return addr
