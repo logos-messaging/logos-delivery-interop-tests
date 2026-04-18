@@ -39,11 +39,9 @@ class StepsRLN(StepsCommon):
     @allure.step
     def register_rln_relay_nodes(self, count, orig_prefixes):
         if count > 0:
-            logger.debug(111111111111111)
             self.keystore_prefixes = self.generate_keystore_prefixes(count)
             self.rln_membership_indexes = []
             for i, prefix in enumerate(self.keystore_prefixes):
-                logger.debug(000000000000000000000)
                 membership_index = self.register_rln_single_node(prefix=prefix, rln_creds_source=RLN_CREDENTIALS, rln_creds_id=f"{i+1}")
                 self.rln_membership_indexes.append(membership_index)
         else:
