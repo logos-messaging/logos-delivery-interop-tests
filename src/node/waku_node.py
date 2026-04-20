@@ -407,7 +407,7 @@ class WakuNode:
                     if p["Rln Relay"] != "READY":
                         raise AssertionError("Waiting for the Rln relay status: READY")
                     # TODO: Remove once Rln Relay reflects true RLN status
-                    sleep(20)
+                #    sleep(20)
 
             logger.info("Node protocols are initialized !!")
 
