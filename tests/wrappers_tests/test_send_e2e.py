@@ -150,6 +150,7 @@ class TestSendBeforeRelay(StepsStore):
                     f"Collected events: {sender_collector.events}"
                 )
 
+    @pytest.mark.docker_required
     def test_s19_store_peer_appears_after_propagation(self, node_config):
         """
         S19: a store peer comes online later.
