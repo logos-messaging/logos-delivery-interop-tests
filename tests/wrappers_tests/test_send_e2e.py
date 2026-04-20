@@ -6,8 +6,10 @@ from src.node.wrapper_helpers import (
     EventCollector,
     get_node_multiaddr,
     wait_for_propagated,
+    wait_for_sent,
     wait_for_error,
 )
+from tests.wrappers_tests.conftest import build_node_config
 
 CONTENT_TOPIC = "/test/1/s17-relay-late-join/proto"
 PROPAGATED_TIMEOUT_S = 30.0
@@ -88,3 +90,52 @@ class TestS17RelayPeersAppearLater(StepsCommon):
             sender_node.stop_and_destroy()
             
             """
+
+
+class TestS06CoreSenderRelayOnly(StepsCommon):
+    """
+    S06 — Core sender with relay peers only, no store.
+    Sender has local relay enabled and is connected to one relay peer.
+    Expected: send() returns Ok(RequestId), message_propagated event arrives,
+    no message_sent (store disabled), no message_error.
+    """
+
+    def test_relay_propagation_without_store(self):
+        sender_collector = EventCollector()
+
+        sender_config = build_node_config(relay=True, store=False, lightpush=False, filter=False, discv5Discovery=False)
+        sender_result = WrapperManager.create_and_start(config=sender_config, event_cb=sender_collector.event_callback)
+        assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
+
+        with sender_result.ok_value as sender:
+            sender_multiaddr = get_node_multiaddr(sender)
+
+            peer_config = build_node_config(
+                relay=True, store=False, lightpush=False, filter=False, discv5Discovery=False, staticnodes=[sender_multiaddr]
+            )
+            peer_result = WrapperManager.create_and_start(config=peer_config)
+            assert peer_result.is_ok(), f"Failed to start relay peer: {peer_result.err()}"
+
+            with peer_result.ok_value as peer:
+                message = self.create_message(
+                    payload=to_base64("S06 relay-only test payload"),
+                    contentTopic="/test/1/s06-relay-only/proto",
+                )
+
+                send_result = sender.send_message(message=message)
+                assert send_result.is_ok(), f"send() failed: {send_result.err()}"
+
+                request_id = send_result.ok_value
+                assert request_id, "send() returned an empty RequestId"
+
+                propagated = wait_for_propagated(sender_collector, request_id, timeout_s=PROPAGATED_TIMEOUT_S)
+                assert propagated is not None, (
+                    f"No message_propagated event within {PROPAGATED_TIMEOUT_S}s. " f"Collected events: {sender_collector.events}"
+                )
+                assert propagated["requestId"] == request_id
+
+                error = wait_for_error(sender_collector, request_id, timeout_s=0)
+                assert error is None, f"Unexpected message_error event: {error}"
+
+                sent = wait_for_sent(sender_collector, request_id, timeout_s=0)
+                assert sent is None, f"Unexpected message_sent event (store is disabled): {sent}"
