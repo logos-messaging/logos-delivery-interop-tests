@@ -1,5 +1,3 @@
-from time import time_ns
-
 import pytest
 from src.env_vars import NODE_2
 from src.steps.common import StepsCommon
@@ -25,6 +23,7 @@ NO_SENT_OBSERVATION_S = 5.0
 DEFAULT_CONTENT_TOPIC = "/test/1/default/proto"
 DEFAULT_PAYLOAD = "Default Payload"
 SENT_AFTER_STORE_TIMEOUT_S = 60.0
+ERROR_TIMEOUT_S = 120.0
 
 
 @pytest.mark.smoke
@@ -316,3 +315,121 @@ class TestS06CoreSenderRelayOnly(StepsCommon):
 
                 sent = wait_for_sent(sender_collector, request_id, timeout_s=0)
                 assert sent is None, f"Unexpected message_sent event (store is disabled): {sent}"
+
+
+class TestS02AutoSubscribeOnFirstSend(StepsCommon):
+    """
+    S02 — Auto-subscribe on first send.
+    Sender never calls subscribe_content_topic() before send().
+    The send API must auto-subscribe to the content topic used in the message.
+    Expected: send() returns Ok(RequestId), message_propagated arrives.
+    """
+
+    def test_s02_send_without_explicit_subscribe(self, node_config):
+        sender_collector = EventCollector()
+
+        node_config.update(
+            {
+                "relay": True,
+                "store": False,
+                "lightpush": False,
+                "filter": False,
+                "discv5Discovery": False,
+                "numShardsInNetwork": 1,
+            }
+        )
+
+        sender_result = WrapperManager.create_and_start(
+            config=node_config,
+            event_cb=sender_collector.event_callback,
+        )
+        assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
+
+        with sender_result.ok_value as sender:
+            peer_config = {
+                **node_config,
+                "staticnodes": [get_node_multiaddr(sender)],
+                "portsshift": 1,
+            }
+
+            peer_result = WrapperManager.create_and_start(config=peer_config)
+            assert peer_result.is_ok(), f"Failed to start relay peer: {peer_result.err()}"
+
+            with peer_result.ok_value:
+                message = self.create_message(
+                    payload=to_base64("S02 auto-subscribe test payload"),
+                    contentTopic="/test/1/s02-auto-subscribe/proto",
+                )
+
+                send_result = sender.send_message(message=message)
+                assert send_result.is_ok(), f"send() failed: {send_result.err()}"
+
+                request_id = send_result.ok_value
+                assert request_id, "send() returned an empty RequestId"
+
+                propagated = wait_for_propagated(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=PROPAGATED_TIMEOUT_S,
+                )
+                assert propagated is not None, (
+                    f"No message_propagated event within {PROPAGATED_TIMEOUT_S}s. " f"Collected events: {sender_collector.events}"
+                )
+                assert propagated["requestId"] == request_id
+
+                error = wait_for_error(sender_collector, request_id, timeout_s=0)
+                assert error is None, f"Unexpected message_error event: {error}"
+
+
+class TestS12IsolatedSenderNoPeers(StepsCommon):
+    """
+    S12 — Isolated sender, no peers.
+    Sender has relay enabled but zero relay peers and zero lightpush peers.
+    Expected: send() returns Ok(RequestId), but eventually a message_error
+    event arrives (no route to propagate).
+    """
+
+    def test_s12_send_with_no_peers_produces_error(self, node_config):
+        sender_collector = EventCollector()
+
+        node_config.update(
+            {
+                "relay": True,
+                "store": False,
+                "lightpush": False,
+                "filter": False,
+                "discv5Discovery": False,
+                "numShardsInNetwork": 1,
+            }
+        )
+
+        sender_result = WrapperManager.create_and_start(
+            config=node_config,
+            event_cb=sender_collector.event_callback,
+        )
+        assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
+
+        with sender_result.ok_value as sender:
+            message = self.create_message(
+                payload=to_base64("S12 isolated sender payload"),
+                contentTopic="/test/1/s12-isolated/proto",
+            )
+
+            send_result = sender.send_message(message=message)
+            assert send_result.is_ok(), f"send() must return Ok(RequestId) even with no peers, got: {send_result.err()}"
+
+            request_id = send_result.ok_value
+            assert request_id, "send() returned an empty RequestId"
+
+            error = wait_for_error(
+                collector=sender_collector,
+                request_id=request_id,
+                timeout_s=ERROR_TIMEOUT_S,
+            )
+            assert error is not None, (
+                f"No message_error event within {ERROR_TIMEOUT_S}s for isolated sender. " f"Collected events: {sender_collector.events}"
+            )
+            assert error["requestId"] == request_id
+
+            propagated = wait_for_propagated(sender_collector, request_id, timeout_s=0)
+            assert propagated is None, f"Unexpected message_propagated event for isolated sender: {propagated}"
