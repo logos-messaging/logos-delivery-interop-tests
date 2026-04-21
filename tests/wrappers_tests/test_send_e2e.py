@@ -9,6 +9,7 @@ from src.node.waku_node import WakuNode
 from src.node.wrappers_manager import WrapperManager
 from src.node.wrapper_helpers import (
     EventCollector,
+    create_message_bindings,
     get_node_multiaddr,
     wait_for_propagated,
     wait_for_sent,
@@ -22,8 +23,6 @@ logger = get_custom_logger(__name__)
 PROPAGATED_TIMEOUT_S = 30.0
 SENT_TIMEOUT_S = 10.0
 NO_SENT_OBSERVATION_S = 5.0
-DEFAULT_CONTENT_TOPIC = "/test/1/default/proto"
-DEFAULT_PAYLOAD = "Default Payload"
 SENT_AFTER_STORE_TIMEOUT_S = 60.0
 
 
@@ -53,7 +52,7 @@ class TestSendBeforeRelay(StepsStore):
         assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
 
         with sender_result.ok_value as sender_node:
-            message = self.create_message()
+            message = create_message_bindings()
             send_result = sender_node.send_message(message=message)
             assert send_result.is_ok(), f"send() must return Ok(RequestId) even with no peers, got: {send_result.err()}"
 
@@ -113,7 +112,8 @@ class TestSendBeforeRelay(StepsStore):
         assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
 
         with sender_result.ok_value as sender_node:
-            send_result = sender_node.send_message(message=self.create_message())
+            message = create_message_bindings()
+            send_result = sender_node.send_message(message=message)
             assert send_result.is_ok(), f"send() must return Ok(RequestId) even with no peers, got: {send_result.err()}"
 
             request_id = send_result.ok_value
@@ -170,7 +170,7 @@ class TestSendBeforeRelay(StepsStore):
                 "store": False,
                 "discv5Discovery": False,
                 "numShardsInNetwork": 1,
-                "reliability": True,
+                # "p2preliability": True,
             }
         )
 
@@ -181,29 +181,28 @@ class TestSendBeforeRelay(StepsStore):
         assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
 
         with sender_result.ok_value as sender_node:
-            # Relay-only wrapper peer so propagation can complete without any
-            # store peer being reachable yet.
+            # relay peer
             relay_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender_node)],
                 "portsshift": 1,
                 "store": False,
-                "reliability": False,
+                # "p2preliability": False, # commented as the option not supported
             }
 
             relay_result = WrapperManager.create_and_start(config=relay_config)
             assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
 
             with relay_result.ok_value as relay_peer:
-                # Step 1: send(). Must return Ok(RequestId) immediately.
-                message = self.create_message()
+                # send(). Must return Ok(RequestId) immediately.
+                message = create_message_bindings()
                 send_result = sender_node.send_message(message=message)
                 assert send_result.is_ok(), f"send() must return Ok(RequestId), got: {send_result.err()}"
 
                 request_id = send_result.ok_value
                 assert request_id, "send() returned an empty RequestId"
 
-                # Step 2: Propagated should arrive via the relay peer.
+                # Propagated should arrive via the relay peer.
                 propagated_event = wait_for_propagated(
                     collector=sender_collector,
                     request_id=request_id,
@@ -213,7 +212,6 @@ class TestSendBeforeRelay(StepsStore):
                     f"No MessagePropagatedEvent received within {PROPAGATED_TIMEOUT_S}s. " f"Collected events: {sender_collector.events}"
                 )
 
-                # Step 3: with no store peer reachable, Sent must not arrive yet.
                 early_sent_event = wait_for_sent(
                     collector=sender_collector,
                     request_id=request_id,
@@ -221,9 +219,7 @@ class TestSendBeforeRelay(StepsStore):
                 )
                 assert early_sent_event is None, f"MessageSentEvent arrived before any store peer was reachable. " f"Event: {early_sent_event}"
 
-                # Step 4: bring a docker store node online, wired into the
-                # existing mesh via REST. Teardown is handled by the autouse
-                # close_open_nodes fixture in tests/conftest.py.
+                # Store peer
                 store_node = WakuNode(NODE_2, f"store_node")
                 store_node.start(relay="true", store="true", discv5_discovery="false")
                 store_node.set_relay_subscriptions([self.test_pubsub_topic])
@@ -237,6 +233,7 @@ class TestSendBeforeRelay(StepsStore):
                     request_id=request_id,
                     timeout_s=SENT_AFTER_STORE_TIMEOUT_S,
                 )
+
                 assert sent_event is not None, (
                     f"No MessageSentEvent received within {SENT_AFTER_STORE_TIMEOUT_S}s "
                     f"after store peer joined. Collected events: {sender_collector.events}"

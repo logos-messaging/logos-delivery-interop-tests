@@ -4,6 +4,17 @@ import json
 import threading
 import time
 from typing import Optional
+from src.libs.common import to_base64
+
+DEFAULT_CONTENT_TOPIC = "/test/1/default/proto"
+DEFAULT_PAYLOAD = to_base64("test payload")
+EVENT_PROPAGATED = "message_propagated"
+EVENT_SENT = "message_sent"
+EVENT_ERROR = "message_error"
+
+# ---------------------------------------------------------------------------
+# Event collection
+# ---------------------------------------------------------------------------
 
 
 class EventCollector:
@@ -30,12 +41,6 @@ class EventCollector:
     def get_events_for_request(self, request_id: str) -> list[dict]:
         with self._lock:
             return [e for e in self.events if e.get("requestId") == request_id]
-
-
-# eventType values emitted by liblogosdelivery (node_api.nim:106–124)
-EVENT_PROPAGATED = "message_propagated"
-EVENT_SENT = "message_sent"
-EVENT_ERROR = "message_error"
 
 
 def is_propagated_event(event: dict) -> bool:
@@ -94,3 +99,14 @@ def get_node_multiaddr(node) -> str:
         raise RuntimeError(f"Unexpected multiaddr format: {addr!r}")
 
     return addr
+
+
+# This API for creating messages for send.API not the REST calls
+def create_message_bindings(**overrides) -> dict:
+    envelope = {
+        "contentTopic": DEFAULT_CONTENT_TOPIC,
+        "payload": DEFAULT_PAYLOAD,
+        "ephemeral": False,
+    }
+    envelope.update(overrides)
+    return envelope
