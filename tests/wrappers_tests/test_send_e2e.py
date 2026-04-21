@@ -25,6 +25,13 @@ SENT_TIMEOUT_S = 10.0
 NO_SENT_OBSERVATION_S = 5.0
 SENT_AFTER_STORE_TIMEOUT_S = 60.0
 
+# MaxTimeInCache from send_service.nim.
+MAX_TIME_IN_CACHE_S = 60.0
+# Extra slack to cover the background retry loop tick after the window expires.
+CACHE_EXPIRY_SLACK_S = 10.0
+ERROR_AFTER_CACHE_EXPIRY_TIMEOUT_S = MAX_TIME_IN_CACHE_S + CACHE_EXPIRY_SLACK_S
+RETRY_WINDOW_EXPIRED_MSG = "Unable to send within retry time window"
+
 
 @pytest.mark.smoke
 class TestSendBeforeRelay(StepsStore):
@@ -246,6 +253,57 @@ class TestSendBeforeRelay(StepsStore):
                     page_size=5,
                     ascending="true",
                 )
+
+    def test_s21_error_when_retry_window_expires(self, node_config):
+        """
+        S21: delivery retry window expires before any valid path recovers.
+        """
+        sender_collector = EventCollector()
+
+        node_config.update(
+            {
+                "relay": True,
+                "store": False,
+                "lightpush": False,
+                "filter": False,
+                "discv5Discovery": False,
+                "numShardsInNetwork": 1,
+            }
+        )
+
+        sender_result = WrapperManager.create_and_start(
+            config=node_config,
+            event_cb=sender_collector.event_callback,
+        )
+        assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
+
+        with sender_result.ok_value as sender_node:
+            message = create_message_bindings()
+            send_result = sender_node.send_message(message=message)
+            assert send_result.is_ok(), f"send() must return Ok(RequestId) even with no peers, got: {send_result.err()}"
+
+            request_id = send_result.ok_value
+            assert request_id, "send() returned an empty RequestId"
+
+            # No peer
+            error_event = wait_for_error(
+                collector=sender_collector,
+                request_id=request_id,
+                timeout_s=ERROR_AFTER_CACHE_EXPIRY_TIMEOUT_S,
+            )
+            assert error_event is not None, (
+                f"No MessageErrorEvent received within {ERROR_AFTER_CACHE_EXPIRY_TIMEOUT_S}s "
+                f"(MaxTimeInCache={MAX_TIME_IN_CACHE_S}s + slack). "
+                f"Collected events: {sender_collector.events}"
+            )
+            logger.info(f"S21 received error event: {error_event}")
+
+            assert error_event.get("error") == RETRY_WINDOW_EXPIRED_MSG, (
+                f"Unexpected error message in message_error event.\n"
+                f"Expected: {RETRY_WINDOW_EXPIRED_MSG!r}\n"
+                f"Got:      {error_event.get('error')!r}\n"
+                f"Full event: {error_event}"
+            )
 
 
 class TestS06CoreSenderRelayOnly(StepsCommon):
