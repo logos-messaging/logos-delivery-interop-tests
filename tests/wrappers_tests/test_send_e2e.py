@@ -134,6 +134,8 @@ class TestSendBeforeRelay(StepsCommon):
             assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
 
             with relay_result.ok_value:
+                assert wait_for_connected(sender_collector) is not None, "Sender did not reach Connected/PartiallyConnected state"
+
                 propagated_event = wait_for_propagated(
                     collector=sender_collector,
                     request_id=request_id,
