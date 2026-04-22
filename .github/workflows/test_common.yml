@@ -252,7 +252,7 @@ jobs:
           allure_results: all-results
           gh_pages: gh-pages/${{ env.CALLER }}
           allure_history: allure-history
-          keep_reports: 5
+          keep_reports: 10
           report_url: https://logos-messaging.github.io/logos-delivery-interop-tests/${{ env.CALLER }}
 
       - name: Fix permissions (CRITICAL)
@@ -260,7 +260,8 @@ jobs:
         run: |
           echo "Fixing permissions..."
           sudo chown -R $USER:$USER allure-history || true
-          
+          sudo chmod -R u+rwX allure-history || true
+
       - name: Clean allure-history
         if: always()
         run: |
@@ -268,9 +269,6 @@ jobs:
 
           # Remove ALL txt attachments from history
           find allure-history -type f -name "*.txt" -delete || true
-
-          # Remove very large JSON files (optional but recommended)
-          find allure-history -type f -name "*.json" -size +5M -print -delete || true
 
           echo "After cleanup:"
           du -sh allure-history || true
