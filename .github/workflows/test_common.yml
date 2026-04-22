@@ -255,6 +255,20 @@ jobs:
           keep_reports: 5
           report_url: https://logos-messaging.github.io/logos-delivery-interop-tests/${{ env.CALLER }}
 
+      - name: Clean allure-history
+        if: always()
+        run: |
+          echo "Cleaning allure-history..."
+
+          # Remove ALL txt attachments from history
+          find allure-history -type f -name "*.txt" -delete || true
+
+          # Remove very large JSON files (optional but recommended)
+          find allure-history -type f -name "*.json" -size +5M -print -delete || true
+
+          echo "After cleanup:"
+          du -sh allure-history || true
+
       - name: Verify generated report content
         if: always()
         run: |
