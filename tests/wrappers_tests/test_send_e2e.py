@@ -409,7 +409,6 @@ class TestS10EdgeSenderLightpushOnly(StepsCommon):
             "numShardsInNetwork": 1,
         }
 
-        # 1. Service node: relay + lightpush server (gateway for the edge sender).
         service_config = build_node_config(relay=True, lightpush=True, **common)
 
         service_result = WrapperManager.create_and_start(config=service_config)
@@ -418,8 +417,6 @@ class TestS10EdgeSenderLightpushOnly(StepsCommon):
         with service_result.ok_value as service_node:
             service_multiaddr = get_node_multiaddr(service_node)
 
-            # 2. Relay peer: forms gossipsub mesh with the service node so it
-            #    has someone to relay-publish to after receiving lightpush.
             relay_config = build_node_config(
                 relay=True,
                 staticnodes=[service_multiaddr],
@@ -430,7 +427,6 @@ class TestS10EdgeSenderLightpushOnly(StepsCommon):
             assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
 
             with relay_result.ok_value:
-                # 3. Edge sender: lightpush client only, no relay.
                 edge_config = build_node_config(
                     mode="Edge",
                     relay=False,
