@@ -12,6 +12,7 @@ logger = get_custom_logger(__name__)
 
 @pytest.mark.usefixtures("setup_main_relay_nodes", "subscribe_main_relay_nodes", "relay_warm_up")
 class TestRelayPublish(StepsRelay):
+    @pytest.mark.waku_test_fleet
     def test_publish_with_valid_payloads(self):
         failed_payloads = []
         for payload in SAMPLE_INPUTS:
@@ -44,6 +45,7 @@ class TestRelayPublish(StepsRelay):
         except Exception as ex:
             assert "Bad Request" in str(ex) or "Internal Server Error" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_publish_with_payload_less_than_150_kb(self):
         payload_length = 1024 * 100  # after encoding to base64 this will be close to 150KB
         logger.debug(f"Running test with payload length of {payload_length} bytes")
@@ -92,6 +94,7 @@ class TestRelayPublish(StepsRelay):
         except Exception as ex:
             assert "Bad Request" in str(ex) or "Internal Server Error" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_publish_on_multiple_pubsub_topics(self):
         self.ensure_relay_subscriptions_on_nodes(self.main_nodes, VALID_PUBSUB_TOPICS)
         failed_pubsub_topics = []

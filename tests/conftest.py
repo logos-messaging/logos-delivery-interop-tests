@@ -5,21 +5,27 @@ Root pytest configuration for the logos-delivery interop test suite.
 Fleet bootstrap – hybrid local+fleet
 --------------------------------------------------
 Every local Docker node spawned by a test is patched at start() time so
-that it:
+that it connects to a live waku.test fleet peer as a static peer, and
+discovers all remaining fleet peers through the published ENR DNS tree.
 
-  1. Connects directly to node-01.do-ams3.waku.test.status.im:30303 as a
-     static peer (TCP reachability confirmed via ``nc -vz``).
-  2. Discovers all remaining waku.test fleet peers through the published ENR
-     DNS tree (dns-discovery-url).
+Bootstrap assignment by node creation order (mirrors config-n*.toml files):
+  NODE1 (1st started) → config-n1.toml  → node-01.do-ams3.waku.test.status.im
+  NODE2 (2nd started) → config-n2.toml  → node-01.gc-us-central1-a.waku.test.status.im
+  additional nodes    → FLEET_PRIMARY_MULTIADDR (Amsterdam, same as NODE1)
 
-This makes each local nwaku container a genuine member of the live waku.test
-network for the duration of the test.  Local nodes still relay test messages
-among themselves (using their own cluster-id / shard topics), while fleet
-nodes participate in peer-exchange and discv5 routing.
+Direct bootstrap coupling between NODE1 and NODE2 is suppressed:
+  * ``discv5_bootstrap_node`` kwargs that point to a local node's ENR are
+    stripped; fleet DNS discovery (dns_discovery_url) replaces them so that
+    each node bootstraps independently from its assigned fleet peer rather
+    than from another local container.
+
+Tests still retain full access to local nodes (REST API calls, add_peers,
+store/filter/lightpush service calls) – only the initial discv5 bootstrap
+link between local nodes is removed.
 
 Fleet node information (addresses, peer IDs, ENR tree URL) is stored in
-``src/env_vars.py`` (FLEET_NODES, FLEET_PRIMARY_MULTIADDR,
-FLEET_DNS_DISCOVERY_URL)
+``src/env_vars.py`` (FLEET_NODES, FLEET_N1_MULTIADDR, FLEET_N2_MULTIADDR,
+FLEET_PRIMARY_MULTIADDR, FLEET_DNS_DISCOVERY_URL)
 
 Activation (opt-in, disabled by default):
   pytest <any-test-path> --fleet -v
@@ -36,7 +42,7 @@ from time import time
 from uuid import uuid4
 from src.libs.common import attach_allure_file
 import src.env_vars as env_vars
-from src.env_vars import FLEET_PRIMARY_MULTIADDR, FLEET_DNS_DISCOVERY_URL
+from src.env_vars import FLEET_PRIMARY_MULTIADDR, FLEET_DNS_DISCOVERY_URL, FLEET_N1_MULTIADDR, FLEET_N2_MULTIADDR
 from src.data_storage import DS
 from src.postgres_setup import start_postgres, stop_postgres
 
@@ -107,9 +113,40 @@ def patch_waku_node_start(request, monkeypatch):
 
     def fleet_joined_start(self, wait_for_node_sec=20, use_wrapper=False, **kwargs):
         logger.debug("fleet_joined_start: injecting waku.test bootstrap args into WakuNode.start()")
-        _append_fleet_kwarg(kwargs, "staticnode", FLEET_PRIMARY_MULTIADDR)
+
+        # Determine which fleet peer to connect to based on node creation order
+        # within the current test (DS.waku_nodes is reset to [] before each test).
+        # The append to DS.waku_nodes happens inside _start_docker/_start_wrapper,
+        # *after* this function returns, so len() here reflects the count of nodes
+        # already fully started.
+        node_index = len(DS.waku_nodes)
+        if node_index == 0:
+            # First node started → NODE1 → mirrors config-n1.toml
+            fleet_multiaddr = FLEET_N1_MULTIADDR  # node-01.do-ams3.waku.test.status.im
+            logger.debug("fleet_joined_start: NODE1 – bootstrapping from config-n1.toml (%s)", fleet_multiaddr)
+        elif node_index == 1:
+            # Second node started → NODE2 → mirrors config-n2.toml
+            fleet_multiaddr = FLEET_N2_MULTIADDR  # node-01.gc-us-central1-a.waku.test.status.im
+            logger.debug("fleet_joined_start: NODE2 – bootstrapping from config-n2.toml (%s)", fleet_multiaddr)
+        else:
+            # Additional nodes fall back to the primary (Amsterdam) fleet peer
+            fleet_multiaddr = FLEET_PRIMARY_MULTIADDR
+            logger.debug("fleet_joined_start: additional node %d – bootstrapping from primary (%s)", node_index, fleet_multiaddr)
+
+        _append_fleet_kwarg(kwargs, "staticnode", fleet_multiaddr)
         kwargs.setdefault("dns_discovery", "true")
         kwargs.setdefault("dns_discovery_url", FLEET_DNS_DISCOVERY_URL)
+
+        # Strip any local-node discv5 bootstrap ENR so that each node bootstraps
+        # independently from its assigned fleet peer rather than from another local
+        # container.  The fleet DNS tree (dns_discovery_url) replaces it.
+        if "discv5_bootstrap_node" in kwargs:
+            logger.debug(
+                "fleet_joined_start: dropping local discv5_bootstrap_node=%s " "(fleet DNS discovery replaces it)",
+                kwargs["discv5_bootstrap_node"],
+            )
+            del kwargs["discv5_bootstrap_node"]
+
         logger.debug(
             "fleet_joined_start: staticnode=%s  dns_discovery_url=%s",
             kwargs.get("staticnode"),
@@ -119,7 +156,9 @@ def patch_waku_node_start(request, monkeypatch):
 
     monkeypatch.setattr(WakuNode, "start", fleet_joined_start)
     logger.info(
-        "Fleet bootstrap patch active – local nodes will connect to %s and " "discover the full fleet via %s",
+        "Fleet bootstrap patch active – NODE1→%s  NODE2→%s  (additional nodes→%s)  dns_discovery_url=%s",
+        FLEET_N1_MULTIADDR,
+        FLEET_N2_MULTIADDR,
         FLEET_PRIMARY_MULTIADDR,
         FLEET_DNS_DISCOVERY_URL,
     )

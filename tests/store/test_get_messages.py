@@ -10,6 +10,7 @@ logger = get_custom_logger(__name__)
 
 @pytest.mark.usefixtures("node_setup")
 class TestGetMessages(StepsStore):
+    @pytest.mark.waku_test_fleet
     def test_get_store_messages_with_different_payloads(self):
         failed_payloads = []
         for payload in SAMPLE_INPUTS:
@@ -24,6 +25,7 @@ class TestGetMessages(StepsStore):
         assert not failed_payloads, f"Payloads failed: {failed_payloads}"
         assert len(self.store_response.messages) == len(SAMPLE_INPUTS)
 
+    @pytest.mark.waku_test_fleet
     def test_get_store_messages_with_different_content_topics(self):
         failed_content_topics = []
         for content_topic in CONTENT_TOPICS_DIFFERENT_SHARDS:
@@ -68,6 +70,7 @@ class TestGetMessages(StepsStore):
         # only one message is stored
         assert len(self.store_response.messages) == 1
 
+    @pytest.mark.waku_test_fleet
     def test_get_multiple_store_messages(self):
         message_hash_list = {"nwaku": []}
         for payload in SAMPLE_INPUTS:

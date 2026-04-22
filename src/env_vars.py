@@ -48,5 +48,11 @@ FLEET_NODES = [
 FLEET_PRIMARY_MULTIADDR = FLEET_NODES[0]
 FLEET_DNS_DISCOVERY_URL = "enrtree://AOGYWMBYOUIMOENHXCHILPKY3ZRFEULMFI4DOM442QSZ73TT2A7VI@test.waku.nodes.status.im"
 
+# Per-node bootstrap multiaddrs that mirror the on-disk config-n*.toml files:
+#   config-n1.toml  →  node-01.do-ams3.waku.test.status.im   (Amsterdam)
+#   config-n2.toml  →  node-01.gc-us-central1-a.waku.test.status.im  (US Central)
+FLEET_N1_MULTIADDR = FLEET_NODES[0]  # node-01.do-ams3 – used by NODE1 in --fleet mode
+FLEET_N2_MULTIADDR = FLEET_NODES[1]  # node-01.gc-us-central1-a – used by NODE2 in --fleet mode
+
 # example for .env file
 # RLN_CREDENTIALS = {"rln-relay-cred-password": "password", "rln-relay-eth-client-address": "https://rpc.sepolia.linea.build",  "rln-relay-eth-contract-address": "0xB9cd878C90E49F797B4431fBF4fb333108CB90e6",  "rln-relay-eth-private-key-1": "",  "rln-relay-eth-private-key-2": "", "rln-relay-eth-private-key-3": "", "rln-relay-eth-private-key-4": "", "rln-relay-eth-private-key-5": ""}
