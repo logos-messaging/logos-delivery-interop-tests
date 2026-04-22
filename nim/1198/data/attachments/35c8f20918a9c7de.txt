@@ -1,0 +1,154 @@
+WRN 2026-04-22 14:44:30.397+00:00 whether to mount storeSync is not specified, defaulting to not mounting topics="waku conf builder" tid=59716
+WRN 2026-04-22 14:44:30.397+00:00 missing node key, generating new set       topics="waku conf builder" tid=59716
+bSubscribeShards: none(seq[uint16])
+INF 2026-04-22 14:44:30.397+00:00 Sharding configuration:                    topics="waku conf builder" tid=59716 shardingConf="(kind: AutoSharding, numShardsInCluster: 1)" subscribeShards=@[0]
+INF 2026-04-22 14:44:30.397+00:00 Configuration: Enabled protocols           topics="waku conf" tid=59716 relay=true rlnRelay=false store=true filter=false lightPush=false peerExchange=false rendezvous=true
+INF 2026-04-22 14:44:30.397+00:00 Configuration. Network                     topics="waku conf" tid=59716 cluster=198
+INF 2026-04-22 14:44:30.397+00:00 Configuration. Active Relay Shards         topics="waku conf" tid=59716 shard=0
+DBG 2026-04-22 14:44:34.402+00:00 UPnP                                       topics="eth net nat" tid=59716 msg="Internet Gateway Device not found. Giving up."
+DBG 2026-04-22 14:44:38.154+00:00 NAT-PMP                                    topics="eth net nat" tid=59716 msg="the gateway does not support nat-pmp"
+INF 2026-04-22 14:44:38.155+00:00 Setting up storage                         tid=59716
+INF 2026-04-22 14:44:38.155+00:00 Initializing node                          tid=59716
+INF 2026-04-22 14:44:38.156+00:00 Initializing networking                    tid=59716 addrs=@[/ip4/127.0.0.1/tcp/37105]
+INF 2026-04-22 14:44:38.156+00:00 Mounting protocols                         tid=59716
+INF 2026-04-22 14:44:38.156+00:00 Created WakuMetadata protocol              topics="waku node" tid=59716 clusterId=198 shards="[0]"
+INF 2026-04-22 14:44:38.160+00:00 sqlite database page stats                 tid=59716 pageSize=4096 pages=1 freePages=0
+INF 2026-04-22 14:44:38.160+00:00 starting message store's sqlite database migration topics="waku archive migration" tid=59716
+INF 2026-04-22 14:44:38.160+00:00 Not considered schema version 7            topics="waku archive migration" tid=59716
+INF 2026-04-22 14:44:38.160+00:00 database schema is outdated                topics="sqlite" tid=59716 userVersion=0 targetVersion=10
+INF 2026-04-22 14:44:38.162+00:00 executing migration statement              topics="sqlite" tid=59716 statement="CREATE TABLE IF NOT EXISTS  Message(\n        id BLOB PRIMARY KEY,\n        timestamp INTEGER NOT NULL,\n        contentTopic BLOB NOT NULL,\n        pubsubTopic BLOB NOT NULL,\n        payload BLOB,\n        version INTEGER NOT NULL\n    ) WITHOUT ROWID;"
+INF 2026-04-22 14:44:38.163+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="CREATE TABLE IF NOT EXISTS  Message(\n        id BLOB PRIMARY KEY,\n        timestamp INTEGER NOT NULL,\n        contentTopic BLOB NOT NULL,\n        pubsubTopic BLOB NOT NULL,\n        payload BLOB,\n        version INTEGER NOT NULL\n    ) WITHOUT ROWID;"
+INF 2026-04-22 14:44:38.163+00:00 executing migration statement              topics="sqlite" tid=59716 statement="CREATE TABLE IF NOT EXISTS Message_backup (\n        id BLOB PRIMARY KEY,\n        timestamp INTEGER NOT NULL,\n        contentTopic BLOB NOT NULL,\n        pubsubTopic BLOB NOT NULL,\n        payload BLOB,\n        version INTEGER NOT NULL\n    ) WITHOUT ROWID;"
+INF 2026-04-22 14:44:38.164+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="CREATE TABLE IF NOT EXISTS Message_backup (\n        id BLOB PRIMARY KEY,\n        timestamp INTEGER NOT NULL,\n        contentTopic BLOB NOT NULL,\n        pubsubTopic BLOB NOT NULL,\n        payload BLOB,\n        version INTEGER NOT NULL\n    ) WITHOUT ROWID;"
+INF 2026-04-22 14:44:38.164+00:00 executing migration statement              topics="sqlite" tid=59716 statement="INSERT INTO Message_backup SELECT id, timestamp, contentTopic, pubsubTopic, payload, version FROM Message;"
+INF 2026-04-22 14:44:38.164+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="INSERT INTO Message_backup SELECT id, timestamp, contentTopic, pubsubTopic, payload, version FROM Message;"
+INF 2026-04-22 14:44:38.164+00:00 executing migration statement              topics="sqlite" tid=59716 statement="DROP TABLE Message;"
+INF 2026-04-22 14:44:38.164+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="DROP TABLE Message;"
+INF 2026-04-22 14:44:38.164+00:00 executing migration statement              topics="sqlite" tid=59716 statement="CREATE TABLE IF NOT EXISTS Message(\n        id BLOB PRIMARY KEY,\n        receiverTimestamp REAL NOT NULL,\n        contentTopic BLOB NOT NULL,\n        pubsubTopic BLOB NOT NULL,\n        payload BLOB,\n        version INTEGER NOT NULL,\n        senderTimestamp REAL NOT NULL\n    ) WITHOUT ROWID;"
+INF 2026-04-22 14:44:38.165+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="CREATE TABLE IF NOT EXISTS Message(\n        id BLOB PRIMARY KEY,\n        receiverTimestamp REAL NOT NULL,\n        contentTopic BLOB NOT NULL,\n        pubsubTopic BLOB NOT NULL,\n        payload BLOB,\n        version INTEGER NOT NULL,\n        senderTimestamp REAL NOT NULL\n    ) WITHOUT ROWID;"
+INF 2026-04-22 14:44:38.165+00:00 executing migration statement              topics="sqlite" tid=59716 statement="INSERT INTO Message (id, receiverTimestamp, contentTopic, pubsubTopic, payload, version, senderTimestamp)\n    SELECT id, timestamp, contentTopic, pubsubTopic, payload, version, 0\n    FROM Message_backup;"
+INF 2026-04-22 14:44:38.165+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="INSERT INTO Message (id, receiverTimestamp, contentTopic, pubsubTopic, payload, version, senderTimestamp)\n    SELECT id, timestamp, contentTopic, pubsubTopic, payload, version, 0\n    FROM Message_backup;"
+INF 2026-04-22 14:44:38.165+00:00 executing migration statement              topics="sqlite" tid=59716 statement="DROP TABLE Message_backup;"
+INF 2026-04-22 14:44:38.165+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="DROP TABLE Message_backup;"
+INF 2026-04-22 14:44:38.165+00:00 executing migration statement              topics="sqlite" tid=59716 statement="CREATE TABLE IF NOT EXISTS Message_backup (\n        id BLOB PRIMARY KEY,\n        receiverTimestamp REAL NOT NULL,\n        contentTopic BLOB NOT NULL,\n        pubsubTopic BLOB NOT NULL,\n        payload BLOB,\n        version INTEGER NOT NULL,\n        senderTimestamp REAL NOT NULL\n    ) WITHOUT ROWID;"
+INF 2026-04-22 14:44:38.166+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="CREATE TABLE IF NOT EXISTS Message_backup (\n        id BLOB PRIMARY KEY,\n        receiverTimestamp REAL NOT NULL,\n        contentTopic BLOB NOT NULL,\n        pubsubTopic BLOB NOT NULL,\n        payload BLOB,\n        version INTEGER NOT NULL,\n        senderTimestamp REAL NOT NULL\n    ) WITHOUT ROWID;"
+INF 2026-04-22 14:44:38.166+00:00 executing migration statement              topics="sqlite" tid=59716 statement="INSERT INTO Message_backup SELECT id, receiverTimestamp, contentTopic, pubsubTopic, payload, version, senderTimestamp FROM Message;"
+INF 2026-04-22 14:44:38.166+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="INSERT INTO Message_backup SELECT id, receiverTimestamp, contentTopic, pubsubTopic, payload, version, senderTimestamp FROM Message;"
+INF 2026-04-22 14:44:38.166+00:00 executing migration statement              topics="sqlite" tid=59716 statement="DROP TABLE Message;"
+INF 2026-04-22 14:44:38.166+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="DROP TABLE Message;"
+INF 2026-04-22 14:44:38.166+00:00 executing migration statement              topics="sqlite" tid=59716 statement="CREATE TABLE IF NOT EXISTS Message(\n        id BLOB PRIMARY KEY,\n        receiverTimestamp INTEGER NOT NULL,\n        contentTopic BLOB NOT NULL,\n        pubsubTopic BLOB NOT NULL,\n        payload BLOB,\n        version INTEGER NOT NULL,\n        senderTimestamp INTEGER NOT NULL\n    ) WITHOUT ROWID;"
+INF 2026-04-22 14:44:38.167+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="CREATE TABLE IF NOT EXISTS Message(\n        id BLOB PRIMARY KEY,\n        receiverTimestamp INTEGER NOT NULL,\n        contentTopic BLOB NOT NULL,\n        pubsubTopic BLOB NOT NULL,\n        payload BLOB,\n        version INTEGER NOT NULL,\n        senderTimestamp INTEGER NOT NULL\n    ) WITHOUT ROWID;"
+INF 2026-04-22 14:44:38.167+00:00 executing migration statement              topics="sqlite" tid=59716 statement="INSERT INTO Message (id, receiverTimestamp, contentTopic, pubsubTopic, payload, version, senderTimestamp)\n    SELECT id, CAST(receiverTimestamp*1000000000 AS INTEGER), contentTopic, pubsubTopic, payload, version, CAST(senderTimestamp*1000000000 AS INTEGER)\n    FROM Message_backup;"
+INF 2026-04-22 14:44:38.167+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="INSERT INTO Message (id, receiverTimestamp, contentTopic, pubsubTopic, payload, version, senderTimestamp)\n    SELECT id, CAST(receiverTimestamp*1000000000 AS INTEGER), contentTopic, pubsubTopic, payload, version, CAST(senderTimestamp*1000000000 AS INTEGER)\n    FROM Message_backup;"
+INF 2026-04-22 14:44:38.167+00:00 executing migration statement              topics="sqlite" tid=59716 statement="DROP TABLE Message_backup;"
+INF 2026-04-22 14:44:38.167+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="DROP TABLE Message_backup;"
+INF 2026-04-22 14:44:38.167+00:00 executing migration statement              topics="sqlite" tid=59716 statement="ALTER TABLE Message RENAME TO Message_backup;"
+INF 2026-04-22 14:44:38.168+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="ALTER TABLE Message RENAME TO Message_backup;"
+INF 2026-04-22 14:44:38.168+00:00 executing migration statement              topics="sqlite" tid=59716 statement="CREATE TABLE IF NOT EXISTS Message(\n        id BLOB,\n        receiverTimestamp INTEGER NOT NULL,\n        contentTopic BLOB NOT NULL,\n        pubsubTopic BLOB NOT NULL,\n        payload BLOB,\n        version INTEGER NOT NULL,\n        senderTimestamp INTEGER NOT NULL,\n        CONSTRAINT messageIndex PRIMARY KEY (senderTimestamp, id, pubsubTopic)\n    ) WITHOUT ROWID;"
+INF 2026-04-22 14:44:38.169+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="CREATE TABLE IF NOT EXISTS Message(\n        id BLOB,\n        receiverTimestamp INTEGER NOT NULL,\n        contentTopic BLOB NOT NULL,\n        pubsubTopic BLOB NOT NULL,\n        payload BLOB,\n        version INTEGER NOT NULL,\n        senderTimestamp INTEGER NOT NULL,\n        CONSTRAINT messageIndex PRIMARY KEY (senderTimestamp, id, pubsubTopic)\n    ) WITHOUT ROWID;"
+INF 2026-04-22 14:44:38.169+00:00 executing migration statement              topics="sqlite" tid=59716 statement="INSERT INTO Message\n    SELECT *\n    FROM Message_backup;"
+INF 2026-04-22 14:44:38.169+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="INSERT INTO Message\n    SELECT *\n    FROM Message_backup;"
+INF 2026-04-22 14:44:38.169+00:00 executing migration statement              topics="sqlite" tid=59716 statement="DROP TABLE Message_backup;"
+INF 2026-04-22 14:44:38.169+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="DROP TABLE Message_backup;"
+INF 2026-04-22 14:44:38.169+00:00 executing migration statement              topics="sqlite" tid=59716 statement="CREATE INDEX IF NOT EXISTS i_msg ON Message (contentTopic, pubsubTopic, senderTimestamp, id);"
+INF 2026-04-22 14:44:38.170+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="CREATE INDEX IF NOT EXISTS i_msg ON Message (contentTopic, pubsubTopic, senderTimestamp, id);"
+INF 2026-04-22 14:44:38.170+00:00 executing migration statement              topics="sqlite" tid=59716 statement="ALTER TABLE message RENAME COLUMN receiverTimestamp TO storedAt;"
+INF 2026-04-22 14:44:38.170+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="ALTER TABLE message RENAME COLUMN receiverTimestamp TO storedAt;"
+INF 2026-04-22 14:44:38.170+00:00 executing migration statement              topics="sqlite" tid=59716 statement="DROP INDEX IF EXISTS i_msg;"
+INF 2026-04-22 14:44:38.171+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="DROP INDEX IF EXISTS i_msg;"
+INF 2026-04-22 14:44:38.171+00:00 executing migration statement              topics="sqlite" tid=59716 statement="CREATE INDEX IF NOT EXISTS i_query ON message (contentTopic, pubsubTopic, storedAt, id);"
+INF 2026-04-22 14:44:38.171+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="CREATE INDEX IF NOT EXISTS i_query ON message (contentTopic, pubsubTopic, storedAt, id);"
+INF 2026-04-22 14:44:38.171+00:00 executing migration statement              topics="sqlite" tid=59716 statement="DROP INDEX IF EXISTS i_rt;"
+INF 2026-04-22 14:44:38.171+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="DROP INDEX IF EXISTS i_rt;"
+INF 2026-04-22 14:44:38.171+00:00 executing migration statement              topics="sqlite" tid=59716 statement="CREATE INDEX IF NOT EXISTS i_ts ON message (storedAt);"
+INF 2026-04-22 14:44:38.172+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="CREATE INDEX IF NOT EXISTS i_ts ON message (storedAt);"
+INF 2026-04-22 14:44:38.172+00:00 executing migration statement              topics="sqlite" tid=59716 statement="ALTER TABLE message RENAME TO message_backup;"
+INF 2026-04-22 14:44:38.172+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="ALTER TABLE message RENAME TO message_backup;"
+INF 2026-04-22 14:44:38.172+00:00 executing migration statement              topics="sqlite" tid=59716 statement="CREATE TABLE IF NOT EXISTS message(\n  pubsubTopic BLOB NOT NULL,\n  contentTopic BLOB NOT NULL,\n  payload BLOB,\n  version INTEGER NOT NULL,\n  timestamp INTEGER NOT NULL,\n  id BLOB,\n  storedAt INTEGER NOT NULL,\n  CONSTRAINT messageIndex PRIMARY KEY (storedAt, id, pubsubTopic)\n) WITHOUT ROWID;"
+INF 2026-04-22 14:44:38.173+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="CREATE TABLE IF NOT EXISTS message(\n  pubsubTopic BLOB NOT NULL,\n  contentTopic BLOB NOT NULL,\n  payload BLOB,\n  version INTEGER NOT NULL,\n  timestamp INTEGER NOT NULL,\n  id BLOB,\n  storedAt INTEGER NOT NULL,\n  CONSTRAINT messageIndex PRIMARY KEY (storedAt, id, pubsubTopic)\n) WITHOUT ROWID;"
+INF 2026-04-22 14:44:38.173+00:00 executing migration statement              topics="sqlite" tid=59716 statement="INSERT OR IGNORE INTO message(pubsubTopic, contentTopic, payload, version, timestamp, id, storedAt)\n  SELECT pubsubTopic, contentTopic, payload, version, senderTimestamp, id, storedAt\n  FROM message_backup;"
+INF 2026-04-22 14:44:38.173+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="INSERT OR IGNORE INTO message(pubsubTopic, contentTopic, payload, version, timestamp, id, storedAt)\n  SELECT pubsubTopic, contentTopic, payload, version, senderTimestamp, id, storedAt\n  FROM message_backup;"
+INF 2026-04-22 14:44:38.173+00:00 executing migration statement              topics="sqlite" tid=59716 statement="DROP TABLE message_backup;"
+INF 2026-04-22 14:44:38.173+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="DROP TABLE message_backup;"
+INF 2026-04-22 14:44:38.173+00:00 executing migration statement              topics="sqlite" tid=59716 statement="ALTER TABLE message RENAME TO message_backup;"
+INF 2026-04-22 14:44:38.174+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="ALTER TABLE message RENAME TO message_backup;"
+INF 2026-04-22 14:44:38.174+00:00 executing migration statement              topics="sqlite" tid=59716 statement="CREATE TABLE IF NOT EXISTS message (\n  pubsubTopic BLOB NOT NULL,\n  contentTopic BLOB NOT NULL,\n  payload BLOB,\n  version INTEGER NOT NULL,\n  timestamp INTEGER NOT NULL,\n  id BLOB,\n  messageHash BLOB, -- Newly added, this will be populated with a counter value\n  storedAt INTEGER NOT NULL,\n  CONSTRAINT messageIndex PRIMARY KEY (messageHash)\n) WITHOUT ROWID;"
+INF 2026-04-22 14:44:38.174+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="CREATE TABLE IF NOT EXISTS message (\n  pubsubTopic BLOB NOT NULL,\n  contentTopic BLOB NOT NULL,\n  payload BLOB,\n  version INTEGER NOT NULL,\n  timestamp INTEGER NOT NULL,\n  id BLOB,\n  messageHash BLOB, -- Newly added, this will be populated with a counter value\n  storedAt INTEGER NOT NULL,\n  CONSTRAINT messageIndex PRIMARY KEY (messageHash)\n) WITHOUT ROWID;"
+INF 2026-04-22 14:44:38.174+00:00 executing migration statement              topics="sqlite" tid=59716 statement="INSERT INTO message(pubsubTopic, contentTopic, payload, version, timestamp, id, messageHash, storedAt)\nSELECT\n  mb.pubsubTopic,\n  mb.contentTopic,\n  mb.payload,\n  mb.version,\n  mb.timestamp,\n  mb.id,\n  randomblob(32), -- to populate 32-byte random blob\n  mb.storedAt\nFROM message_backup AS mb;"
+INF 2026-04-22 14:44:38.174+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="INSERT INTO message(pubsubTopic, contentTopic, payload, version, timestamp, id, messageHash, storedAt)\nSELECT\n  mb.pubsubTopic,\n  mb.contentTopic,\n  mb.payload,\n  mb.version,\n  mb.timestamp,\n  mb.id,\n  randomblob(32), -- to populate 32-byte random blob\n  mb.storedAt\nFROM message_backup AS mb;"
+INF 2026-04-22 14:44:38.174+00:00 executing migration statement              topics="sqlite" tid=59716 statement="DROP TABLE message_backup;"
+INF 2026-04-22 14:44:38.175+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="DROP TABLE message_backup;"
+INF 2026-04-22 14:44:38.175+00:00 executing migration statement              topics="sqlite" tid=59716 statement="ALTER TABLE message ADD COLUMN meta BLOB;"
+INF 2026-04-22 14:44:38.175+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="ALTER TABLE message ADD COLUMN meta BLOB;"
+INF 2026-04-22 14:44:38.175+00:00 executing migration statement              topics="sqlite" tid=59716 statement="ALTER TABLE message DROP COLUMN timestamp;"
+INF 2026-04-22 14:44:38.176+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="ALTER TABLE message DROP COLUMN timestamp;"
+INF 2026-04-22 14:44:38.176+00:00 executing migration statement              topics="sqlite" tid=59716 statement="ALTER TABLE message RENAME COLUMN storedAt TO timestamp;"
+INF 2026-04-22 14:44:38.177+00:00 migration statement executed succesfully   topics="sqlite" tid=59716 statement="ALTER TABLE message RENAME COLUMN storedAt TO timestamp;"
+INF 2026-04-22 14:44:38.177+00:00 database user_version updated              topics="sqlite" tid=59716 userVersion=10
+INF 2026-04-22 14:44:38.177+00:00 finished message store's sqlite database migration topics="waku archive migration" tid=59716
+INF 2026-04-22 14:44:38.177+00:00 setting up sqlite waku archive driver      tid=59716
+INF 2026-04-22 14:44:38.177+00:00 executing message retention policy         topics="waku archive" tid=59716 policy=time:172800
+INF 2026-04-22 14:44:38.177+00:00 beginning of executing message retention policy - time topics="waku archive retention_policy" tid=59716
+INF 2026-04-22 14:44:38.178+00:00 end of executing message retention policy - time topics="waku archive retention_policy" tid=59716
+INF 2026-04-22 14:44:38.178+00:00 mounting waku store protocol               topics="waku node store api" tid=59716
+INF 2026-04-22 14:44:38.178+00:00 mounting store client                      topics="waku node store api" tid=59716
+INF 2026-04-22 14:44:38.178+00:00 mounting auto sharding                     topics="waku node" tid=59716 clusterId=198 shardCount=1
+INF 2026-04-22 14:44:38.178+00:00 Shards created from content topics         tid=59716 contentTopics=[] shards=[]
+INF 2026-04-22 14:44:38.178+00:00 Setting max message size                   tid=59716 num_bytes=153600
+INF 2026-04-22 14:44:38.178+00:00 mounting relay protocol                    topics="waku node relay api" tid=59716
+INF 2026-04-22 14:44:38.178+00:00 relay mounted successfully                 topics="waku node relay api" tid=59716
+INF 2026-04-22 14:44:38.178+00:00 adding validator to signed shards          tid=59716 protectedShards=[] clusterId=198
+INF 2026-04-22 14:44:38.178+00:00 mounting rendezvous discovery protocol     topics="waku node" tid=59716
+INF 2026-04-22 14:44:38.178+00:00 waku rendezvous initialized                topics="waku node" tid=59716 clusterId=198 shards="[0]" capabilities="[Relay, Store]" wakuPeerRecord="(peerId: 16U*5fdMKa, seqNo: 1776869078, addresses: [/ip4/127.0.0.1/tcp/37105], mixKey: )"
+INF 2026-04-22 14:44:38.178+00:00 mounting rendezvous client                 topics="waku node" tid=59716
+INF 2026-04-22 14:44:38.178+00:00 waku rendezvous client initialized         topics="waku node" tid=59716 clusterId=198
+INF 2026-04-22 14:44:38.178+00:00 mounting libp2p ping protocol              topics="waku node ping api" tid=59716
+INF 2026-04-22 14:44:38.178+00:00 mounting light push client                 topics="waku node lightpush api" tid=59716
+INF 2026-04-22 14:44:38.178+00:00 mounting legacy light push client          topics="waku node lightpush api" tid=59716
+INF 2026-04-22 14:44:38.178+00:00 mounting filter client                     topics="waku node filter api" tid=59716
+INF 2026-04-22 14:44:38.178+00:00 mounting waku peer exchange client         topics="waku node peerexchange api" tid=59716
+INF 2026-04-22 14:44:38.178+00:00 No external callbacks to be set            topics="wakunode waku" tid=59716
+INF 2026-04-22 14:44:38.179+00:00 Retrieve dynamic bootstrap nodes           topics="wakunode waku" tid=59716
+INF 2026-04-22 14:44:38.179+00:00 Running nwaku node                         tid=59716 version="\"f5762a\""
+INF 2026-04-22 14:44:38.179+00:00 Starting Waku node                         topics="waku node" tid=59716 version="\"f5762a\""
+INF 2026-04-22 14:44:38.179+00:00 starting relay protocol                    topics="waku node" tid=59716
+INF 2026-04-22 14:44:38.179+00:00 start                                      topics="waku relay" tid=59716
+INF 2026-04-22 14:44:38.179+00:00 relay started successfully                 topics="waku node" tid=59716
+INF 2026-04-22 14:44:38.179+00:00 waku rendezvous periodic registration started topics="waku rendezvous" tid=59716 interval=10s
+INF 2026-04-22 14:44:38.179+00:00 waku rendezvous discovery started          topics="waku rendezvous" tid=59716
+INF 2026-04-22 14:44:38.179+00:00 waku rendezvous periodic requests started  topics="waku rendezvous client" tid=59716 interval=10s
+INF 2026-04-22 14:44:38.179+00:00 waku rendezvous client started             topics="waku rendezvous client" tid=59716
+DBG 2026-04-22 14:44:38.179+00:00 starting switch for peer                   topics="libp2p switch" tid=59716 peerInfo="(peerId: 16Uiu2HAmKpw5gXXYcN2M5R2HHXJZQKvTNQDDCuMzA7waAQ5fdMKa, listenAddrs: [/ip4/0.0.0.0/tcp/37105], addrs: [], protocols: [/ipfs/id/1.0.0, /libp2p/autonat/1.0.0, /libp2p/circuit/relay/0.2.0/hop, /vac/waku/metadata/1.0.0, /vac/waku/store-query/3.0.0, /vac/waku/relay/2.0.0, /vac/waku/rendezvous/1.0.0, /ipfs/ping/1.0.0, /vac/waku/filter-push/2.0.0-beta1], protoVersion: ipfs/0.1.0, agentVersion: logos-delivery-\"f5762a\")"
+DBG 2026-04-22 14:44:38.180+00:00 About to accept incoming connection        topics="libp2p switch" tid=59716
+INF 2026-04-22 14:44:38.180+00:00 Setting up AutonatService                  topics="libp2p autonatservice" tid=59716
+WRN 2026-04-22 14:44:38.180+00:00 Starting gossipsub twice                   topics="libp2p gossipsub" tid=59716
+WRN 2026-04-22 14:44:38.180+00:00 Starting rendezvous twice                  topics="waku rendezvous" tid=59716
+DBG 2026-04-22 14:44:38.180+00:00 Started libp2p node                        topics="libp2p switch" tid=59716 peer="(peerId: 16Uiu2HAmKpw5gXXYcN2M5R2HHXJZQKvTNQDDCuMzA7waAQ5fdMKa, listenAddrs: [/ip4/0.0.0.0/tcp/37105], addrs: [/ip4/127.0.0.1/tcp/37105], protocols: [/ipfs/id/1.0.0, /libp2p/autonat/1.0.0, /libp2p/circuit/relay/0.2.0/hop, /vac/waku/metadata/1.0.0, /vac/waku/store-query/3.0.0, /vac/waku/relay/2.0.0, /vac/waku/rendezvous/1.0.0, /ipfs/ping/1.0.0, /vac/waku/filter-push/2.0.0-beta1], protoVersion: ipfs/0.1.0, agentVersion: logos-delivery-\"f5762a\")"
+INF 2026-04-22 14:44:38.180+00:00 PeerInfo                                   topics="waku node" tid=59716 peerId=16U*5fdMKa addrs="[/ip4/127.0.0.1/tcp/37105]"
+INF 2026-04-22 14:44:38.180+00:00 Listening on                               topics="waku node" tid=59716 full=[/ip4/0.0.0.0/tcp/37105/p2p/16Uiu2HAmKpw5gXXYcN2M5R2HHXJZQKvTNQDDCuMzA7waAQ5fdMKa] localIp=10.1.0.248 switchAddress=@[/ip4/10.1.0.248/tcp/37105]
+INF 2026-04-22 14:44:38.180+00:00 Announcing addresses                       topics="waku node" tid=59716 full=[/ip4/10.1.0.248/tcp/37105/p2p/16Uiu2HAmKpw5gXXYcN2M5R2HHXJZQKvTNQDDCuMzA7waAQ5fdMKa]
+INF 2026-04-22 14:44:38.180+00:00 DNS: discoverable ENR                      topics="waku node" tid=59716 enr=enr:-KC4QPIaR5KFVV7AfF8pZ-kWtAZAUI-8HtQC4pP3pkZhQYwYMj393a2DcsgZkmwz47iFN17HVrX0Tt0TVBqo9AqE8F8BgmlkgnY0gmlwhAAAAACKbXVsdGlhZGRyc4CCcnOFAMYBAACJc2VjcDI1NmsxoQNqjeuR_8kmnpqk-3zciOrVu-JF0BxzmmrwJyrXYHB6xYN0Y3CCkPGFd2FrdTID
+INF 2026-04-22 14:44:38.180+00:00 Node started successfully                  topics="waku node" tid=59716
+INF 2026-04-22 14:44:38.180+00:00 Starting peer exchange loop                topics="waku node peerexchange api" tid=59716
+INF 2026-04-22 14:44:38.180+00:00 Retrieving peer info via peer exchange protocol topics="waku node peerexchange api" tid=59716 amount=5
+INF 2026-04-22 14:44:38.180+00:00 peer exchange request could not be made as no peer exchange peers found topics="waku peer_exchange client" tid=59716
+WRN 2026-04-22 14:44:38.180+00:00 failed to retrieve peer info via peer exchange protocol topics="waku node peerexchange api" tid=59716 error="(status_code: SERVICE_UNAVAILABLE, status_desc: some("peer_not_found_failure"))"
+WRN 2026-04-22 14:44:38.180+00:00 Cannot fetch peers from peer exchange      topics="waku node peerexchange api" tid=59716 cause="(status_code: SERVICE_UNAVAILABLE, status_desc: some("peer_not_found_failure"))"
+INF 2026-04-22 14:44:38.180+00:00 Relay peer connections                     topics="waku node peer_manager" tid=59716 inRelayConns=0/50 outRelayConns=0/25 totalConnections=0/150 notConnectedPeers=0 outsideBackoffPeers=0
+INF 2026-04-22 14:44:38.180+00:00 PeerInfo                                   topics="waku node" tid=59716 peerId=16U*5fdMKa addrs="[/ip4/10.1.0.248/tcp/37105]"
+INF 2026-04-22 14:44:38.180+00:00 Listening on                               topics="waku node" tid=59716 full=[/ip4/0.0.0.0/tcp/37105/p2p/16Uiu2HAmKpw5gXXYcN2M5R2HHXJZQKvTNQDDCuMzA7waAQ5fdMKa] localIp=10.1.0.248 switchAddress=@[/ip4/10.1.0.248/tcp/37105]
+INF 2026-04-22 14:44:38.180+00:00 Announcing addresses                       topics="waku node" tid=59716 full=[/ip4/10.1.0.248/tcp/37105/p2p/16Uiu2HAmKpw5gXXYcN2M5R2HHXJZQKvTNQDDCuMzA7waAQ5fdMKa]
+INF 2026-04-22 14:44:38.180+00:00 DNS: discoverable ENR                      topics="waku node" tid=59716 enr=enr:-KC4QPIaR5KFVV7AfF8pZ-kWtAZAUI-8HtQC4pP3pkZhQYwYMj393a2DcsgZkmwz47iFN17HVrX0Tt0TVBqo9AqE8F8BgmlkgnY0gmlwhAAAAACKbXVsdGlhZGRyc4CCcnOFAMYBAACJc2VjcDI1NmsxoQNqjeuR_8kmnpqk-3zciOrVu-JF0BxzmmrwJyrXYHB6xYN0Y3CCkPGFd2FrdTID
+INF 2026-04-22 14:44:38.181+00:00 Waku node ENR updated successfully with new multiaddress topics="wakunode waku" tid=59716 enr=enr:-Kq4QHRL02xqI2kaAwl709dlp9JZmumYPWFPsAner3dy1NLTJx3Mq1HfaqP6rXwtGCjCI9T0qDgVi-9vh4lMgK8u_TACgmlkgnY0gmlwhAAAAACKbXVsdGlhZGRyc4oACAQKAQD4BpDxgnJzhQDGAQAAiXNlY3AyNTZrMaEDao3rkf_JJp6apPt83Ijq1bviRdAcc5pq8Ccq12BwesWDdGNwgpDxhXdha3UyAw record="(2, id: \"v4\", ip: 0.0.0.0, multiaddrs: 0x0008040A0100F80690F1, rs: 0x00C6010000, secp256k1: 0x036A8DEB91FFC9269E9AA4FB7CDC88EAD5BBE245D01C739A6AF0272AD760707AC5, tcp: 37105, waku2: 0x03)"
+INF 2026-04-22 14:44:38.181+00:00 subscribe                                  topics="waku relay" tid=59716 pubsubTopic=/waku/2/rs/198/0
+WRN 2026-04-22 14:44:38.181+00:00 No-effect API call to subscribe. Already subscribed to topic topics="waku node relay api" tid=59716 pubsubTopic=/waku/2/rs/198/0
+INF 2026-04-22 14:44:38.181+00:00 Health monitor loop start                  tid=59716
+DBG 2026-04-22 14:44:38.181+00:00 calculateConnectionState                   tid=59716 relayCount=0 storeClientCount=0 lightpushCount=0 filterCount=0
+INF 2026-04-22 14:44:38.181+00:00 starting keepalive                         tid=59716 randomPeersKeepalive=10s allPeersKeepalive=2m
+INF 2026-04-22 14:44:38.181+00:00 getPubSubPeersInMesh - there is no mesh peer for the given pubsub topic topics="waku relay" tid=59716 pubsubTopic=/waku/2/rs/198/0
+INF 2026-04-22 14:44:38.181+00:00 Stopping AutonatService                    topics="libp2p autonatservice" tid=59716
+WRN 2026-04-22 14:44:38.182+00:00 Stopping rendezvous without starting it    topics="waku rendezvous" tid=59716
+WRN 2026-04-22 14:44:38.182+00:00 Stopping rendezvous without starting it    topics="waku rendezvous" tid=59716
+INF 2026-04-22 14:44:38.182+00:00 waku rendezvous discovery stopped          topics="waku rendezvous" tid=59716
+INF 2026-04-22 14:44:38.182+00:00 waku rendezvous client stopped             topics="waku rendezvous client" tid=59716
+DBG 2026-04-22 14:44:41.409+00:00 Watchdog thread exiting because FFIContext is not running tid=59717
