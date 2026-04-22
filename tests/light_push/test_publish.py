@@ -17,6 +17,7 @@ class TestLightPushPublish(StepsLightPush):
         self.setup_first_lightpush_node()
         self.subscribe_to_pubsub_topics_via_relay()
 
+    @pytest.mark.waku_test_fleet
     def test_light_push_with_valid_payloads(self):
         failed_payloads = []
         for payload in SAMPLE_INPUTS:
@@ -75,6 +76,7 @@ class TestLightPushPublish(StepsLightPush):
         except Exception as ex:
             assert "Message size exceeded maximum of 153600 bytes" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_light_push_with_valid_content_topics(self):
         failed_content_topics = []
         for content_topic in SAMPLE_INPUTS:
@@ -151,6 +153,7 @@ class TestLightPushPublish(StepsLightPush):
         except Exception as ex:
             assert "not_published_to_any_peer" in str(ex) or "timeout" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_light_push_with_valid_timestamps(self):
         failed_timestamps = []
         for timestamp in SAMPLE_TIMESTAMPS:
@@ -191,6 +194,7 @@ class TestLightPushPublish(StepsLightPush):
         except Exception as ex:
             assert "Bad Request" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_light_push_with_valid_meta(self):
         self.check_light_pushed_message_reaches_receiving_peer(message=self.create_message(meta=to_base64(self.test_payload)))
 
@@ -208,6 +212,7 @@ class TestLightPushPublish(StepsLightPush):
         except Exception as ex:
             assert '(kind: InvalidLengthField, field: "meta")' in str(ex) or "invalid length for Meta field" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_light_push_with_ephemeral(self):
         failed_ephemeral = []
         for ephemeral in [True, False]:
@@ -219,6 +224,7 @@ class TestLightPushPublish(StepsLightPush):
                 failed_ephemeral.append(ephemeral)
         assert not failed_ephemeral, f"Ephemeral that failed: {failed_ephemeral}"
 
+    @pytest.mark.waku_test_fleet
     def test_light_push_with_extra_field(self):
         try:
             self.check_light_pushed_message_reaches_receiving_peer(message=self.create_message(extraField="extraValue"))
