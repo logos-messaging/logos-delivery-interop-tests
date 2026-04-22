@@ -88,6 +88,41 @@ def wait_for_error(collector: EventCollector, request_id: str, timeout_s: float)
     return wait_for_event(collector, request_id, is_error_event, timeout_s)
 
 
+TERMINAL_EVENT_TYPES = {EVENT_PROPAGATED, EVENT_SENT, EVENT_ERROR}
+
+
+def assert_event_invariants(collector: EventCollector, request_id: str) -> None:
+    """Check per-request event invariants from the issue #163 spec:
+    - All events carry the correct requestId.
+    - No duplicate terminal events (Propagated, Sent, Error) for the same request.
+    - Sent never appears before Propagated (by arrival order).
+    """
+    events = collector.get_events_for_request(request_id)
+    assert events, f"No events found for request {request_id}"
+
+    counts: dict[str, int] = {}
+    first_index: dict[str, int] = {}
+    for i, event in enumerate(events):
+        assert event.get("requestId") == request_id, (
+            f"Event at index {i} has wrong requestId: " f"expected {request_id!r}, got {event.get('requestId')!r}"
+        )
+        event_type = event.get("eventType", "")
+        if event_type in TERMINAL_EVENT_TYPES:
+            counts[event_type] = counts.get(event_type, 0) + 1
+            if event_type not in first_index:
+                first_index[event_type] = i
+
+    for event_type, count in counts.items():
+        assert count == 1, f"Duplicate {event_type} events for request {request_id}: " f"got {count}, expected 1. Events: {events}"
+
+    if EVENT_SENT in first_index and EVENT_PROPAGATED in first_index:
+        assert first_index[EVENT_PROPAGATED] < first_index[EVENT_SENT], (
+            f"message_sent (index {first_index[EVENT_SENT]}) arrived before "
+            f"message_propagated (index {first_index[EVENT_PROPAGATED]}) "
+            f"for request {request_id}. Events: {events}"
+        )
+
+
 def get_node_multiaddr(node) -> str:
     """Return the first TCP multiaddr (with peer-id) from a WrapperManager node."""
     result = node.get_node_info_raw("MyMultiaddresses")
