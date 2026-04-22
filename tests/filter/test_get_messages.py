@@ -12,6 +12,7 @@ logger = get_custom_logger(__name__)
 @pytest.mark.usefixtures("setup_main_relay_node", "setup_main_filter_node", "subscribe_main_nodes")
 class TestFilterGetMessages(StepsFilter):
     @pytest.mark.smoke
+    @pytest.mark.waku_test_fleet
     def test_filter_get_message_with_valid_payloads(self):
         failed_payloads = []
         for payload in SAMPLE_INPUTS:
@@ -24,6 +25,7 @@ class TestFilterGetMessages(StepsFilter):
                 failed_payloads.append(payload["description"])
         assert not failed_payloads, f"Payloads failed: {failed_payloads}"
 
+    @pytest.mark.waku_test_fleet
     def test_filter_get_message_with_valid_timestamps(self):
         failed_timestamps = []
         for timestamp in SAMPLE_TIMESTAMPS:
@@ -37,12 +39,15 @@ class TestFilterGetMessages(StepsFilter):
                     failed_timestamps.append(timestamp)
         assert not failed_timestamps, f"Timestamps failed: {failed_timestamps}"
 
+    @pytest.mark.waku_test_fleet
     def test_filter_get_message_with_version(self):
         self.check_published_message_reaches_filter_peer(self.create_message(version=10))
 
+    @pytest.mark.waku_test_fleet
     def test_filter_get_message_with_meta(self):
         self.check_published_message_reaches_filter_peer(self.create_message(meta=to_base64(self.test_payload)))
 
+    @pytest.mark.waku_test_fleet
     def test_filter_get_message_with_ephemeral(self):
         failed_ephemeral = []
         for ephemeral in [True, False]:
@@ -54,6 +59,7 @@ class TestFilterGetMessages(StepsFilter):
                 failed_ephemeral.append(ephemeral)
         assert not failed_ephemeral, f"Ephemeral that failed: {failed_ephemeral}"
 
+    @pytest.mark.waku_test_fleet
     def test_filter_get_message_with_extra_field(self):
         try:
             self.check_published_message_reaches_filter_peer(self.create_message(extraField="extraValue"))
