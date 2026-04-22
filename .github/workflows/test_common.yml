@@ -22,6 +22,11 @@ on:
         required: false
         description: "Workflow caller. Used in reporting"
         type: string
+      fleet_tests:
+        required: false
+        description: "Run fleet tests only"
+        type: boolean
+        default: false
 
 env:
   FORCE_COLOR: "1"
@@ -174,7 +179,15 @@ jobs:
           export PATH="$HOME/.nimble/bin:$PATH"
           export PYTHONPATH="$(pwd)/vendor/logos-delivery-python-bindings/waku:$PYTHONPATH"
 
-          if [ "${{ matrix.shard }}" == "16" ]; then
+          if [ "${{ inputs.fleet_tests }}" == "true" ]; then
+              if [ "${{ matrix.shard }}" == "0" ]; then
+                  pytest --fleet -m waku_test_fleet \
+                    --ignore=vendor/logos-delivery-python-bindings/tests \
+                    --alluredir=allure-results-${{ matrix.shard }}
+              else
+                  echo "Skipping shard ${{ matrix.shard }}: fleet tests run on shard 0 only"
+              fi
+          elif [ "${{ matrix.shard }}" == "16" ]; then
               pytest tests/relay/test_rln.py \
                 --ignore=vendor/logos-delivery-python-bindings/tests \
                 --alluredir=allure-results-${{ matrix.shard }}
