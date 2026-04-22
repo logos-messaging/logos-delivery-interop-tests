@@ -1,0 +1,77 @@
+2026-04-22 15:47:23.071 DEBUG [tests.conftest] Running fixture setup: test_id
+2026-04-22 15:47:23.071 DEBUG [tests.conftest] Running test: test_relay_different_latency_between_two_nodes[500] with id: 2026-04-22_15-47-23__6ab56623-4d26-4d20-ae12-c37827005b27
+2026-04-22 15:47:23.072 DEBUG [src.steps.common] Running fixture setup: common_setup
+2026-04-22 15:47:23.072 DEBUG [src.steps.relay] Running fixture setup: relay_setup
+2026-04-22 15:47:23.080 DEBUG [src.node.docker_mananger] Docker client initialized with image wakuorg/nwaku:latest
+2026-04-22 15:47:23.080 DEBUG [src.node.waku_node] WakuNode instance initialized with log path ./log/docker/node1_2026-04-22_15-47-23__6ab56623-4d26-4d20-ae12-c37827005b27__wakuorg_nwaku:latest.log
+2026-04-22 15:47:23.087 DEBUG [src.node.docker_mananger] Docker client initialized with image wakuorg/nwaku:latest
+2026-04-22 15:47:23.088 DEBUG [src.node.waku_node] WakuNode instance initialized with log path ./log/docker/node2_2026-04-22_15-47-23__6ab56623-4d26-4d20-ae12-c37827005b27__wakuorg_nwaku:latest.log
+2026-04-22 15:47:23.089 INFO [tests.e2e.test_network_conditions] Starting node1 and node2 with relay enabled
+2026-04-22 15:47:23.089 DEBUG [src.node.waku_node] Starting Node...
+2026-04-22 15:47:23.089 DEBUG [src.node.docker_mananger] Attempting to create or retrieve network waku
+2026-04-22 15:47:23.090 DEBUG [src.node.docker_mananger] Network waku already exists
+2026-04-22 15:47:23.090 DEBUG [src.node.docker_mananger] Generated random external IP 172.18.121.246
+2026-04-22 15:47:23.091 DEBUG [src.node.docker_mananger] Generated ports ['37465', '37466', '37467', '37468', '37469']
+2026-04-22 15:47:23.091 DEBUG [src.node.waku_node] RLN credentials were not set
+2026-04-22 15:47:23.091 INFO [src.node.waku_node] RLN credentials not set or credential store not available, starting without RLN
+2026-04-22 15:47:23.091 DEBUG [src.node.waku_node] Using volumes []
+2026-04-22 15:47:23.091 DEBUG [src.node.docker_mananger] docker run -i -t -p 37465:37465 -p 37466:37466 -p 37467:37467 -p 37468:37468 -p 37469:37469 wakuorg/nwaku:latest --listen-address=0.0.0.0 --rest=true --rest-admin=true --websocket-support=true --log-level=TRACE --rest-relay-cache-capacity=100 --websocket-port=37467 --rest-port=37465 --tcp-port=37466 --discv5-udp-port=37468 --rest-address=0.0.0.0 --nat=extip:172.18.121.246 --peer-exchange=true --discv5-discovery=true --cluster-id=198 --nodekey=ccef23abbc81d9a60ec04a465c1f9a0e89ed2aba475ab8cec652ecfbf30a2be9 --shard=0 --metrics-server=true --metrics-server-address=0.0.0.0 --metrics-server-port=37469 --metrics-logging=true --relay=true
+2026-04-22 15:47:23.281 DEBUG [src.node.docker_mananger] docker network connect --ip 172.18.121.246 waku e0e6ff346c449be315c736596ec08f0726812f3b3af53533bf96597aa205cedb
+2026-04-22 15:47:23.293 ERROR [src.node.docker_mananger] Max retries reached for container c903deb2301c. Exiting log stream.
+2026-04-22 15:47:23.319 DEBUG [src.node.docker_mananger] Container started with ID e0e6ff346c44. Setting up logs at ./log/docker/node1_2026-04-22_15-47-23__6ab56623-4d26-4d20-ae12-c37827005b27__wakuorg_nwaku:latest.log
+2026-04-22 15:47:23.319 DEBUG [src.node.waku_node] Started container from image wakuorg/nwaku:latest. REST: 37465
+2026-04-22 15:47:23.320 DEBUG [src.libs.common] Sleeping for 1 seconds
+2026-04-22 15:47:24.321 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:37465/health" -H "Content-Type: application/json" -d 'None'
+2026-04-22 15:47:24.324 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"nodeHealth":"READY","connectionStatus":"Disconnected","protocolsHealth":[{"Relay":"NOT_READY","desc":"No connected peers"},{"Lightpush":"NOT_MOUNTED"},{"Legacy Lightpush":"NOT_MOUNTED"},{"Filter":"NOT_MOUNTED"},{"Store":"NOT_MOUNTED"},{"Peer Exchange":"READY"},{"Rendezvous":"NOT_READY","desc":"No Rendezvous peers are available yet"},{"Mix":"NOT_MOUNTED"},{"Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Legacy Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Store Client":"NOT_READY","desc":"No Store service peer available yet, neither Store service set up for the node"},{"Filter Client":"NOT_READY","desc":"No Filter service peer available yet"},{"Rln Relay":"NOT_MOUNTED"}]}'
+2026-04-22 15:47:24.325 INFO [src.node.waku_node] Node protocols are initialized !!
+2026-04-22 15:47:24.325 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:37465/debug/v1/info" -H "Content-Type: application/json" -d 'None'
+2026-04-22 15:47:24.328 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"listenAddresses":["/ip4/172.18.121.246/tcp/37466/p2p/16Uiu2HAmLswopPQE9PgozijybkZj8wb5jaaMRCxuTsc3K33t9MVL","/ip4/172.18.121.246/tcp/37467/ws/p2p/16Uiu2HAmLswopPQE9PgozijybkZj8wb5jaaMRCxuTsc3K33t9MVL"],"enrUri":"enr:-L24QB5NqaG1blM9KQ2H5INCJu--Nb_BvB4QbzfTHH1M__QccuXOYnGXy_fq0B7V5WFnx7YFSmIQwh3PSwmbeyUhKQQCgmlkgnY0gmlwhKwSefaKbXVsdGlhZGRyc5YACASsEnn2BpJaAAoErBJ59gaSW90DgnJzhQDGAQAAiXNlY3AyNTZrMaEDei8rxSuCLYKORSm8-8ihJjCJn6taXu2IHuToI6sndWuDdGNwgpJag3VkcIKSXIV3YWt1MgE"}'
+2026-04-22 15:47:24.328 INFO [src.node.waku_node] REST service is ready !!
+2026-04-22 15:47:24.328 DEBUG [src.node.waku_node] Starting Node...
+2026-04-22 15:47:24.328 DEBUG [src.node.docker_mananger] Attempting to create or retrieve network waku
+2026-04-22 15:47:24.330 DEBUG [src.node.docker_mananger] Network waku already exists
+2026-04-22 15:47:24.330 DEBUG [src.node.docker_mananger] Generated random external IP 172.18.5.119
+2026-04-22 15:47:24.330 DEBUG [src.node.docker_mananger] Generated ports ['65295', '65296', '65297', '65298', '65299']
+2026-04-22 15:47:24.330 DEBUG [src.node.waku_node] RLN credentials were not set
+2026-04-22 15:47:24.330 INFO [src.node.waku_node] RLN credentials not set or credential store not available, starting without RLN
+2026-04-22 15:47:24.331 DEBUG [src.node.waku_node] Using volumes []
+2026-04-22 15:47:24.331 DEBUG [src.node.docker_mananger] docker run -i -t -p 65295:65295 -p 65296:65296 -p 65297:65297 -p 65298:65298 -p 65299:65299 wakuorg/nwaku:latest --listen-address=0.0.0.0 --rest=true --rest-admin=true --websocket-support=true --log-level=TRACE --rest-relay-cache-capacity=100 --websocket-port=65297 --rest-port=65295 --tcp-port=65296 --discv5-udp-port=65298 --rest-address=0.0.0.0 --nat=extip:172.18.5.119 --peer-exchange=true --discv5-discovery=true --cluster-id=198 --nodekey=8d40a71dcbf08cfe8e4ad22bea1e120ecd5c4f9ce04cef35bffd37cd3afccd79 --shard=0 --metrics-server=true --metrics-server-address=0.0.0.0 --metrics-server-port=65299 --metrics-logging=true --relay=true --discv5-bootstrap-node=enr:-L24QB5NqaG1blM9KQ2H5INCJu--Nb_BvB4QbzfTHH1M__QccuXOYnGXy_fq0B7V5WFnx7YFSmIQwh3PSwmbeyUhKQQCgmlkgnY0gmlwhKwSefaKbXVsdGlhZGRyc5YACASsEnn2BpJaAAoErBJ59gaSW90DgnJzhQDGAQAAiXNlY3AyNTZrMaEDei8rxSuCLYKORSm8-8ihJjCJn6taXu2IHuToI6sndWuDdGNwgpJag3VkcIKSXIV3YWt1MgE
+2026-04-22 15:47:24.523 DEBUG [src.node.docker_mananger] docker network connect --ip 172.18.5.119 waku cc3dd97dd8d8f4c7d0aeea1e274d8d7616c972b71501a9ab153360f0add19a2d
+2026-04-22 15:47:24.559 DEBUG [src.node.docker_mananger] Container started with ID cc3dd97dd8d8. Setting up logs at ./log/docker/node2_2026-04-22_15-47-23__6ab56623-4d26-4d20-ae12-c37827005b27__wakuorg_nwaku:latest.log
+2026-04-22 15:47:24.559 DEBUG [src.node.waku_node] Started container from image wakuorg/nwaku:latest. REST: 65295
+2026-04-22 15:47:24.559 DEBUG [src.libs.common] Sleeping for 1 seconds
+2026-04-22 15:47:25.560 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:65295/health" -H "Content-Type: application/json" -d 'None'
+2026-04-22 15:47:25.575 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"nodeHealth":"READY","connectionStatus":"PartiallyConnected","protocolsHealth":[{"Relay":"READY"},{"Lightpush":"NOT_MOUNTED"},{"Legacy Lightpush":"NOT_MOUNTED"},{"Filter":"NOT_MOUNTED"},{"Store":"NOT_MOUNTED"},{"Peer Exchange":"READY"},{"Rendezvous":"NOT_READY","desc":"No Rendezvous peers are available yet"},{"Mix":"NOT_MOUNTED"},{"Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Legacy Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Store Client":"NOT_READY","desc":"No Store service peer available yet, neither Store service set up for the node"},{"Filter Client":"NOT_READY","desc":"No Filter service peer available yet"},{"Rln Relay":"NOT_MOUNTED"}]}'
+2026-04-22 15:47:25.575 INFO [src.node.waku_node] Node protocols are initialized !!
+2026-04-22 15:47:25.576 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:65295/debug/v1/info" -H "Content-Type: application/json" -d 'None'
+2026-04-22 15:47:25.579 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'{"listenAddresses":["/ip4/172.18.5.119/tcp/65296/p2p/16Uiu2HAmEoqFLxKasvGe76u4hGnBwWnhfG6LiwDwEgX7ko2XxNES","/ip4/172.18.5.119/tcp/65297/ws/p2p/16Uiu2HAmEoqFLxKasvGe76u4hGnBwWnhfG6LiwDwEgX7ko2XxNES"],"enrUri":"enr:-L24QI33T0wgwFDgLpqGqhjJixKPykv1_cI6aeiQXg_kYy1aBQYfagZUyvprUONkfCeeOq8dbxb_vK6Z5VyAdfRNolICgmlkgnY0gmlwhKwSBXeKbXVsdGlhZGRyc5YACASsEgV3Bv8QAAoErBIFdwb_Ed0DgnJzhQDGAQAAiXNlY3AyNTZrMaEDH_tPFFl_0xdcPsI80qhIC2VTWJvvPhg-pDbiZhtKzBeDdGNwgv8Qg3VkcIL_EoV3YWt1MgE"}'
+2026-04-22 15:47:25.580 INFO [src.node.waku_node] REST service is ready !!
+2026-04-22 15:47:25.580 INFO [tests.e2e.test_network_conditions] Subscribing both nodes to relay topic
+2026-04-22 15:47:25.580 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:37465/relay/v1/subscriptions" -H "Content-Type: application/json" -d '["/waku/2/rs/198/1"]'
+2026-04-22 15:47:25.585 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-04-22 15:47:25.585 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:65295/relay/v1/subscriptions" -H "Content-Type: application/json" -d '["/waku/2/rs/198/1"]'
+2026-04-22 15:47:25.590 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-04-22 15:47:25.592 INFO [tests.e2e.test_network_conditions] Waiting for autoconnection
+2026-04-22 15:47:25.592 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:37465/admin/v1/peers" -H "Content-Type: application/json" -d 'None'
+2026-04-22 15:47:25.595 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"multiaddr":"/ip4/172.18.5.119/tcp/37868/p2p/16Uiu2HAmEoqFLxKasvGe76u4hGnBwWnhfG6LiwDwEgX7ko2XxNES","protocols":["/ipfs/id/1.0.0","/libp2p/autonat/1.0.0","/libp2p/circuit/relay/0.2.0/hop","/vac/waku/metadata/1.0.0","/vac/waku/relay/2.0.0","/vac/waku/rendezvous/1.0.0","/ipfs/ping/1.0.0","/vac/waku/filter-push/2.0.0-beta1","/vac/waku/peer-exchange/2.0.0-alpha1"],"shards":[0],"connected":"Connected","agent":"logos-delivery-\\"v0.38.0-16-g260def\\"","origin":"UnknownOrigin"}]'
+2026-04-22 15:47:25.595 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:65295/admin/v1/peers" -H "Content-Type: application/json" -d 'None'
+2026-04-22 15:47:25.598 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"multiaddr":"/ip4/172.18.121.246/tcp/37466/p2p/16Uiu2HAmLswopPQE9PgozijybkZj8wb5jaaMRCxuTsc3K33t9MVL","protocols":["/ipfs/id/1.0.0","/libp2p/autonat/1.0.0","/libp2p/circuit/relay/0.2.0/hop","/vac/waku/metadata/1.0.0","/vac/waku/relay/2.0.0","/vac/waku/rendezvous/1.0.0","/ipfs/ping/1.0.0","/vac/waku/filter-push/2.0.0-beta1","/vac/waku/peer-exchange/2.0.0-alpha1"],"shards":[0],"connected":"Connected","agent":"logos-delivery-\\"v0.38.0-16-g260def\\"","origin":"Discv5"}]'
+2026-04-22 15:47:25.598 DEBUG [src.libs.common] Sleeping for 10 seconds
+2026-04-22 15:47:35.598 INFO [tests.e2e.test_network_conditions] Applying 500ms latency to node2
+2026-04-22 15:47:35.600 INFO [src.steps.network_conditions] TC exec: ['sudo', '-n', 'nsenter', '-t', '26513', '-n', 'tc', 'qdisc', 'del', 'dev', 'eth0', 'root']
+2026-04-22 15:47:35.611 INFO [src.steps.network_conditions] TC exec: ['sudo', '-n', 'nsenter', '-t', '26513', '-n', 'tc', 'qdisc', 'del', 'dev', 'eth0', 'root']
+2026-04-22 15:47:35.620 INFO [src.steps.network_conditions] TC exec: ['sudo', '-n', 'nsenter', '-t', '26513', '-n', 'tc', 'qdisc', 'add', 'dev', 'eth0', 'root', 'netem', 'delay', '500ms']
+2026-04-22 15:47:35.629 INFO [src.node.api_clients.base_client] curl -v -X POST "http://127.0.0.1:37465/relay/v1/messages/%2Fwaku%2F2%2Frs%2F198%2F1" -H "Content-Type: application/json" -d '{"payload": "UmVsYXkgd29ya3MhIQ==", "contentTopic": "/test/1/waku-relay/proto", "timestamp": '$(date +%s%N)'}'
+2026-04-22 15:47:35.636 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'OK'
+2026-04-22 15:47:35.636 INFO [src.node.api_clients.base_client] curl -v -X GET "http://127.0.0.1:65295/relay/v1/messages/%2Fwaku%2F2%2Frs%2F198%2F1" -H "Content-Type: application/json" -d 'None'
+2026-04-22 15:47:36.639 INFO [src.node.api_clients.base_client] Response status code: 200. Response content: b'[{"payload":"UmVsYXkgd29ya3MhIQ==","contentTopic":"/test/1/waku-relay/proto","version":0,"timestamp":1776872855629478376,"ephemeral":false,"proof":""}]'
+2026-04-22 15:47:36.641 INFO [src.steps.network_conditions] TC exec: ['sudo', '-n', 'nsenter', '-t', '26513', '-n', 'tc', 'qdisc', 'del', 'dev', 'eth0', 'root']
+2026-04-22 15:47:36.651 DEBUG [tests.conftest] Running fixture teardown: test_setup
+2026-04-22 15:47:36.652 DEBUG [tests.conftest] Running fixture teardown: close_open_nodes
+2026-04-22 15:47:36.653 DEBUG [src.node.waku_node] Stopping container with id e0e6ff346c44
+2026-04-22 15:47:37.116 DEBUG [src.node.waku_node] Container stopped.
+2026-04-22 15:47:37.116 DEBUG [src.node.waku_node] Stopping container with id cc3dd97dd8d8
+2026-04-22 15:47:37.555 DEBUG [src.node.waku_node] Container stopped.
+2026-04-22 15:47:37.556 DEBUG [tests.conftest] Running fixture teardown: check_waku_log_errors
+2026-04-22 15:47:37.581 DEBUG [src.node.docker_mananger] No errors found in the waku logs.
+2026-04-22 15:47:37.593 DEBUG [src.node.docker_mananger] No errors found in the waku logs.
