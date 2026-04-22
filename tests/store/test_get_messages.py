@@ -52,11 +52,13 @@ class TestGetMessages(StepsStore):
                 failed_pubsub_topics.append(pubsub_topic)
         assert not failed_pubsub_topics, f"PubsubTopics failed: {failed_pubsub_topics}"
 
+    @pytest.mark.waku_test_fleet
     def test_get_store_message_with_meta(self):
         message = self.create_message(meta=to_base64(self.test_payload))
         self.publish_message(message=message)
         self.check_published_message_is_stored(page_size=5, ascending="true")
 
+    @pytest.mark.waku_test_fleet
     def test_get_store_message_with_version(self):
         message = self.create_message(version=10)
         self.publish_message(message=message)
