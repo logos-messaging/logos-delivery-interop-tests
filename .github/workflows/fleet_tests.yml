@@ -5,6 +5,10 @@ concurrency:
   cancel-in-progress: false
 
 on:
+  push:
+    branches:
+      - test-waku-fleet
+
   workflow_dispatch:
     inputs:
       node1:
@@ -28,7 +32,7 @@ jobs:
     uses: ./.github/workflows/test_common.yml
     secrets: inherit
     with:
-      node1: ${{ inputs.node1 }}
-      node2: ${{ inputs.node2 }}
-      additional_nodes: ${{ inputs.additional_nodes }}
+      node1: ${{ inputs.node1 || 'wakuorg/nwaku:latest' }}
+      node2: ${{ inputs.node2 || 'wakuorg/nwaku:latest' }}
+      additional_nodes: ${{ inputs.additional_nodes || 'wakuorg/nwaku:latest,wakuorg/nwaku:latest,wakuorg/nwaku:latest' }}
       fleet_tests: true
