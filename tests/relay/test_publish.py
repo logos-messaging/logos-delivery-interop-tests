@@ -62,6 +62,7 @@ class TestRelayPublish(StepsRelay):
             except Exception as ex:
                 assert "couldn't find any messages" in str(ex) or "Bad Request" in str(ex) or "Internal Server Error" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_publish_with_valid_content_topics(self):
         failed_content_topics = []
         for content_topic in SAMPLE_INPUTS:
@@ -121,6 +122,7 @@ class TestRelayPublish(StepsRelay):
         except Exception as ex:
             assert "Bad Request" in str(ex) or "Internal Server Error" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_publish_with_valid_timestamps(self):
         failed_timestamps = []
         for timestamp in SAMPLE_TIMESTAMPS:
@@ -147,10 +149,12 @@ class TestRelayPublish(StepsRelay):
                     pass
         assert not success_timestamps, f"Invalid Timestamps that didn't failed: {success_timestamps}"
 
+    @pytest.mark.waku_test_fleet
     def test_publish_with_no_timestamp(self):
         message = {"payload": to_base64(self.test_payload), "contentTopic": self.test_content_topic}
         self.check_published_message_reaches_relay_peer(message)
 
+    @pytest.mark.waku_test_fleet
     def test_publish_with_valid_version(self):
         self.check_published_message_reaches_relay_peer(self.create_message(version=10))
 
@@ -171,6 +175,7 @@ class TestRelayPublish(StepsRelay):
         except Exception as ex:
             assert "Bad Request" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_publish_with_ephemeral(self):
         failed_ephemeral = []
         for ephemeral in [True, False]:
