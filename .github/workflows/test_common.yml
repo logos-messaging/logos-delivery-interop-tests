@@ -255,6 +255,12 @@ jobs:
           keep_reports: 5
           report_url: https://logos-messaging.github.io/logos-delivery-interop-tests/${{ env.CALLER }}
 
+      - name: Fix permissions (CRITICAL)
+        if: always()
+        run: |
+          echo "Fixing permissions..."
+          sudo chown -R $USER:$USER allure-history || true
+          
       - name: Clean allure-history
         if: always()
         run: |
