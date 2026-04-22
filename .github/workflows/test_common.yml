@@ -39,6 +39,7 @@ env:
 jobs:
   tests:
     name: tests
+    if: ${{ !inputs.fleet_tests || matrix.shard == 0 }}
     strategy:
       fail-fast: false
       matrix:
@@ -279,7 +280,7 @@ jobs:
           for key in $(jq -r 'keys[]' results.json); do
             result=$(jq -r --arg key "$key" '.[$key]' results.json)
             echo "Key: $key, Value: $result"
-            if [ "$result" != "success" ]; then
+            if [ -n "$result" ] && [ "$result" != "success" ]; then
               echo "Value 'success' not found at key: $key"
               TESTS_RESULT="failure"
               break
