@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
+        shard: [2]
     # total number of shards =18 means tests will split into 18 thread and run in parallel to increase execution speed
     # command for sharding :
     # pytest --shard-id=<shard_number> --num-shards=<total_shards>
@@ -254,11 +254,6 @@ jobs:
           allure_history: allure-history
           keep_reports: 5
           report_url: https://logos-messaging.github.io/logos-delivery-interop-tests/${{ env.CALLER }}
-
-      - name: Ensure hidden file exists in allure-history
-        if: always()
-        run: |
-          touch allure-history/.nojekyll
 
       - name: Verify generated report content
         if: always()
