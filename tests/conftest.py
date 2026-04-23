@@ -135,9 +135,9 @@ def fleet_rln_state(request):
             state["rln_membership_indexes"],
             state["keystore_prefixes"],
         )
-    except Exception as ex:
-        logger.warning("Fleet RLN: registration failed – nodes will start without RLN: %s", ex)
-        state = {"keystore_prefixes": [], "rln_membership_indexes": []}
+    except BaseException as ex:
+        logger.error("Fleet RLN: registration failed – aborting test session: %s", ex)
+        pytest.exit(f"Fleet RLN registration failed – aborting session: {ex}", returncode=1)
 
     yield state
 
@@ -265,6 +265,24 @@ def patch_waku_node_start(request, monkeypatch, fleet_rln_state):
         FLEET_DNS_DISCOVERY_URL,
     )
     yield
+
+
+@pytest.fixture(scope="function", autouse=True)
+def skip_fleet_test_without_rln(request, fleet_rln_state):
+    """Skip tests marked @pytest.mark.waku_test_fleet when no RLN keystore is
+    available for the current session.
+
+    When fleet bootstrap is active but RLN credentials were not set (or
+    on-chain registration failed), local nodes cannot join the fleet relay mesh
+    (which enforces RLN), so every fleet-marked test would ERROR instead of
+    giving useful signal.  An explicit skip with a clear reason is cleaner.
+    """
+    if not _fleet_bootstrap_enabled(request.config):
+        return
+    if not request.node.get_closest_marker("waku_test_fleet"):
+        return
+    if not fleet_rln_state.get("keystore_prefixes"):
+        pytest.skip("Skipping fleet test: RLN keystore not available " "(RLN_CREDENTIALS not set or on-chain registration failed)")
 
 
 @pytest.fixture(autouse=True)

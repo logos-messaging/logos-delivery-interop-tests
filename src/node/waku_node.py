@@ -10,7 +10,7 @@ import pytest
 import requests
 from src.libs.common import delay
 from src.libs.custom_logger import get_custom_logger
-from tenacity import retry, stop_after_delay, wait_fixed, sleep
+from tenacity import retry, stop_after_attempt, stop_after_delay, wait_fixed, sleep
 from docker.errors import NotFound as DockerNotFound
 from src.node.api_clients.rest import REST
 from src.node.docker_mananger import DockerManager
@@ -280,7 +280,7 @@ class WakuNode:
             },
         }
 
-    @retry(stop=stop_after_delay(250), wait=wait_fixed(0.1), reraise=True)
+    @retry(stop=stop_after_attempt(1), wait=wait_fixed(0.1), reraise=True)
     def register_rln(self, **kwargs):
         logger.debug("Registering RLN credentials...")
         self._docker_manager.create_network()
