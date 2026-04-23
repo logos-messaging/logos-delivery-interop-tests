@@ -23,7 +23,12 @@ class TestGetMessages(StepsStore):
                 logger.error(f'Payload {payload["description"]} failed: {str(e)}')
                 failed_payloads.append(payload["description"])
         assert not failed_payloads, f"Payloads failed: {failed_payloads}"
-        assert len(self.store_response.messages) == len(SAMPLE_INPUTS)
+        # In fleet mode the archive may also store background fleet messages; count
+        # only the messages that belong to the test by matching the test content topic.
+        test_msgs = [m for m in self.store_response.messages if m.get("message", {}).get("contentTopic") == self.test_content_topic]
+        assert len(test_msgs) == len(SAMPLE_INPUTS), (
+            f"Expected {len(SAMPLE_INPUTS)} test messages but found {len(test_msgs)} " f"(total in store: {len(self.store_response.messages)})"
+        )
 
     @pytest.mark.waku_test_fleet
     def test_get_store_messages_with_different_content_topics(self):
@@ -80,8 +85,12 @@ class TestGetMessages(StepsStore):
             self.publish_message(message=message)
             message_hash_list["nwaku"].append(self.compute_message_hash(self.test_pubsub_topic, message, hash_type="hex"))
         for node in self.store_nodes:
-            store_response = self.get_messages_from_store(node, page_size=50)
-            assert len(store_response.messages) == len(SAMPLE_INPUTS)
+            # Scope the store query to the test content topic so that background fleet
+            # messages archived on the same shard do not inflate the expected count.
+            store_response = self.get_messages_from_store(node, page_size=50, content_topics=self.test_content_topic)
+            assert len(store_response.messages) == len(
+                SAMPLE_INPUTS
+            ), f"Expected {len(SAMPLE_INPUTS)} messages but got {len(store_response.messages)}"
             for index in range(len(store_response.messages)):
                 assert store_response.message_hash(index) == message_hash_list[node.type()][index], f"Message hash at index {index} doesn't match"
 

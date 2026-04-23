@@ -105,6 +105,11 @@ VALID_PUBSUB_TOPICS = [
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/1000",
 ]
 
+# Fleet cluster configuration – mirrors config-n1.toml / config-n2.toml
+# Both fleet nodes run cluster-id=1 with shards 0-7.
+FLEET_CLUSTER_ID = "1"
+FLEET_PUBSUB_TOPICS = [f"/waku/2/rs/{FLEET_CLUSTER_ID}/{i}" for i in range(8)]
+
 PUBSUB_TOPICS_STORE = [
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/0",
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/1",
