@@ -1,0 +1,78 @@
+[35mDEBUG   [0m tests.conftest:conftest.py:51 Running fixture setup: test_id
+[35mDEBUG   [0m tests.conftest:conftest.py:57 Running test: test_relay_different_latency_between_two_nodes[200] with id: 2026-04-23_21-56-18__a1089d4a-487d-4cae-befa-c608cd6bc411
+[35mDEBUG   [0m src.steps.common:common.py:19 Running fixture setup: common_setup
+[35mDEBUG   [0m src.steps.relay:relay.py:28 Running fixture setup: relay_setup
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:19 Docker client initialized with image wakuorg/nwaku:latest
+[35mDEBUG   [0m src.node.waku_node:waku_node.py:86 WakuNode instance initialized with log path ./log/docker/node1_2026-04-23_21-56-18__a1089d4a-487d-4cae-befa-c608cd6bc411__wakuorg_nwaku:latest.log
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:19 Docker client initialized with image wakuorg/nwaku:latest
+[35mDEBUG   [0m src.node.waku_node:waku_node.py:86 WakuNode instance initialized with log path ./log/docker/node2_2026-04-23_21-56-18__a1089d4a-487d-4cae-befa-c608cd6bc411__wakuorg_nwaku:latest.log
+[32mINFO    [0m tests.e2e.test_network_conditions:test_network_conditions.py:202 Starting node1 and node2 with relay enabled
+[35mDEBUG   [0m src.node.waku_node:waku_node.py:90 Starting Node...
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:22 Attempting to create or retrieve network waku
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:25 Network waku already exists
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:108 Generated random external IP 172.18.72.94
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:101 Generated ports ['60407', '60408', '60409', '60410', '60411']
+[35mDEBUG   [0m src.node.waku_node:waku_node.py:455 RLN credentials were not set
+[32mINFO    [0m src.node.waku_node:waku_node.py:180 RLN credentials not set or credential store not available, starting without RLN
+[35mDEBUG   [0m src.node.waku_node:waku_node.py:186 Using volumes []
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:49 docker run -i -t -p 60407:60407 -p 60408:60408 -p 60409:60409 -p 60410:60410 -p 60411:60411 wakuorg/nwaku:latest --listen-address=0.0.0.0 --rest=true --rest-admin=true --websocket-support=true --log-level=TRACE --rest-relay-cache-capacity=100 --websocket-port=60409 --rest-port=60407 --tcp-port=60408 --discv5-udp-port=60410 --rest-address=0.0.0.0 --nat=extip:172.18.72.94 --peer-exchange=true --discv5-discovery=true --cluster-id=198 --nodekey=e62dd11e667aa3adbddf09ef5fcaaccff2fb2fd7363f7eeaf21d3beb11add3ad --shard=0 --metrics-server=true --metrics-server-address=0.0.0.0 --metrics-server-port=60411 --metrics-logging=true --relay=true
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:55 docker network connect --ip 172.18.72.94 waku 437c0809befcfa53aa1688686738cc5528803e34c0d71413dea0d390a1f26171
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:58 Container started with ID 437c0809befc. Setting up logs at ./log/docker/node1_2026-04-23_21-56-18__a1089d4a-487d-4cae-befa-c608cd6bc411__wakuorg_nwaku:latest.log
+[35mDEBUG   [0m src.node.waku_node:waku_node.py:197 Started container from image wakuorg/nwaku:latest. REST: 60407
+[35mDEBUG   [0m src.libs.common:common.py:47 Sleeping for 1 seconds
+[31m[1mERROR   [0m src.node.docker_mananger:docker_mananger.py:89 Max retries reached for container 58699dca0610. Exiting log stream.
+[31m[1mERROR   [0m src.node.docker_mananger:docker_mananger.py:89 Max retries reached for container 25d728491c4f. Exiting log stream.
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:37 curl -v -X GET "http://127.0.0.1:60407/health" -H "Content-Type: application/json" -d 'None'
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:22 Response status code: 200. Response content: b'{"nodeHealth":"READY","connectionStatus":"Disconnected","protocolsHealth":[{"Relay":"NOT_READY","desc":"No connected peers"},{"Lightpush":"NOT_MOUNTED"},{"Legacy Lightpush":"NOT_MOUNTED"},{"Filter":"NOT_MOUNTED"},{"Store":"NOT_MOUNTED"},{"Peer Exchange":"READY"},{"Rendezvous":"NOT_READY","desc":"No Rendezvous peers are available yet"},{"Mix":"NOT_MOUNTED"},{"Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Legacy Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Store Client":"NOT_READY","desc":"No Store service peer available yet, neither Store service set up for the node"},{"Filter Client":"NOT_READY","desc":"No Filter service peer available yet"},{"Rln Relay":"NOT_MOUNTED"}]}'
+[32mINFO    [0m src.node.waku_node:waku_node.py:294 Node protocols are initialized !!
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:37 curl -v -X GET "http://127.0.0.1:60407/debug/v1/info" -H "Content-Type: application/json" -d 'None'
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:22 Response status code: 200. Response content: b'{"listenAddresses":["/ip4/172.18.72.94/tcp/60408/p2p/16Uiu2HAm58p2ohHQ4A3kf7E4ezXEEQALXfJwpDbsGeufJsaYePEm","/ip4/172.18.72.94/tcp/60409/ws/p2p/16Uiu2HAm58p2ohHQ4A3kf7E4ezXEEQALXfJwpDbsGeufJsaYePEm"],"enrUri":"enr:-L24QMqeD0lvvMeoMlVaZPNAjRM1n1aLjETY87RD0H1ljKf5VCXRAoZppOfMYyDNmEGVFen0wu8TAG-mB3MUBn3N96oCgmlkgnY0gmlwhKwSSF6KbXVsdGlhZGRyc5YACASsEkheBuv4AAoErBJIXgbr-d0DgnJzhQDGAQAAiXNlY3AyNTZrMaECkEMZkLDH7rcWhqN3q8qYQAN0wkrnybzqCfsQhph8j46DdGNwguv4g3VkcILr-oV3YWt1MgE"}'
+[32mINFO    [0m src.node.waku_node:waku_node.py:299 REST service is ready !!
+[35mDEBUG   [0m src.node.waku_node:waku_node.py:90 Starting Node...
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:22 Attempting to create or retrieve network waku
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:25 Network waku already exists
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:108 Generated random external IP 172.18.15.182
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:101 Generated ports ['18255', '18256', '18257', '18258', '18259']
+[35mDEBUG   [0m src.node.waku_node:waku_node.py:455 RLN credentials were not set
+[32mINFO    [0m src.node.waku_node:waku_node.py:180 RLN credentials not set or credential store not available, starting without RLN
+[35mDEBUG   [0m src.node.waku_node:waku_node.py:186 Using volumes []
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:49 docker run -i -t -p 18255:18255 -p 18256:18256 -p 18257:18257 -p 18258:18258 -p 18259:18259 wakuorg/nwaku:latest --listen-address=0.0.0.0 --rest=true --rest-admin=true --websocket-support=true --log-level=TRACE --rest-relay-cache-capacity=100 --websocket-port=18257 --rest-port=18255 --tcp-port=18256 --discv5-udp-port=18258 --rest-address=0.0.0.0 --nat=extip:172.18.15.182 --peer-exchange=true --discv5-discovery=true --cluster-id=198 --nodekey=bc49d5b971ccaa0b4f4653b5ac9e7e408ddd20abb4b9a6a6bdf01bc5478de8a6 --shard=0 --metrics-server=true --metrics-server-address=0.0.0.0 --metrics-server-port=18259 --metrics-logging=true --relay=true --discv5-bootstrap-node=enr:-L24QMqeD0lvvMeoMlVaZPNAjRM1n1aLjETY87RD0H1ljKf5VCXRAoZppOfMYyDNmEGVFen0wu8TAG-mB3MUBn3N96oCgmlkgnY0gmlwhKwSSF6KbXVsdGlhZGRyc5YACASsEkheBuv4AAoErBJIXgbr-d0DgnJzhQDGAQAAiXNlY3AyNTZrMaECkEMZkLDH7rcWhqN3q8qYQAN0wkrnybzqCfsQhph8j46DdGNwguv4g3VkcILr-oV3YWt1MgE
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:55 docker network connect --ip 172.18.15.182 waku b760db7ff54f6606ad49b5cbf9cc076d6e471984f3e970ebdb32fa0dfc500416
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:58 Container started with ID b760db7ff54f. Setting up logs at ./log/docker/node2_2026-04-23_21-56-18__a1089d4a-487d-4cae-befa-c608cd6bc411__wakuorg_nwaku:latest.log
+[35mDEBUG   [0m src.node.waku_node:waku_node.py:197 Started container from image wakuorg/nwaku:latest. REST: 18255
+[35mDEBUG   [0m src.libs.common:common.py:47 Sleeping for 1 seconds
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:37 curl -v -X GET "http://127.0.0.1:18255/health" -H "Content-Type: application/json" -d 'None'
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:22 Response status code: 200. Response content: b'{"nodeHealth":"READY","connectionStatus":"PartiallyConnected","protocolsHealth":[{"Relay":"READY"},{"Lightpush":"NOT_MOUNTED"},{"Legacy Lightpush":"NOT_MOUNTED"},{"Filter":"NOT_MOUNTED"},{"Store":"NOT_MOUNTED"},{"Peer Exchange":"READY"},{"Rendezvous":"NOT_READY","desc":"No Rendezvous peers are available yet"},{"Mix":"NOT_MOUNTED"},{"Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Legacy Lightpush Client":"NOT_READY","desc":"No Lightpush service peer available yet"},{"Store Client":"NOT_READY","desc":"No Store service peer available yet, neither Store service set up for the node"},{"Filter Client":"NOT_READY","desc":"No Filter service peer available yet"},{"Rln Relay":"NOT_MOUNTED"}]}'
+[32mINFO    [0m src.node.waku_node:waku_node.py:294 Node protocols are initialized !!
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:37 curl -v -X GET "http://127.0.0.1:18255/debug/v1/info" -H "Content-Type: application/json" -d 'None'
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:22 Response status code: 200. Response content: b'{"listenAddresses":["/ip4/172.18.15.182/tcp/18256/p2p/16Uiu2HAm3KTmtMoEZp9QByEMybgZXuD3daaxL5RafBhj2TLMQd9d","/ip4/172.18.15.182/tcp/18257/ws/p2p/16Uiu2HAm3KTmtMoEZp9QByEMybgZXuD3daaxL5RafBhj2TLMQd9d"],"enrUri":"enr:-L24QO3yHGaPAWDODU9q6E7WCOtEL7_Er-JvVeqDMmMpyL2ZAcnemO3EN5Fdwox36Lt63GcuY-7Y9SJ-PjqRqjckPXsCgmlkgnY0gmlwhKwSD7aKbXVsdGlhZGRyc5YACASsEg-2BkdQAAoErBIPtgZHUd0DgnJzhQDGAQAAiXNlY3AyNTZrMaECdUY1wXju1XnlJcLx7BiKd2RpuDhxaNR8Bky1kfwUw7yDdGNwgkdQg3VkcIJHUoV3YWt1MgE"}'
+[32mINFO    [0m src.node.waku_node:waku_node.py:299 REST service is ready !!
+[32mINFO    [0m tests.e2e.test_network_conditions:test_network_conditions.py:206 Subscribing both nodes to relay topic
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:37 curl -v -X POST "http://127.0.0.1:60407/relay/v1/subscriptions" -H "Content-Type: application/json" -d '["/waku/2/rs/198/1"]'
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:22 Response status code: 200. Response content: b'OK'
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:37 curl -v -X POST "http://127.0.0.1:18255/relay/v1/subscriptions" -H "Content-Type: application/json" -d '["/waku/2/rs/198/1"]'
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:22 Response status code: 200. Response content: b'OK'
+[32mINFO    [0m tests.e2e.test_network_conditions:test_network_conditions.py:210 Waiting for autoconnection
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:37 curl -v -X GET "http://127.0.0.1:60407/admin/v1/peers" -H "Content-Type: application/json" -d 'None'
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:22 Response status code: 200. Response content: b'[{"multiaddr":"/ip4/172.18.15.182/tcp/37438/p2p/16Uiu2HAm3KTmtMoEZp9QByEMybgZXuD3daaxL5RafBhj2TLMQd9d","protocols":["/ipfs/id/1.0.0","/libp2p/autonat/1.0.0","/libp2p/circuit/relay/0.2.0/hop","/vac/waku/metadata/1.0.0","/vac/waku/relay/2.0.0","/vac/waku/rendezvous/1.0.0","/ipfs/ping/1.0.0","/vac/waku/filter-push/2.0.0-beta1","/vac/waku/peer-exchange/2.0.0-alpha1"],"shards":[0],"connected":"Connected","agent":"logos-delivery-\\"v0.38.0-19-g820ccc\\"","origin":"UnknownOrigin"}]'
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:37 curl -v -X GET "http://127.0.0.1:18255/admin/v1/peers" -H "Content-Type: application/json" -d 'None'
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:22 Response status code: 200. Response content: b'[{"multiaddr":"/ip4/172.18.72.94/tcp/60408/p2p/16Uiu2HAm58p2ohHQ4A3kf7E4ezXEEQALXfJwpDbsGeufJsaYePEm","protocols":["/ipfs/id/1.0.0","/libp2p/autonat/1.0.0","/libp2p/circuit/relay/0.2.0/hop","/vac/waku/metadata/1.0.0","/vac/waku/relay/2.0.0","/vac/waku/rendezvous/1.0.0","/ipfs/ping/1.0.0","/vac/waku/filter-push/2.0.0-beta1","/vac/waku/peer-exchange/2.0.0-alpha1"],"shards":[0],"connected":"Connected","agent":"logos-delivery-\\"v0.38.0-19-g820ccc\\"","origin":"Discv5"}]'
+[35mDEBUG   [0m src.libs.common:common.py:47 Sleeping for 10 seconds
+[32mINFO    [0m tests.e2e.test_network_conditions:test_network_conditions.py:213 Applying 200ms latency to node2
+[32mINFO    [0m src.steps.network_conditions:network_conditions.py:23 TC exec: ['sudo', '-n', 'nsenter', '-t', '22742', '-n', 'tc', 'qdisc', 'del', 'dev', 'eth0', 'root']
+[32mINFO    [0m src.steps.network_conditions:network_conditions.py:23 TC exec: ['sudo', '-n', 'nsenter', '-t', '22742', '-n', 'tc', 'qdisc', 'del', 'dev', 'eth0', 'root']
+[32mINFO    [0m src.steps.network_conditions:network_conditions.py:23 TC exec: ['sudo', '-n', 'nsenter', '-t', '22742', '-n', 'tc', 'qdisc', 'add', 'dev', 'eth0', 'root', 'netem', 'delay', '200ms']
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:37 curl -v -X POST "http://127.0.0.1:60407/relay/v1/messages/%2Fwaku%2F2%2Frs%2F198%2F1" -H "Content-Type: application/json" -d '{"payload": "UmVsYXkgd29ya3MhIQ==", "contentTopic": "/test/1/waku-relay/proto", "timestamp": '$(date +%s%N)'}'
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:22 Response status code: 200. Response content: b'OK'
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:37 curl -v -X GET "http://127.0.0.1:18255/relay/v1/messages/%2Fwaku%2F2%2Frs%2F198%2F1" -H "Content-Type: application/json" -d 'None'
+[32mINFO    [0m src.node.api_clients.base_client:base_client.py:22 Response status code: 200. Response content: b'[{"payload":"UmVsYXkgd29ya3MhIQ==","contentTopic":"/test/1/waku-relay/proto","version":0,"timestamp":1776981390808900208,"ephemeral":false,"proof":""}]'
+[32mINFO    [0m src.steps.network_conditions:network_conditions.py:23 TC exec: ['sudo', '-n', 'nsenter', '-t', '22742', '-n', 'tc', 'qdisc', 'del', 'dev', 'eth0', 'root']
+[35mDEBUG   [0m tests.conftest:conftest.py:59 Running fixture teardown: test_setup
+[35mDEBUG   [0m tests.conftest:conftest.py:83 Running fixture teardown: close_open_nodes
+[35mDEBUG   [0m src.node.waku_node:waku_node.py:241 Stopping container with id 437c0809befc
+[35mDEBUG   [0m src.node.waku_node:waku_node.py:248 Container stopped.
+[35mDEBUG   [0m src.node.waku_node:waku_node.py:241 Stopping container with id b760db7ff54f
+[35mDEBUG   [0m src.node.waku_node:waku_node.py:248 Container stopped.
+[35mDEBUG   [0m tests.conftest:conftest.py:98 Running fixture teardown: check_waku_log_errors
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:144 No errors found in the waku logs.
+[35mDEBUG   [0m src.node.docker_mananger:docker_mananger.py:144 No errors found in the waku logs.
