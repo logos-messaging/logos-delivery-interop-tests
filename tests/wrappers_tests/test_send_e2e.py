@@ -20,8 +20,6 @@ PROPAGATED_TIMEOUT_S = 30.0
 SENT_TIMEOUT_S = 10.0
 NO_SENT_OBSERVATION_S = 5.0
 SENT_AFTER_STORE_TIMEOUT_S = 60.0
-ERROR_TIMEOUT_S = 120.0
-
 # MaxTimeInCache from send_service.nim.
 MAX_TIME_IN_CACHE_S = 60.0
 # Extra slack to cover the background retry loop tick after the window expires.
@@ -474,10 +472,12 @@ class TestS12IsolatedSenderNoPeers(StepsCommon):
             error = wait_for_error(
                 collector=sender_collector,
                 request_id=request_id,
-                timeout_s=ERROR_TIMEOUT_S,
+                timeout_s=ERROR_AFTER_CACHE_EXPIRY_TIMEOUT_S,
             )
             assert error is not None, (
-                f"No message_error event within {ERROR_TIMEOUT_S}s for isolated sender. " f"Collected events: {sender_collector.events}"
+                f"No message_error event within {ERROR_AFTER_CACHE_EXPIRY_TIMEOUT_S}s "
+                f"(MaxTimeInCache={MAX_TIME_IN_CACHE_S}s + slack) for isolated sender. "
+                f"Collected events: {sender_collector.events}"
             )
             assert error["requestId"] == request_id
 

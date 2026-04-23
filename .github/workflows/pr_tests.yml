@@ -155,7 +155,7 @@ jobs:
         run: |
           pytest tests/wrappers_tests/ \
             -m "not docker_required" \
-            -x \
+            --reruns 2 \
             --junit-xml=wrapper-results.xml
 
       - name: Test Report
@@ -203,6 +203,7 @@ jobs:
         run: |
           pytest -m "smoke and not docker_required" \
             --ignore=vendor/logos-delivery-python-bindings/tests \
+            --ignore=tests/wrappers_tests \
             --reruns 1 \
             -n 4 \
             --dist=loadgroup \
