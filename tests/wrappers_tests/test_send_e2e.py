@@ -24,6 +24,7 @@ PROPAGATED_TIMEOUT_S = 30.0
 SENT_TIMEOUT_S = 10.0
 NO_SENT_OBSERVATION_S = 5.0
 SENT_AFTER_STORE_TIMEOUT_S = 60.0
+NO_STORE_OBSERVATION_S = 60.0
 
 # MaxTimeInCache from send_service.nim.
 MAX_TIME_IN_CACHE_S = 60.0
@@ -33,7 +34,6 @@ ERROR_AFTER_CACHE_EXPIRY_TIMEOUT_S = MAX_TIME_IN_CACHE_S + CACHE_EXPIRY_SLACK_S
 RETRY_WINDOW_EXPIRED_MSG = "Unable to send within retry time window"
 
 
-@pytest.mark.smoke
 class TestSendBeforeRelay(StepsStore):
     def test_s17_send_before_relay_peers_joins(self, node_config):
         """
@@ -97,9 +97,11 @@ class TestSendBeforeRelay(StepsStore):
                     f"from a store-enabled relay peer. Collected events: {sender_collector.events}"
                 )
 
-    def test_s17_no_sent_event_when_relay_has_no_store(self, node_config):
+    def test_s23_no_sent_event_when_relay_has_no_store(self, node_config):
         """
-        S17 negative: relay peerstore=false, there shouldn't be a Sent event,.
+        S23: non-ephemeral message, reliability enabled, no store peer ever reachable.
+          - Expected: Ok(RequestId), Propagated event only, no Sent and no terminal error.
+          - Purpose: regression detector — current implementation does not convert
         """
         sender_collector = EventCollector()
 
@@ -109,6 +111,7 @@ class TestSendBeforeRelay(StepsStore):
                 "store": False,
                 "discv5Discovery": False,
                 "numShardsInNetwork": 1,
+                "reliabilityEnabled": True,
             }
         )
 
@@ -119,7 +122,7 @@ class TestSendBeforeRelay(StepsStore):
         assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
 
         with sender_result.ok_value as sender_node:
-            message = create_message_bindings()
+            message = create_message_bindings(ephemeral=False)
             send_result = sender_node.send_message(message=message)
             assert send_result.is_ok(), f"send() must return Ok(RequestId) even with no peers, got: {send_result.err()}"
 
@@ -150,11 +153,27 @@ class TestSendBeforeRelay(StepsStore):
                 sent_event = wait_for_sent(
                     collector=sender_collector,
                     request_id=request_id,
-                    timeout_s=SENT_TIMEOUT_S,
+                    timeout_s=NO_STORE_OBSERVATION_S,
                 )
                 assert sent_event is None, (
-                    f"Unexpected MessageSentEvent received when relay peer has store=false.\n"
+                    f"Unexpected MessageSentEvent within {NO_STORE_OBSERVATION_S}s "
+                    f"when relay peer has store=false.\n"
                     f"Sent event: {sent_event}\n"
+                    f"Collected events: {sender_collector.events}"
+                )
+
+                # Regression guard: current behavior must NOT convert "no store
+                # reachable" into an immediate terminal error. If a future change
+                # starts emitting one, this assertion will catch it.
+                error_event = wait_for_error(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=0,
+                )
+                assert error_event is None, (
+                    f"Unexpected terminal error event when no store peer is reachable. "
+                    f"S23 expects silent behavior (Propagated only).\n"
+                    f"Error event: {error_event}\n"
                     f"Collected events: {sender_collector.events}"
                 )
 
@@ -304,6 +323,70 @@ class TestSendBeforeRelay(StepsStore):
                 f"Got:      {error_event.get('error')!r}\n"
                 f"Full event: {error_event}"
             )
+
+    def test_s22_non_ephemeral_message_with_reliability_disabled(self, node_config):
+        """
+        S22: non-ephemeral message with reliabilityEnabled disabled.
+          - propagation path exists ,reliabilityEnabled = false.
+          - Expected: Ok(RequestId), Propagated event only, no Sent event.
+          Note: S17 already covers the positive path of this test with reliabilityEnabled=True.
+        """
+        sender_collector = EventCollector()
+
+        node_config.update(
+            {
+                "relay": True,
+                "store": False,
+                "discv5Discovery": False,
+                "numShardsInNetwork": 1,
+                "reliabilityEnabled": False,
+            }
+        )
+
+        sender_result = WrapperManager.create_and_start(
+            config=node_config,
+            event_cb=sender_collector.event_callback,
+        )
+        assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
+
+        with sender_result.ok_value as sender_node:
+            relay_config = {
+                **node_config,
+                "staticnodes": [get_node_multiaddr(sender_node)],
+                "portsshift": 1,
+                "store": True,
+            }
+
+            relay_result = WrapperManager.create_and_start(config=relay_config)
+            assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
+
+            with relay_result.ok_value:
+                message = create_message_bindings(ephemeral=False)
+                send_result = sender_node.send_message(message=message)
+                assert send_result.is_ok(), f"send() must return Ok(RequestId), got: {send_result.err()}"
+
+                request_id = send_result.ok_value
+                assert request_id, "send() returned an empty RequestId"
+
+                propagated_event = wait_for_propagated(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=PROPAGATED_TIMEOUT_S,
+                )
+                assert propagated_event is not None, (
+                    f"No MessagePropagatedEvent received within {PROPAGATED_TIMEOUT_S}s. " f"Collected events: {sender_collector.events}"
+                )
+
+                sent_event = wait_for_sent(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=SENT_TIMEOUT_S,
+                )
+                assert sent_event is None, (
+                    f"Unexpected MessageSentEvent received when reliabilityEnabled is disabled.\n"
+                    f"Sent event: {sent_event}\n"
+                    f"Collected events: {sender_collector.events}"
+                )
 
 
 class TestS06CoreSenderRelayOnly(StepsCommon):
