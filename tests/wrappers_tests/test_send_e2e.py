@@ -450,6 +450,94 @@ class TestSendBeforeRelay(StepsStore):
                     f"Collected events: {sender_collector.events}"
                 )
 
+    @pytest.mark.s26_note("LightPush not used, falls back to Relay")
+    def test_s26_lightpush_peer_churn_alternate_remains(self, node_config):
+        """
+        S26: multiple lightpush peers, the selected one disappears,
+             an alternate remains.
+          - Propagated event eventually arrives (via P2)
+          - no message_error
+        """
+        sender_collector = EventCollector()
+
+        # Two lightpush server peers: relay+lightpush, connected to each other.
+        peer1_config = {
+            **node_config,
+            "relay": True,
+            "lightpush": True,
+            "store": False,
+            "filter": False,
+            "discv5Discovery": True,
+            "numShardsInNetwork": 1,
+            "portsshift": 1,
+        }
+        peer1_result = WrapperManager.create_and_start(config=peer1_config)
+        assert peer1_result.is_ok(), f"Failed to start lightpush peer1: {peer1_result.err()}"
+        peer1 = peer1_result.ok_value
+
+        peer2_config = {
+            **peer1_config,
+            "staticnodes": [get_node_multiaddr(peer1)],
+            "portsshift": 2,
+        }
+        peer2_result = WrapperManager.create_and_start(config=peer2_config)
+        assert peer2_result.is_ok(), f"Failed to start lightpush peer2: {peer2_result.err()}"
+
+        with peer2_result.ok_value as peer2:
+            # Sender is a lightpush client:  lightpush enabled,
+            # both peers in staticnodes so the sender has a choice.
+            sender_config = {
+                **node_config,
+                "lightpushnode": get_node_multiaddr(peer1),
+                "relay": True,
+                "lightpush": True,
+                "store": False,
+                "filter": False,
+                "discv5Discovery": False,
+                "numShardsInNetwork": 1,
+                "portsshift": 3,
+                "staticnodes": [
+                    get_node_multiaddr(peer1),
+                    get_node_multiaddr(peer2),
+                ],
+            }
+
+            sender_result = WrapperManager.create_and_start(
+                config=sender_config,
+                event_cb=sender_collector.event_callback,
+            )
+            assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
+
+            with sender_result.ok_value as sender_node:
+                delay(2)
+                stop_result = peer1.stop_and_destroy()
+                assert stop_result.is_ok(), f"Failed to stop peer1: {stop_result.err()}"
+                message = create_message_bindings()
+                send_result = sender_node.send_message(message=message)
+                assert send_result.is_ok(), f"send() must return Ok(RequestId) during peer churn, " f"got: {send_result.err()}"
+
+                request_id = send_result.ok_value
+                assert request_id, "send() returned an empty RequestId"
+
+                # Expect Propagated via the surviving lightpush peer (peer2).
+                propagated_event = wait_for_propagated(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=PROPAGATED_TIMEOUT_S,
+                )
+                assert propagated_event is not None, (
+                    f"No MessagePropagatedEvent within {PROPAGATED_TIMEOUT_S}s "
+                    f"after the selected lightpush peer disappeared. "
+                    f"Collected events: {sender_collector.events}"
+                )
+
+                error_event = wait_for_error(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=0,
+                )
+                assert error_event is None, f"Unexpected message_error event during peer churn: {error_event}"
+
 
 class TestS06CoreSenderRelayOnly(StepsCommon):
     """
