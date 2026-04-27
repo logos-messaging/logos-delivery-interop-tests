@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from time import time_ns
 
 import pytest
@@ -32,6 +33,10 @@ MAX_TIME_IN_CACHE_S = 60.0
 CACHE_EXPIRY_SLACK_S = 10.0
 ERROR_AFTER_CACHE_EXPIRY_TIMEOUT_S = MAX_TIME_IN_CACHE_S + CACHE_EXPIRY_SLACK_S
 RETRY_WINDOW_EXPIRED_MSG = "Unable to send within retry time window"
+
+# S30: concurrent sends on the same content topic during initial auto-subscribe.
+S30_CONCURRENT_SENDS = 5
+S30_CONTENT_TOPIC = "/test/1/s30-concurrent/proto"
 
 
 class TestSendBeforeRelay(StepsStore):
@@ -537,6 +542,99 @@ class TestSendBeforeRelay(StepsStore):
                     timeout_s=0,
                 )
                 assert error_event is None, f"Unexpected message_error event during peer churn: {error_event}"
+
+    def test_s30_concurrent_sends_during_auto_subscribe(self, node_config):
+        """
+        S30: concurrent sends on the same content topic during initial auto-subscribe.
+          - Each call must return Ok(RequestId) with a unique id.
+
+        """
+        sender_collector = EventCollector()
+
+        node_config.update(
+            {
+                "relay": True,
+                "store": False,
+                "discv5Discovery": False,
+                "numShardsInNetwork": 1,
+            }
+        )
+
+        sender_result = WrapperManager.create_and_start(
+            config=node_config,
+            event_cb=sender_collector.event_callback,
+        )
+        assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
+
+        with sender_result.ok_value as sender_node:
+            # Relay peer so the sender has a propagation path.
+            relay_config = {
+                **node_config,
+                "staticnodes": [get_node_multiaddr(sender_node)],
+                "portsshift": 1,
+            }
+
+            relay_result = WrapperManager.create_and_start(config=relay_config)
+            assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
+
+            with relay_result.ok_value:
+                # Build one message per send, with distinct payloads so we can
+                # detect any cross-association between request ids and events.
+                messages = [
+                    create_message_bindings(
+                        contentTopic=S30_CONTENT_TOPIC,
+                        payload=to_base64(f"s30-concurrent-{i}"),
+                    )
+                    for i in range(S30_CONCURRENT_SENDS)
+                ]
+
+                # Fire all sends concurrently. The sender is not yet subscribed
+                # to S30_CONTENT_TOPIC, so this exercises the auto-subscribe path
+                # under contention.
+                with ThreadPoolExecutor(max_workers=S30_CONCURRENT_SENDS) as pool:
+                    send_results = list(pool.map(sender_node.send_message, messages))
+
+                # Every send must return Ok(RequestId).
+                request_ids = []
+                for i, send_result in enumerate(send_results):
+                    assert send_result.is_ok(), f"Concurrent send #{i} failed: {send_result.err()}"
+                    request_id = send_result.ok_value
+                    assert request_id, f"Concurrent send #{i} returned an empty RequestId"
+                    request_ids.append(request_id)
+
+                # Request ids must be unique across concurrent sends.
+                assert len(set(request_ids)) == len(request_ids), f"Duplicate RequestIds returned by concurrent sends: {request_ids}"
+
+                # Each request id must get its own propagated event and no error.
+                for request_id in request_ids:
+                    propagated_event = wait_for_propagated(
+                        collector=sender_collector,
+                        request_id=request_id,
+                        timeout_s=PROPAGATED_TIMEOUT_S,
+                    )
+                    assert propagated_event is not None, (
+                        f"No MessagePropagatedEvent for request_id={request_id} "
+                        f"within {PROPAGATED_TIMEOUT_S}s. "
+                        f"Collected events: {sender_collector.events}"
+                    )
+
+                    error_event = wait_for_error(
+                        collector=sender_collector,
+                        request_id=request_id,
+                        timeout_s=0,
+                    )
+                    assert error_event is None, f"Unexpected message_error for request_id={request_id}: {error_event}"
+
+                # Cross-association guard: every event with a requestId must
+                # belong to exactly one of the request ids we issued.
+                issued = set(request_ids)
+                for event in sender_collector.events:
+                    event_request_id = event.get("requestId")
+                    if event_request_id is None:
+                        continue
+                    assert event_request_id in issued, (
+                        f"Event carries an unknown requestId={event_request_id!r}, " f"not in issued set {issued}. Event: {event}"
+                    )
 
 
 class TestS06CoreSenderRelayOnly(StepsCommon):
