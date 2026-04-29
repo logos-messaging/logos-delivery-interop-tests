@@ -63,13 +63,13 @@ def wait_for_event(
     """
     deadline = time.monotonic() + timeout_s
 
-    while time.monotonic() < deadline:
+    while True:
         for event in collector.get_events_for_request(request_id):
             if predicate(event):
                 return event
+        if time.monotonic() >= deadline:
+            return None
         time.sleep(poll_interval_s)
-
-    return None
 
 
 def wait_for_propagated(collector: EventCollector, request_id: str, timeout_s: float) -> Optional[dict]:
@@ -98,6 +98,41 @@ def wait_for_connected(
                     return event
         time.sleep(poll_interval_s)
     return None
+
+
+TERMINAL_EVENT_TYPES = {EVENT_PROPAGATED, EVENT_SENT, EVENT_ERROR}
+
+
+def assert_event_invariants(collector: EventCollector, request_id: str) -> None:
+    """Check per-request event invariants (issue #163):
+    - All events carry the correct requestId.
+    - No duplicate terminal events (Propagated, Sent, Error).
+    - Sent never appears before Propagated.
+    """
+    events = collector.get_events_for_request(request_id)
+    assert events, f"No events found for request {request_id}"
+
+    counts: dict[str, int] = {}
+    first_index: dict[str, int] = {}
+    for i, event in enumerate(events):
+        assert event.get("requestId") == request_id, (
+            f"Event at index {i} has wrong requestId: " f"expected {request_id!r}, got {event.get('requestId')!r}"
+        )
+        event_type = event.get("eventType", "")
+        if event_type in TERMINAL_EVENT_TYPES:
+            counts[event_type] = counts.get(event_type, 0) + 1
+            if event_type not in first_index:
+                first_index[event_type] = i
+
+    for event_type, count in counts.items():
+        assert count == 1, f"Duplicate {event_type} events for request {request_id}: " f"got {count}, expected 1. Events: {events}"
+
+    if EVENT_SENT in first_index and EVENT_PROPAGATED in first_index:
+        assert first_index[EVENT_PROPAGATED] < first_index[EVENT_SENT], (
+            f"message_sent (index {first_index[EVENT_SENT]}) arrived before "
+            f"message_propagated (index {first_index[EVENT_PROPAGATED]}) "
+            f"for request {request_id}. Events: {events}"
+        )
 
 
 def get_node_multiaddr(node) -> str:

@@ -1,10 +1,13 @@
+import base64
+
 import pytest
 from src.steps.common import StepsCommon
-from src.libs.common import to_base64
+from src.libs.common import delay, to_base64
 from src.libs.custom_logger import get_custom_logger
 from src.node.wrappers_manager import WrapperManager
 from src.node.wrapper_helpers import (
     EventCollector,
+    assert_event_invariants,
     create_message_bindings,
     get_node_multiaddr,
     wait_for_connected,
@@ -12,14 +15,19 @@ from src.node.wrapper_helpers import (
     wait_for_sent,
     wait_for_error,
 )
+from src.steps.store import StepsStore
+from tests.wrappers_tests.conftest import build_node_config
 
 logger = get_custom_logger(__name__)
-
 
 PROPAGATED_TIMEOUT_S = 30.0
 SENT_TIMEOUT_S = 10.0
 NO_SENT_OBSERVATION_S = 5.0
 SENT_AFTER_STORE_TIMEOUT_S = 60.0
+OVERSIZED_PAYLOAD_BYTES = 200 * 1024
+RECOVERY_TIMEOUT_S = 45.0
+SERVICE_DOWN_SETTLE_S = 3.0
+
 # MaxTimeInCache from send_service.nim.
 MAX_TIME_IN_CACHE_S = 60.0
 # Extra slack to cover the background retry loop tick after the window expires.
@@ -92,6 +100,8 @@ class TestSendBeforeRelay(StepsCommon):
                     f"from a store-enabled relay peer. Collected events: {sender_collector.events}"
                 )
 
+                assert_event_invariants(sender_collector, request_id)
+
     def test_s17_no_sent_event_when_relay_has_no_store(self, node_config):
         """
         S17 negative: relay peerstore=false, there shouldn't be a Sent event,.
@@ -154,6 +164,8 @@ class TestSendBeforeRelay(StepsCommon):
                     f"Sent event: {sent_event}\n"
                     f"Collected events: {sender_collector.events}"
                 )
+
+                assert_event_invariants(sender_collector, request_id)
 
     def test_s19_store_peer_appears_after_propagation(self, node_config):
         """
@@ -242,6 +254,8 @@ class TestSendBeforeRelay(StepsCommon):
                         f"after store peer joined. Collected events: {sender_collector.events}"
                     )
 
+                assert_event_invariants(sender_collector, request_id)
+
     def test_s21_error_when_retry_window_expires(self, node_config):
         """
         S21: delivery retry window expires before any valid path recovers.
@@ -292,6 +306,166 @@ class TestSendBeforeRelay(StepsCommon):
                 f"Got:      {error_event.get('error')!r}\n"
                 f"Full event: {error_event}"
             )
+
+            assert_event_invariants(sender_collector, request_id)
+
+
+class TestS07CoreSenderRelayAndStore(StepsCommon):
+    """
+    S07 — Core sender with relay peers and store peer, reliability enabled.
+    Sender relays message to a store-capable peer; delivery service validates
+    the message reached the store via p2p reliability check.
+    Expected: Propagated, then Sent.
+    """
+
+    def test_s07_relay_propagation_with_store_validation(self, node_config):
+        sender_collector = EventCollector()
+
+        node_config.update(
+            {
+                "relay": True,
+                "store": False,
+                "lightpush": False,
+                "filter": False,
+                "discv5Discovery": False,
+                "numShardsInNetwork": 1,
+                "reliabilityEnabled": True,
+            }
+        )
+
+        sender_result = WrapperManager.create_and_start(
+            config=node_config,
+            event_cb=sender_collector.event_callback,
+        )
+        assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
+
+        with sender_result.ok_value as sender:
+            peer_config = {
+                **node_config,
+                "staticnodes": [get_node_multiaddr(sender)],
+                "portsshift": 1,
+                "store": True,
+            }
+
+            peer_result = WrapperManager.create_and_start(config=peer_config)
+            assert peer_result.is_ok(), f"Failed to start store peer: {peer_result.err()}"
+
+            with peer_result.ok_value:
+                message = create_message_bindings(
+                    payload=to_base64("S07 relay+store test payload"),
+                    contentTopic="/test/1/s07-relay-store/proto",
+                )
+
+                send_result = sender.send_message(message=message)
+                assert send_result.is_ok(), f"send() failed: {send_result.err()}"
+
+                request_id = send_result.ok_value
+                assert request_id, "send() returned an empty RequestId"
+
+                propagated = wait_for_propagated(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=PROPAGATED_TIMEOUT_S,
+                )
+                assert propagated is not None, (
+                    f"No message_propagated event within {PROPAGATED_TIMEOUT_S}s. " f"Collected events: {sender_collector.events}"
+                )
+                assert propagated["requestId"] == request_id
+
+                sent = wait_for_sent(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=SENT_TIMEOUT_S,
+                )
+                assert sent is not None, (
+                    f"No message_sent event within {SENT_TIMEOUT_S}s after propagation. " f"Collected events: {sender_collector.events}"
+                )
+                assert sent["requestId"] == request_id
+
+                error = wait_for_error(sender_collector, request_id, timeout_s=0)
+                assert error is None, f"Unexpected message_error event: {error}"
+
+                assert_event_invariants(sender_collector, request_id)
+
+
+class TestS10EdgeSenderLightpushOnly(StepsCommon):
+    """
+    S10 — Edge sender with lightpush path only, no store peer.
+    Edge sender has no local relay; it publishes via a lightpush service node.
+    Expected: Propagated only (no Sent, no Error).
+    """
+
+    def test_s10_edge_lightpush_propagation(self, node_config):
+        sender_collector = EventCollector()
+
+        common = {
+            "store": False,
+            "filter": False,
+            "discv5Discovery": False,
+            "numShardsInNetwork": 1,
+        }
+
+        service_config = build_node_config(relay=True, lightpush=True, **common)
+
+        service_result = WrapperManager.create_and_start(config=service_config)
+        assert service_result.is_ok(), f"Failed to start service node: {service_result.err()}"
+
+        with service_result.ok_value as service_node:
+            service_multiaddr = get_node_multiaddr(service_node)
+
+            relay_config = build_node_config(
+                relay=True,
+                staticnodes=[service_multiaddr],
+                **common,
+            )
+
+            relay_result = WrapperManager.create_and_start(config=relay_config)
+            assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
+
+            with relay_result.ok_value:
+                edge_config = build_node_config(
+                    mode="Edge",
+                    relay=False,
+                    lightpushnode=service_multiaddr,
+                    staticnodes=[service_multiaddr],
+                    **common,
+                )
+
+                edge_result = WrapperManager.create_and_start(
+                    config=edge_config,
+                    event_cb=sender_collector.event_callback,
+                )
+                assert edge_result.is_ok(), f"Failed to start edge sender: {edge_result.err()}"
+
+                with edge_result.ok_value as edge_sender:
+                    message = create_message_bindings(
+                        payload=to_base64("S10 edge lightpush test payload"),
+                        contentTopic="/test/1/s10-edge-lightpush/proto",
+                    )
+
+                    send_result = edge_sender.send_message(message=message)
+                    assert send_result.is_ok(), f"send() failed: {send_result.err()}"
+
+                    request_id = send_result.ok_value
+                    assert request_id, "send() returned an empty RequestId"
+
+                    propagated = wait_for_propagated(
+                        collector=sender_collector,
+                        request_id=request_id,
+                        timeout_s=PROPAGATED_TIMEOUT_S,
+                    )
+                    assert propagated is not None, (
+                        f"No message_propagated event within {PROPAGATED_TIMEOUT_S}s. " f"Collected events: {sender_collector.events}"
+                    )
+                    assert propagated["requestId"] == request_id
+
+                    sent = wait_for_sent(sender_collector, request_id, timeout_s=NO_SENT_OBSERVATION_S)
+                    assert sent is None, f"Unexpected message_sent event (no store peer): {sent}"
+
+                    error = wait_for_error(sender_collector, request_id, timeout_s=0)
+                    assert error is None, f"Unexpected message_error event: {error}"
+
+                    assert_event_invariants(sender_collector, request_id)
 
 
 class TestS06CoreSenderRelayOnly(StepsCommon):
@@ -361,6 +535,8 @@ class TestS06CoreSenderRelayOnly(StepsCommon):
 
                 sent = wait_for_sent(sender_collector, request_id, timeout_s=0)
                 assert sent is None, f"Unexpected message_sent event (store is disabled): {sent}"
+
+                assert_event_invariants(sender_collector, request_id)
 
 
 class TestS02AutoSubscribeOnFirstSend(StepsCommon):
@@ -483,3 +659,162 @@ class TestS12IsolatedSenderNoPeers(StepsCommon):
 
             propagated = wait_for_propagated(sender_collector, request_id, timeout_s=0)
             assert propagated is None, f"Unexpected message_propagated event for isolated sender: {propagated}"
+
+
+class TestS14LightpushNonRetryableError(StepsCommon):
+    """
+    S14 — Lightpush non-retryable error via oversized message.
+    Edge sender publishes a message exceeding DefaultMaxWakuMessageSize (150KiB)
+    through a lightpush service node. The server validates message size and
+    returns INVALID_MESSAGE (420), a non-retryable error.
+    Expected: send() returns Ok(RequestId), then message_error event.
+    """
+
+    def test_s14_oversized_message_triggers_error(self):
+        sender_collector = EventCollector()
+
+        common = {
+            "store": False,
+            "filter": False,
+            "discv5Discovery": False,
+            "numShardsInNetwork": 1,
+        }
+
+        service_config = build_node_config(relay=True, lightpush=True, **common)
+        service_result = WrapperManager.create_and_start(config=service_config)
+        assert service_result.is_ok(), f"Failed to start service: {service_result.err()}"
+
+        with service_result.ok_value as service:
+            service_multiaddr = get_node_multiaddr(service)
+
+            edge_config = build_node_config(
+                mode="Edge",
+                relay=False,
+                lightpushnode=service_multiaddr,
+                staticnodes=[service_multiaddr],
+                **common,
+            )
+            edge_result = WrapperManager.create_and_start(
+                config=edge_config,
+                event_cb=sender_collector.event_callback,
+            )
+            assert edge_result.is_ok(), f"Failed to start edge sender: {edge_result.err()}"
+
+            with edge_result.ok_value as edge_sender:
+                oversized_payload = base64.b64encode(b"x" * OVERSIZED_PAYLOAD_BYTES).decode()
+                message = create_message_bindings(
+                    payload=oversized_payload,
+                    contentTopic="/test/1/s14-oversized/proto",
+                )
+
+                send_result = edge_sender.send_message(message=message)
+                assert send_result.is_ok(), f"send() failed: {send_result.err()}"
+
+                request_id = send_result.ok_value
+                assert request_id, "send() returned an empty RequestId"
+
+                error = wait_for_error(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=PROPAGATED_TIMEOUT_S,
+                )
+                assert error is not None, (
+                    f"No message_error event within {PROPAGATED_TIMEOUT_S}s "
+                    f"after sending oversized message. "
+                    f"Collected events: {sender_collector.events}"
+                )
+                assert error["requestId"] == request_id
+                logger.info(f"S14 received error event: {error}")
+
+                error_msg = error.get("error", "").lower()
+                assert "size exceeded" in error_msg, f"Error message doesn't indicate size violation: {error}"
+
+                propagated = wait_for_propagated(sender_collector, request_id, timeout_s=0)
+                assert propagated is None, f"Unexpected message_propagated for an invalid message: {propagated}"
+
+                assert_event_invariants(sender_collector, request_id)
+
+
+class TestS15LightpushRetryableErrorRecovery(StepsCommon):
+    """
+    S15 — Lightpush retryable error + recovery.
+    Edge sender publishes via a lightpush service node that has NO relay peers.
+    The service accepts the lightpush request but returns NO_PEERS_TO_RELAY —
+    a retryable error (explicitly listed in the S15 spec).  The message enters
+    the retry loop.  A relay peer then joins the service node, and the next
+    retry succeeds.
+    Expected: send() returns Ok(RequestId), then eventually Propagated.
+    """
+
+    def test_s15_lightpush_retryable_error_then_recovery(self):
+        sender_collector = EventCollector()
+
+        common = {
+            "store": False,
+            "filter": False,
+            "discv5Discovery": False,
+            "numShardsInNetwork": 1,
+        }
+
+        service_config = build_node_config(relay=True, lightpush=True, **common)
+        service_result = WrapperManager.create_and_start(config=service_config)
+        assert service_result.is_ok(), f"Failed to start service: {service_result.err()}"
+
+        with service_result.ok_value as service:
+            service_multiaddr = get_node_multiaddr(service)
+
+            edge_config = build_node_config(
+                mode="Edge",
+                relay=False,
+                lightpushnode=service_multiaddr,
+                staticnodes=[service_multiaddr],
+                **common,
+            )
+            edge_result = WrapperManager.create_and_start(
+                config=edge_config,
+                event_cb=sender_collector.event_callback,
+            )
+            assert edge_result.is_ok(), f"Failed to start edge sender: {edge_result.err()}"
+
+            with edge_result.ok_value as edge_sender:
+                msg = create_message_bindings(
+                    payload=to_base64("S15 retryable error recovery"),
+                    contentTopic="/test/1/s15-recovery/proto",
+                )
+                send_result = edge_sender.send_message(message=msg)
+                assert send_result.is_ok(), f"send() failed: {send_result.err()}"
+                request_id = send_result.ok_value
+                assert request_id, "send() returned an empty RequestId"
+
+                delay(SERVICE_DOWN_SETTLE_S)
+
+                early_propagated = wait_for_propagated(sender_collector, request_id, timeout_s=0)
+                assert early_propagated is None, (
+                    f"message_propagated arrived before relay peer joined — " f"retryable error path was not exercised: {early_propagated}"
+                )
+
+                relay_config = build_node_config(
+                    relay=True,
+                    staticnodes=[service_multiaddr],
+                    **common,
+                )
+                relay_result = WrapperManager.create_and_start(config=relay_config)
+                assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
+
+                with relay_result.ok_value:
+                    propagated = wait_for_propagated(
+                        collector=sender_collector,
+                        request_id=request_id,
+                        timeout_s=RECOVERY_TIMEOUT_S,
+                    )
+                    assert propagated is not None, (
+                        f"No message_propagated within {RECOVERY_TIMEOUT_S}s "
+                        f"after relay peer joined. "
+                        f"Collected events: {sender_collector.events}"
+                    )
+                    assert propagated["requestId"] == request_id
+
+                    error = wait_for_error(sender_collector, request_id, timeout_s=0)
+                    assert error is None, f"Unexpected message_error after recovery: {error}"
+
+                    assert_event_invariants(sender_collector, request_id)
