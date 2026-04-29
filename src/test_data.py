@@ -168,7 +168,7 @@ SAMPLE_TIMESTAMPS = [
     {"description": "Missing", "value": None, "valid_for": []},
 ]
 
-PUBSUB_TOPICS_RLN = ["/waku/2/rs/1/0"]
+PUBSUB_TOPICS_RLN = [f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/0"]
 
 LOG_ERROR_KEYWORDS = [
     "crash",

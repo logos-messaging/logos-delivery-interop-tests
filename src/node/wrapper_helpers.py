@@ -67,13 +67,13 @@ def wait_for_event(
     """
     deadline = time.monotonic() + timeout_s
 
-    while time.monotonic() < deadline:
+    while True:
         for event in collector.get_events_for_request(request_id):
             if predicate(event):
                 return event
+        if time.monotonic() >= deadline:
+            return None
         time.sleep(poll_interval_s)
-
-    return None
 
 
 def wait_for_propagated(collector: EventCollector, request_id: str, timeout_s: float) -> Optional[dict]:
@@ -92,10 +92,10 @@ TERMINAL_EVENT_TYPES = {EVENT_PROPAGATED, EVENT_SENT, EVENT_ERROR}
 
 
 def assert_event_invariants(collector: EventCollector, request_id: str) -> None:
-    """Check per-request event invariants from the issue #163 spec:
+    """Check per-request event invariants (issue #163):
     - All events carry the correct requestId.
-    - No duplicate terminal events (Propagated, Sent, Error) for the same request.
-    - Sent never appears before Propagated (by arrival order).
+    - No duplicate terminal events (Propagated, Sent, Error).
+    - Sent never appears before Propagated.
     """
     events = collector.get_events_for_request(request_id)
     assert events, f"No events found for request {request_id}"
