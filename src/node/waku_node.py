@@ -96,6 +96,12 @@ def resolve_sharding_flags(kwargs):
 
 
 class WakuNode:
+    # Optional pre-start hook: when set to a callable, it is invoked at the
+    # beginning of every start() call with (self, kwargs_dict) and must return
+    # the (possibly modified) kwargs dict.  Set by tests/conftest.py when
+    # fleet bootstrap is active; None by default so all normal tests are unaffected.
+    _pre_start_hook = None
+
     def __init__(self, docker_image, docker_log_prefix=""):
         self._image_name = docker_image
         self._log_path = os.path.join(DOCKER_LOG_DIR, f"{docker_log_prefix}__{self._image_name.replace('/', '_')}.log")
@@ -113,6 +119,8 @@ class WakuNode:
 
     @retry(stop=stop_after_delay(60), wait=wait_fixed(0.1), reraise=True)
     def start(self, wait_for_node_sec=20, use_wrapper=False, **kwargs):
+        if WakuNode._pre_start_hook is not None:
+            kwargs = WakuNode._pre_start_hook(self, kwargs)
         logger.debug("Starting Node...")
         default_args, remove_container = self._prepare_start_context(**kwargs)
 
