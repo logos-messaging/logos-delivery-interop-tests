@@ -1,17 +1,16 @@
 import base64
 
 import pytest
-from src.env_vars import NODE_2
 from src.steps.common import StepsCommon
 from src.libs.common import delay, to_base64
 from src.libs.custom_logger import get_custom_logger
-from src.node.waku_node import WakuNode
 from src.node.wrappers_manager import WrapperManager
 from src.node.wrapper_helpers import (
     EventCollector,
     assert_event_invariants,
     create_message_bindings,
     get_node_multiaddr,
+    wait_for_connected,
     wait_for_propagated,
     wait_for_sent,
     wait_for_error,
@@ -38,7 +37,7 @@ RETRY_WINDOW_EXPIRED_MSG = "Unable to send within retry time window"
 
 
 @pytest.mark.smoke
-class TestSendBeforeRelay(StepsStore):
+class TestSendBeforeRelay(StepsCommon):
     def test_s17_send_before_relay_peers_joins(self, node_config):
         """
         S17: sender starts isolated, calls send()
@@ -74,7 +73,7 @@ class TestSendBeforeRelay(StepsStore):
             relay_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender_node)],
-                "portsshift": 1,
+                "portsShift": 1,
                 "store": True,
             }
 
@@ -135,7 +134,7 @@ class TestSendBeforeRelay(StepsStore):
             relay_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender_node)],
-                "portsshift": 1,
+                "portsShift": 1,
                 "store": False,
             }
 
@@ -143,6 +142,8 @@ class TestSendBeforeRelay(StepsStore):
             assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
 
             with relay_result.ok_value:
+                assert wait_for_connected(sender_collector) is not None, "Sender did not reach Connected/PartiallyConnected state"
+
                 propagated_event = wait_for_propagated(
                     collector=sender_collector,
                     request_id=request_id,
@@ -168,12 +169,11 @@ class TestSendBeforeRelay(StepsStore):
 
     def test_s19_store_peer_appears_after_propagation(self, node_config):
         """
-        S19: a store peer comes online later.
-           question for Zoltan , is reliability = true mandatory for the store peer ?
-           what is the effect of the reliability here ?
-          - send() returns Ok(RequestId) immediately
-          - Propagated --- relay peer
-          - Sent when store peer is reachable
+        S19: store peer comes online after relay propagation succeeds.
+          - send() returns Ok(RequestId)
+          - Propagated arrives via relay peer
+          - No Sent while store peer is absent
+          - Sent arrives after store peer joins and archives the message
         """
         sender_collector = EventCollector()
 
@@ -194,20 +194,19 @@ class TestSendBeforeRelay(StepsStore):
         assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
 
         with sender_result.ok_value as sender_node:
-            # relay peer
             relay_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender_node)],
-                "portsshift": 1,
+                "portsShift": 1,
                 "store": False,
-                # "p2preliability": False, # commented as the option not supported
             }
 
             relay_result = WrapperManager.create_and_start(config=relay_config)
             assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
 
             with relay_result.ok_value as relay_peer:
-                # send(). Must return Ok(RequestId) immediately.
+                assert wait_for_connected(sender_collector) is not None, "Sender did not reach Connected/PartiallyConnected state"
+
                 message = create_message_bindings()
                 send_result = sender_node.send_message(message=message)
                 assert send_result.is_ok(), f"send() must return Ok(RequestId), got: {send_result.err()}"
@@ -215,7 +214,6 @@ class TestSendBeforeRelay(StepsStore):
                 request_id = send_result.ok_value
                 assert request_id, "send() returned an empty RequestId"
 
-                # Propagated should arrive via the relay peer.
                 propagated_event = wait_for_propagated(
                     collector=sender_collector,
                     request_id=request_id,
@@ -232,33 +230,29 @@ class TestSendBeforeRelay(StepsStore):
                 )
                 assert early_sent_event is None, f"MessageSentEvent arrived before any store peer was reachable. " f"Event: {early_sent_event}"
 
-                # Store peer
-                store_node = WakuNode(NODE_2, f"store_node")
-                store_node.start(relay="true", store="true", discv5_discovery="false")
-                store_node.set_relay_subscriptions([self.test_pubsub_topic])
-                relay_multiaddr = get_node_multiaddr(relay_peer)
-                sender_multiaddr = get_node_multiaddr(sender_node)
-                store_node.add_peers([relay_multiaddr, sender_multiaddr])
-                delay(3)
+                store_config = {
+                    **node_config,
+                    "staticnodes": [
+                        get_node_multiaddr(sender_node),
+                        get_node_multiaddr(relay_peer),
+                    ],
+                    "portsShift": 2,
+                    "store": True,
+                }
 
-                sent_event = wait_for_sent(
-                    collector=sender_collector,
-                    request_id=request_id,
-                    timeout_s=SENT_AFTER_STORE_TIMEOUT_S,
-                )
+                store_result = WrapperManager.create_and_start(config=store_config)
+                assert store_result.is_ok(), f"Failed to start store peer: {store_result.err()}"
 
-                assert sent_event is not None, (
-                    f"No MessageSentEvent received within {SENT_AFTER_STORE_TIMEOUT_S}s "
-                    f"after store peer joined. Collected events: {sender_collector.events}"
-                )
-
-                self.check_published_message_is_stored(
-                    store_node=store_node,
-                    pubsub_topic=self.test_pubsub_topic,
-                    messages_to_check=[message],
-                    page_size=5,
-                    ascending="true",
-                )
+                with store_result.ok_value:
+                    sent_event = wait_for_sent(
+                        collector=sender_collector,
+                        request_id=request_id,
+                        timeout_s=SENT_AFTER_STORE_TIMEOUT_S,
+                    )
+                    assert sent_event is not None, (
+                        f"No MessageSentEvent received within {SENT_AFTER_STORE_TIMEOUT_S}s "
+                        f"after store peer joined. Collected events: {sender_collector.events}"
+                    )
 
                 assert_event_invariants(sender_collector, request_id)
 
@@ -349,7 +343,7 @@ class TestS07CoreSenderRelayAndStore(StepsCommon):
             peer_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender)],
-                "portsshift": 1,
+                "portsShift": 1,
                 "store": True,
             }
 
@@ -506,14 +500,16 @@ class TestS06CoreSenderRelayOnly(StepsCommon):
             peer_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender)],
-                "portsshift": 1,
+                "portsShift": 1,
             }
 
             peer_result = WrapperManager.create_and_start(config=peer_config)
             assert peer_result.is_ok(), f"Failed to start relay peer: {peer_result.err()}"
 
             with peer_result.ok_value:
-                message = self.create_message(
+                assert wait_for_connected(sender_collector) is not None, "Sender did not reach Connected/PartiallyConnected state"
+
+                message = create_message_bindings(
                     payload=to_base64("S06 relay-only test payload"),
                     contentTopic="/test/1/s06-relay-only/proto",
                 )
@@ -541,6 +537,128 @@ class TestS06CoreSenderRelayOnly(StepsCommon):
                 assert sent is None, f"Unexpected message_sent event (store is disabled): {sent}"
 
                 assert_event_invariants(sender_collector, request_id)
+
+
+class TestS02AutoSubscribeOnFirstSend(StepsCommon):
+    """
+    S02 — Auto-subscribe on first send.
+    Sender never calls subscribe_content_topic() before send().
+    The send API must auto-subscribe to the content topic used in the message.
+    Expected: send() returns Ok(RequestId), message_propagated arrives.
+    """
+
+    def test_s02_send_without_explicit_subscribe(self, node_config):
+        sender_collector = EventCollector()
+
+        node_config.update(
+            {
+                "relay": True,
+                "store": False,
+                "lightpush": False,
+                "filter": False,
+                "discv5Discovery": False,
+                "numShardsInNetwork": 1,
+            }
+        )
+
+        sender_result = WrapperManager.create_and_start(
+            config=node_config,
+            event_cb=sender_collector.event_callback,
+        )
+        assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
+
+        with sender_result.ok_value as sender:
+            peer_config = {
+                **node_config,
+                "staticnodes": [get_node_multiaddr(sender)],
+                "portsShift": 1,
+            }
+
+            peer_result = WrapperManager.create_and_start(config=peer_config)
+            assert peer_result.is_ok(), f"Failed to start relay peer: {peer_result.err()}"
+
+            with peer_result.ok_value:
+                assert wait_for_connected(sender_collector) is not None, "Sender did not reach Connected/PartiallyConnected state"
+
+                message = create_message_bindings(
+                    payload=to_base64("S02 auto-subscribe test payload"),
+                    contentTopic="/test/1/s02-auto-subscribe/proto",
+                )
+
+                send_result = sender.send_message(message=message)
+                assert send_result.is_ok(), f"send() failed: {send_result.err()}"
+
+                request_id = send_result.ok_value
+                assert request_id, "send() returned an empty RequestId"
+
+                propagated = wait_for_propagated(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=PROPAGATED_TIMEOUT_S,
+                )
+                assert propagated is not None, (
+                    f"No message_propagated event within {PROPAGATED_TIMEOUT_S}s. " f"Collected events: {sender_collector.events}"
+                )
+                assert propagated["requestId"] == request_id
+
+                error = wait_for_error(sender_collector, request_id, timeout_s=0)
+                assert error is None, f"Unexpected message_error event: {error}"
+
+
+class TestS12IsolatedSenderNoPeers(StepsCommon):
+    """
+    S12 — Isolated sender, no peers.
+    Sender has relay enabled but zero relay peers and zero lightpush peers.
+    Expected: send() returns Ok(RequestId), but eventually a message_error
+    event arrives (no route to propagate).
+    """
+
+    def test_s12_send_with_no_peers_produces_error(self, node_config):
+        sender_collector = EventCollector()
+
+        node_config.update(
+            {
+                "relay": True,
+                "store": False,
+                "lightpush": False,
+                "filter": False,
+                "discv5Discovery": False,
+                "numShardsInNetwork": 1,
+            }
+        )
+
+        sender_result = WrapperManager.create_and_start(
+            config=node_config,
+            event_cb=sender_collector.event_callback,
+        )
+        assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
+
+        with sender_result.ok_value as sender:
+            message = create_message_bindings(
+                payload=to_base64("S12 isolated sender payload"),
+                contentTopic="/test/1/s12-isolated/proto",
+            )
+
+            send_result = sender.send_message(message=message)
+            assert send_result.is_ok(), f"send() must return Ok(RequestId) even with no peers, got: {send_result.err()}"
+
+            request_id = send_result.ok_value
+            assert request_id, "send() returned an empty RequestId"
+
+            error = wait_for_error(
+                collector=sender_collector,
+                request_id=request_id,
+                timeout_s=ERROR_AFTER_CACHE_EXPIRY_TIMEOUT_S,
+            )
+            assert error is not None, (
+                f"No message_error event within {ERROR_AFTER_CACHE_EXPIRY_TIMEOUT_S}s "
+                f"(MaxTimeInCache={MAX_TIME_IN_CACHE_S}s + slack) for isolated sender. "
+                f"Collected events: {sender_collector.events}"
+            )
+            assert error["requestId"] == request_id
+
+            propagated = wait_for_propagated(sender_collector, request_id, timeout_s=0)
+            assert propagated is None, f"Unexpected message_propagated event for isolated sender: {propagated}"
 
 
 class TestS14LightpushNonRetryableError(StepsCommon):

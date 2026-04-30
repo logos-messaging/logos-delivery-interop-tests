@@ -12,10 +12,6 @@ EVENT_PROPAGATED = "message_propagated"
 EVENT_SENT = "message_sent"
 EVENT_ERROR = "message_error"
 
-# ---------------------------------------------------------------------------
-# Event collection
-# ---------------------------------------------------------------------------
-
 
 class EventCollector:
     """Thread-safe collector for async node events.
@@ -88,6 +84,22 @@ def wait_for_error(collector: EventCollector, request_id: str, timeout_s: float)
     return wait_for_event(collector, request_id, is_error_event, timeout_s)
 
 
+def wait_for_connected(
+    collector: EventCollector,
+    timeout_s: float = 10.0,
+    poll_interval_s: float = 0.3,
+) -> Optional[dict]:
+    """Wait until a connection_status_change event with PartiallyConnected or Connected arrives."""
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        with collector._lock:
+            for event in collector.events:
+                if event.get("eventType") == "connection_status_change" and event.get("connectionStatus") in ("PartiallyConnected", "Connected"):
+                    return event
+        time.sleep(poll_interval_s)
+    return None
+
+
 TERMINAL_EVENT_TYPES = {EVENT_PROPAGATED, EVENT_SENT, EVENT_ERROR}
 
 
@@ -136,7 +148,6 @@ def get_node_multiaddr(node) -> str:
     return addr
 
 
-# This API for creating messages for send.API not the REST calls
 def create_message_bindings(**overrides) -> dict:
     envelope = {
         "contentTopic": DEFAULT_CONTENT_TOPIC,
