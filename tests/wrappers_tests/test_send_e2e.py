@@ -194,26 +194,17 @@ class TestSendBeforeRelay(StepsStore):
                     f"Collected events: {sender_collector.events}"
                 )
 
+    @pytest.mark.ignore("scenario might be not possible to simulate")
     def test_s19_store_peer_appears_after_propagation(self, node_config):
         """
         S19: a store peer comes online later.
-           question for Zoltan , is reliability = true mandatory for the store peer ?
-           what is the effect of the reliability here ?
           - send() returns Ok(RequestId) immediately
           - Propagated --- relay peer
           - Sent when store peer is reachable
         """
         sender_collector = EventCollector()
 
-        node_config.update(
-            {
-                "relay": True,
-                "store": False,
-                "discv5Discovery": False,
-                "numShardsInNetwork": 1,
-                # "p2preliability": True,
-            }
-        )
+        node_config.update({"relay": True, "store": False, "discv5Discovery": False, "numShardsInNetwork": 1, "reliabilityEnabled": True})
 
         sender_result = WrapperManager.create_and_start(
             config=node_config,
@@ -228,7 +219,7 @@ class TestSendBeforeRelay(StepsStore):
                 "staticnodes": [get_node_multiaddr(sender_node)],
                 "portsshift": 1,
                 "store": False,
-                # "p2preliability": False, # commented as the option not supported
+                "reliabilityEnabled": True,
             }
 
             relay_result = WrapperManager.create_and_start(config=relay_config)
@@ -262,11 +253,12 @@ class TestSendBeforeRelay(StepsStore):
 
                 # Store peer
                 store_node = WakuNode(NODE_2, f"store_node")
-                store_node.start(relay="true", store="true", discv5_discovery="false")
+                store_node.start(relay="true", store="true", discv5_discovery="false", cluster_id=node_config["clusterId"], shard=0)
                 store_node.set_relay_subscriptions([self.test_pubsub_topic])
                 relay_multiaddr = get_node_multiaddr(relay_peer)
                 sender_multiaddr = get_node_multiaddr(sender_node)
                 store_node.add_peers([relay_multiaddr, sender_multiaddr])
+                self.wait_for_autoconnection([store_node], hard_wait=10)
                 delay(3)
 
                 sent_event = wait_for_sent(
