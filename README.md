@@ -52,6 +52,16 @@ To launch it manually:
 2. Click **► Run workflow**.
 3. Pick the branch you want to test (defaults to `master`) and press **Run workflow**.
 
+### PR tests
+
+Every push to a pull request triggers **pr\_tests.yml** which runs:
+
+1. **Build** — compiles `liblogosdelivery.so` (cached by submodule commit hash).
+2. **Wrapper tests** — all tests under `tests/wrappers_tests/` that don't require Docker (~5 min).
+3. **Smoke tests** — `pytest -m smoke` with Docker nodes (~10 min).
+
+To run the **full test suite** (18 shards, same as daily) on a PR, add the label **`full-test`** to the pull request. The full suite will start automatically.
+
 ### On‑demand matrix against custom *logos-messaging-nim* versions
 
 Use **interop\_tests.yml** when you need to test a PR or a historical image:
