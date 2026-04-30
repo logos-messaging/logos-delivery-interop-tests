@@ -73,7 +73,7 @@ class TestSendBeforeRelay(StepsCommon):
             relay_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender_node)],
-                "portsshift": 1,
+                "portsShift": 1,
                 "store": True,
             }
 
@@ -134,7 +134,7 @@ class TestSendBeforeRelay(StepsCommon):
             relay_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender_node)],
-                "portsshift": 1,
+                "portsShift": 1,
                 "store": False,
             }
 
@@ -197,7 +197,7 @@ class TestSendBeforeRelay(StepsCommon):
             relay_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender_node)],
-                "portsshift": 1,
+                "portsShift": 1,
                 "store": False,
             }
 
@@ -236,7 +236,7 @@ class TestSendBeforeRelay(StepsCommon):
                         get_node_multiaddr(sender_node),
                         get_node_multiaddr(relay_peer),
                     ],
-                    "portsshift": 2,
+                    "portsShift": 2,
                     "store": True,
                 }
 
@@ -343,7 +343,7 @@ class TestS07CoreSenderRelayAndStore(StepsCommon):
             peer_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender)],
-                "portsshift": 1,
+                "portsShift": 1,
                 "store": True,
             }
 
@@ -500,7 +500,7 @@ class TestS06CoreSenderRelayOnly(StepsCommon):
             peer_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender)],
-                "portsshift": 1,
+                "portsShift": 1,
             }
 
             peer_result = WrapperManager.create_and_start(config=peer_config)
@@ -571,7 +571,7 @@ class TestS02AutoSubscribeOnFirstSend(StepsCommon):
             peer_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender)],
-                "portsshift": 1,
+                "portsShift": 1,
             }
 
             peer_result = WrapperManager.create_and_start(config=peer_config)
