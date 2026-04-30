@@ -39,14 +39,17 @@ S30_CONCURRENT_SENDS = 5
 S30_CONTENT_TOPIC = "/test/1/s30-concurrent/proto"
 
 # S31: concurrent sends across mixed topics during peer churn.
-S31_BURST_SIZE = 4
+S31_BURST_SIZE = 8
 S31_CONTENT_TOPICS = [
     "/test/1/s31-topic-a/proto",
     "/test/1/s31-topic-b/proto",
     "/test/1/s31-topic-c/proto",
     "/test/1/s31-topic-d/proto",
+    "/test/1/s31-topic-e/proto",
+    "/test/1/s31-topic-f/proto",
+    "/test/1/s31-topic-g/proto",
+    "/test/1/s31-topic-h/proto",
 ]
-S31_PROPAGATED_TIMEOUT_S = 30.0
 
 
 class TestSendBeforeRelay(StepsStore):
@@ -285,6 +288,104 @@ class TestSendBeforeRelay(StepsStore):
                     ascending="true",
                 )
 
+    def test_s20_store_misses_initially_then_retry_succeeds(self, node_config):
+        """
+        S20: relay propagation succeeds, initial store query misses,
+        a retry republishes, and a store peer eventually archives the message.
+
+        Covers state flow:
+            SuccessfullyPropagated -> NextRoundRetry
+              -> SuccessfullyPropagated -> SuccessfullyValidated
+        """
+        sender_collector = EventCollector()
+
+        node_config.update(
+            {
+                "relay": True,
+                "store": False,
+                "discv5Discovery": False,
+                "numShardsInNetwork": 1,
+                "reliabilityEnabled": True,
+            }
+        )
+
+        sender_result = WrapperManager.create_and_start(
+            config=node_config,
+            event_cb=sender_collector.event_callback,
+        )
+        assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
+
+        with sender_result.ok_value as sender_node:
+            # Relay-only peer: gives the sender a propagation path but no store.
+            relay_config = {
+                **node_config,
+                "staticnodes": [get_node_multiaddr(sender_node)],
+                "portsshift": 1,
+                "store": False,
+            }
+
+            relay_result = WrapperManager.create_and_start(config=relay_config)
+            assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
+
+            with relay_result.ok_value as relay_peer:
+                message = create_message_bindings(ephemeral=False)
+                send_result = sender_node.send_message(message=message)
+                assert send_result.is_ok(), f"send() must return Ok(RequestId), got: {send_result.err()}"
+
+                request_id = send_result.ok_value
+                assert request_id, "send() returned an empty RequestId"
+
+                # First round: propagation succeeds via the relay peer.
+                propagated_event = wait_for_propagated(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=PROPAGATED_TIMEOUT_S,
+                )
+                assert propagated_event is not None, (
+                    f"No MessagePropagatedEvent received within {PROPAGATED_TIMEOUT_S}s. " f"Collected events: {sender_collector.events}"
+                )
+
+                early_sent_event = wait_for_sent(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=NO_SENT_OBSERVATION_S,
+                )
+                assert early_sent_event is None, (
+                    f"MessageSentEvent arrived before any store peer was reachable. "
+                    f"Initial store validation should have missed and triggered a retry. "
+                    f"Event: {early_sent_event}"
+                )
+
+                store_node = WakuNode(NODE_2, f"s20_store_node_{self.test_id}")
+                store_node.start(relay="true", store="true", discv5_discovery="false")
+                store_node.set_relay_subscriptions([self.test_pubsub_topic])
+
+                relay_multiaddr = get_node_multiaddr(relay_peer)
+                sender_multiaddr = get_node_multiaddr(sender_node)
+                store_node.add_peers([relay_multiaddr, sender_multiaddr])
+                delay(3)
+
+                # Retry round: republish reaches the store peer, validation passes.
+                sent_event = wait_for_sent(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=SENT_AFTER_STORE_TIMEOUT_S,
+                )
+                assert sent_event is not None, (
+                    f"No MessageSentEvent received within {SENT_AFTER_STORE_TIMEOUT_S}s "
+                    f"after the store peer joined. The retry round should have "
+                    f"republished the message and the store peer should have archived it. "
+                    f"Collected events: {sender_collector.events}"
+                )
+
+                self.check_published_message_is_stored(
+                    store_node=store_node,
+                    pubsub_topic=self.test_pubsub_topic,
+                    messages_to_check=[message],
+                    page_size=5,
+                    ascending="true",
+                )
+
     def test_s21_error_when_retry_window_expires(self, node_config):
         """
         S21: delivery retry window expires before any valid path recovers.
@@ -465,13 +566,13 @@ class TestSendBeforeRelay(StepsStore):
                     f"Collected events: {sender_collector.events}"
                 )
 
-    @pytest.mark.s26_note("LightPush not used, falls back to Relay")
     def test_s26_lightpush_peer_churn_alternate_remains(self, node_config):
         """
         S26: multiple lightpush peers, the selected one disappears,
              an alternate remains.
-          - Propagated event eventually arrives (via P2)
-          - no message_error
+          - send() returns Ok(RequestId) during peer churn.
+          - Propagated event eventually arrives (via the surviving peer, peer2).
+          - No message_error event.
         """
         sender_collector = EventCollector()
 
@@ -499,11 +600,9 @@ class TestSendBeforeRelay(StepsStore):
         assert peer2_result.is_ok(), f"Failed to start lightpush peer2: {peer2_result.err()}"
 
         with peer2_result.ok_value as peer2:
-            # Sender is a lightpush client:  lightpush enabled,
-            # both peers in staticnodes so the sender has a choice.
             sender_config = {
                 **node_config,
-                "lightpushnode": get_node_multiaddr(peer1),
+                "mode": "Edge",
                 "relay": True,
                 "lightpush": True,
                 "store": False,
@@ -511,6 +610,7 @@ class TestSendBeforeRelay(StepsStore):
                 "discv5Discovery": False,
                 "numShardsInNetwork": 1,
                 "portsshift": 3,
+                "lightpushnode": get_node_multiaddr(peer1),
                 "staticnodes": [
                     get_node_multiaddr(peer1),
                     get_node_multiaddr(peer2),
@@ -527,9 +627,10 @@ class TestSendBeforeRelay(StepsStore):
                 delay(2)
                 stop_result = peer1.stop_and_destroy()
                 assert stop_result.is_ok(), f"Failed to stop peer1: {stop_result.err()}"
+
                 message = create_message_bindings()
                 send_result = sender_node.send_message(message=message)
-                assert send_result.is_ok(), f"send() must return Ok(RequestId) during peer churn, " f"got: {send_result.err()}"
+                assert send_result.is_ok(), f"send() must return Ok(RequestId) during peer churn, got: {send_result.err()}"
 
                 request_id = send_result.ok_value
                 assert request_id, "send() returned an empty RequestId"
@@ -649,13 +750,13 @@ class TestSendBeforeRelay(StepsStore):
                         f"Event carries an unknown requestId={event_request_id!r}, " f"not in issued set {issued}. Event: {event}"
                     )
 
+    @pytest.mark.note("S31 exposes nwaku crash in json_serialization writer")
     def test_s31_concurrent_sends_mixed_topics_during_churn(self, node_config):
         """
         S31: concurrent sends across mixed content topics during peer churn.
         """
         sender_collector = EventCollector()
 
-        # Three docker peers, started first so the sender can discover them.
         relay_peer = WakuNode(NODE_2, f"s31_relay_peer_{self.test_id}")
         relay_peer.start(relay="true", discv5_discovery="false")
         relay_peer.set_relay_subscriptions([self.test_pubsub_topic])
@@ -670,9 +771,15 @@ class TestSendBeforeRelay(StepsStore):
 
         churn_peers = [relay_peer, lightpush_peer, store_peer]
 
-        # Sender: wrapper node with relay + lightpush enabled as a client.
+        # Mesh docker peers so a lightpushed message can fan out to the store peer.
+        peer_multiaddrs = [p.get_multiaddr_with_id() for p in churn_peers]
+        for peer in churn_peers:
+            others = [a for a in peer_multiaddrs if a != peer.get_multiaddr_with_id()]
+            peer.add_peers(others)
+
         node_config.update(
             {
+                "mode": "Edge",
                 "relay": True,
                 "lightpush": True,
                 "store": False,
@@ -689,21 +796,18 @@ class TestSendBeforeRelay(StepsStore):
         assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
 
         with sender_result.ok_value as sender_node:
-            # Connect every docker peer to the sender.
             sender_multiaddr = get_node_multiaddr(sender_node)
             for peer in churn_peers:
                 peer.add_peers([sender_multiaddr])
             delay(3)  # let docker peers connect to the sender
 
             all_request_ids: list[str] = []
-
-            # ---- Phase 1: burst BEFORE churn (full topology). ----
             phase1_ids = self._s31_fire_burst(sender_node, phase_label="phase1")
             all_request_ids.extend(phase1_ids)
 
-            # ---- Phase 2: restart all docker peers, burst DURING churn. ----
             for peer in churn_peers:
                 peer.restart()
+            delay(1)  # small window so the restart is actually in-flight
             phase2_ids = self._s31_fire_burst(sender_node, phase_label="phase2")
             all_request_ids.extend(phase2_ids)
 
@@ -711,28 +815,44 @@ class TestSendBeforeRelay(StepsStore):
             for peer in churn_peers:
                 peer.ensure_ready(timeout_duration=20)
                 peer.add_peers([sender_multiaddr])
+
+            peer_multiaddrs = [p.get_multiaddr_with_id() for p in churn_peers]
+            for peer in churn_peers:
+                others = [a for a in peer_multiaddrs if a != peer.get_multiaddr_with_id()]
+                peer.add_peers(others)
             delay(3)
 
-            # ---- Phase 3: burst AFTER churn (full topology restored). ----
             phase3_ids = self._s31_fire_burst(sender_node, phase_label="phase3")
             all_request_ids.extend(phase3_ids)
 
-            # All request ids across all phases must be globally unique.
             assert len(set(all_request_ids)) == len(all_request_ids), f"Duplicate RequestIds across bursts: {all_request_ids}"
 
-            # Stable-topology phases must each get a propagated event
-            # per request id. We do not assert this for phase 2.
             for request_id in phase1_ids + phase3_ids:
                 propagated_event = wait_for_propagated(
                     collector=sender_collector,
                     request_id=request_id,
-                    timeout_s=S31_PROPAGATED_TIMEOUT_S,
+                    timeout_s=PROPAGATED_TIMEOUT_S,
                 )
                 assert propagated_event is not None, (
                     f"No MessagePropagatedEvent for stable-phase "
-                    f"request_id={request_id} within {S31_PROPAGATED_TIMEOUT_S}s. "
+                    f"request_id={request_id} within {PROPAGATED_TIMEOUT_S}s. "
                     f"Collected events: {sender_collector.events}"
                 )
+
+                error_event = wait_for_error(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=0,
+                )
+                assert error_event is None, f"Unexpected message_error event for stable-phase " f"request_id={request_id}: {error_event}"
+
+            for request_id in phase2_ids:
+                error_event = wait_for_error(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=0,
+                )
+                assert error_event is None, f"Unexpected terminal message_error for phase-2 " f"request_id={request_id} after recovery: {error_event}"
 
             issued = set(all_request_ids)
             for event in sender_collector.events:
@@ -743,12 +863,38 @@ class TestSendBeforeRelay(StepsStore):
                     f"Event carries an unknown requestId={event_request_id!r}, " f"not in issued set {issued}. Event: {event}"
                 )
 
-    @staticmethod
-    def _s31_fire_burst(sender_node, *, phase_label: str) -> list[str]:
+            # Use the hash the wrapper emitted on message_sent so the store
+            # lookup matches the exact bytes that were actually published.
+            phase3_hashes = []
+            for request_id in phase3_ids:
+                sent_event = wait_for_sent(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=PROPAGATED_TIMEOUT_S,
+                )
+                assert sent_event is not None, (
+                    f"No message_sent event for phase-3 request_id={request_id} "
+                    f"within {PROPAGATED_TIMEOUT_S}s. Collected events: {sender_collector.events}"
+                )
+                msg_hash = sent_event.get("messageHash")
+                assert msg_hash, f"message_sent event missing messageHash: {sent_event}"
+                phase3_hashes.append(msg_hash)
+
+            # 3 phases × S31_BURST_SIZE messages, so the page must fit them all,
+            # otherwise phase-3 hashes (which sort last in ascending order) get cut off.
+            self.check_sent_message_is_stored(
+                expected_hashes=phase3_hashes,
+                store_node=store_peer,
+                pubsub_topic=self.test_pubsub_topic,
+                page_size=S31_BURST_SIZE * 3,
+                ascending="true",
+            )
+
+    def _s31_fire_burst(self, sender_node, *, phase_label: str) -> list[str]:
         """Fire S31_BURST_SIZE concurrent sends, one per topic in S31_CONTENT_TOPICS.
-        Returns the list of request ids. Asserts every send returned Ok."""
+        Returns the list of RequestIds. Asserts every send returned Ok."""
         messages = [
-            create_message_bindings(
+            self.create_message(
                 contentTopic=S31_CONTENT_TOPICS[i],
                 payload=to_base64(f"s31-{phase_label}-{i}"),
             )
