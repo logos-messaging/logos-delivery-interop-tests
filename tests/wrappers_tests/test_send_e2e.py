@@ -194,7 +194,7 @@ class TestSendBeforeRelay(StepsStore):
                     f"Collected events: {sender_collector.events}"
                 )
 
-    @pytest.mark.ignore("scenario might be not possible to simulate")
+    @pytest.mark.xfail("scenario might be not possible to simulate")
     def test_s19_store_peer_appears_after_propagation(self, node_config):
         """
         S19: a store peer comes online later.
@@ -583,68 +583,87 @@ class TestSendBeforeRelay(StepsStore):
         assert peer1_result.is_ok(), f"Failed to start lightpush peer1: {peer1_result.err()}"
         peer1 = peer1_result.ok_value
 
-        peer2_config = {
-            **peer1_config,
-            "staticnodes": [get_node_multiaddr(peer1)],
-            "portsshift": 2,
+        relay_config = {
+            **node_config,
+            "relay": True,
+            "lightpush": False,
+            "store": False,
+            "filter": False,
+            "discv5Discovery": False,
+            "numShardsInNetwork": 1,
+            "portsshift": 4,
         }
-        peer2_result = WrapperManager.create_and_start(config=peer2_config)
-        assert peer2_result.is_ok(), f"Failed to start lightpush peer2: {peer2_result.err()}"
 
-        with peer2_result.ok_value as peer2:
-            sender_config = {
-                **node_config,
-                "mode": "Edge",
-                "relay": True,
-                "lightpush": True,
-                "store": False,
-                "filter": False,
-                "discv5Discovery": False,
-                "numShardsInNetwork": 1,
-                "portsshift": 3,
-                "lightpushnode": get_node_multiaddr(peer1),
+        relay_result = WrapperManager.create_and_start(config=relay_config)
+        assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
+
+        with relay_result.ok_value as relay_peer:
+            peer2_config = {
+                **peer1_config,
                 "staticnodes": [
                     get_node_multiaddr(peer1),
-                    get_node_multiaddr(peer2),
+                    # get_node_multiaddr(relay_peer),
                 ],
+                "portsshift": 2,
             }
 
-            sender_result = WrapperManager.create_and_start(
-                config=sender_config,
-                event_cb=sender_collector.event_callback,
-            )
-            assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
+            peer2_result = WrapperManager.create_and_start(config=peer2_config)
+            assert peer2_result.is_ok(), f"Failed to start lightpush peer2: {peer2_result.err()}"
 
-            with sender_result.ok_value as sender_node:
-                delay(2)
-                stop_result = peer1.stop_and_destroy()
-                assert stop_result.is_ok(), f"Failed to stop peer1: {stop_result.err()}"
+            with peer2_result.ok_value as peer2:
+                sender_config = {
+                    **node_config,
+                    "mode": "Edge",
+                    "relay": True,
+                    "lightpush": True,
+                    "store": False,
+                    "filter": False,
+                    "discv5Discovery": False,
+                    "numShardsInNetwork": 1,
+                    "portsshift": 3,
+                    "staticnodes": [
+                        get_node_multiaddr(peer1),
+                        get_node_multiaddr(peer2),
+                    ],
+                }
 
-                message = create_message_bindings()
-                send_result = sender_node.send_message(message=message)
-                assert send_result.is_ok(), f"send() must return Ok(RequestId) during peer churn, got: {send_result.err()}"
-
-                request_id = send_result.ok_value
-                assert request_id, "send() returned an empty RequestId"
-
-                # Expect Propagated via the surviving lightpush peer (peer2).
-                propagated_event = wait_for_propagated(
-                    collector=sender_collector,
-                    request_id=request_id,
-                    timeout_s=PROPAGATED_TIMEOUT_S,
+                sender_result = WrapperManager.create_and_start(
+                    config=sender_config,
+                    event_cb=sender_collector.event_callback,
                 )
-                assert propagated_event is not None, (
-                    f"No MessagePropagatedEvent within {PROPAGATED_TIMEOUT_S}s "
-                    f"after the selected lightpush peer disappeared. "
-                    f"Collected events: {sender_collector.events}"
-                )
+                assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
 
-                error_event = wait_for_error(
-                    collector=sender_collector,
-                    request_id=request_id,
-                    timeout_s=0,
-                )
-                assert error_event is None, f"Unexpected message_error event during peer churn: {error_event}"
+                with sender_result.ok_value as sender_node:
+                    delay(2)
+                    stop_result = peer1.stop_and_destroy()
+                    assert stop_result.is_ok(), f"Failed to stop peer1: {stop_result.err()}"
+                    delay(2)
+
+                    message = create_message_bindings()
+                    send_result = sender_node.send_message(message=message)
+                    assert send_result.is_ok(), f"send() must return Ok(RequestId) during peer churn, got: {send_result.err()}"
+
+                    request_id = send_result.ok_value
+                    assert request_id, "send() returned an empty RequestId"
+
+                    # Expect Propagated via the surviving lightpush peer (peer2).
+                    propagated_event = wait_for_propagated(
+                        collector=sender_collector,
+                        request_id=request_id,
+                        timeout_s=PROPAGATED_TIMEOUT_S,
+                    )
+                    assert propagated_event is not None, (
+                        f"No MessagePropagatedEvent within {PROPAGATED_TIMEOUT_S}s "
+                        f"after the selected lightpush peer disappeared. "
+                        f"Collected events: {sender_collector.events}"
+                    )
+
+                    error_event = wait_for_error(
+                        collector=sender_collector,
+                        request_id=request_id,
+                        timeout_s=0,
+                    )
+                    assert error_event is None, f"Unexpected message_error event during peer churn: {error_event}"
 
     def test_s30_concurrent_sends_during_auto_subscribe(self, node_config):
         """
