@@ -208,7 +208,7 @@ class TestSendBeforeRelay(StepsStore):
                     f"Collected events: {sender_collector.events}"
                 )
 
-    @pytest.mark.xfail(reason="scenario might be not possible to simulate")
+    # @pytest.mark.xfail(reason="scenario might be not possible to simulate")
     def test_s19_store_peer_appears_after_propagation(self, node_config):
         """
         S19: a store peer comes online later.
@@ -294,7 +294,7 @@ class TestSendBeforeRelay(StepsStore):
                     ascending="true",
                 )
 
-    @pytest.mark.xfail(reason="error:NoPeersToPublish")
+    # @pytest.mark.xfail(reason="error:NoPeersToPublish")
     def test_s20_store_misses_initially_then_retry_succeeds(self, node_config):
         """
         S20: relay propagation succeeds, initial store query misses,
@@ -821,7 +821,7 @@ class TestSendBeforeRelay(StepsStore):
                         f"Event carries an unknown requestId={event_request_id!r}, " f"not in issued set {issued}. Event: {event}"
                     )
 
-    @pytest.mark.xfail(reason="S31 exposes nwaku crash in json_serialization writer")
+    # @pytest.mark.xfail(reason="S31 exposes nwaku crash in json_serialization writer")
     def test_s31_concurrent_sends_mixed_topics_during_churn(self, node_config):
         """
         S31: concurrent sends across mixed content topics during peer churn.
