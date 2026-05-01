@@ -142,8 +142,10 @@ def get_node_multiaddr(node) -> str:
         raise RuntimeError(f"get_node_info_raw failed: {result.err()}")
 
     addr = result.ok_value.strip()
-    if not addr or not addr.startswith("/"):
+    if not addr:
         raise RuntimeError(f"Unexpected multiaddr format: {addr!r}")
+    if not addr.startswith("/"):
+        raise RuntimeError(f"Unexpected start multiaddr format: {addr!r}")
 
     return addr
 

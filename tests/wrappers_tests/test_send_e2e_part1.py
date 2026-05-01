@@ -22,7 +22,7 @@ from tests.wrappers_tests.conftest import free_port
 
 logger = get_custom_logger(__name__)
 
-
+## max time to wait after sending the message
 PROPAGATED_TIMEOUT_S = 30.0
 SENT_TIMEOUT_S = 10.0
 NO_SENT_OBSERVATION_S = 5.0
@@ -122,90 +122,11 @@ class TestSendBeforeRelay(StepsStore):
                 sent_event = wait_for_sent(
                     collector=sender_collector,
                     request_id=request_id,
-                    timeout_s=SENT_TIMEOUT_S,
+                    timeout_s=NO_SENT_OBSERVATION_S,
                 )
                 assert sent_event is not None, (
-                    f"No MessageSentEvent received within {SENT_TIMEOUT_S}s "
+                    f"No MessageSentEvent received within {NO_SENT_OBSERVATION_S}s "
                     f"from a store-enabled relay peer. Collected events: {sender_collector.events}"
-                )
-
-    def test_s23_no_sent_event_when_relay_has_no_store(self, node_config):
-        """
-        S23: non-ephemeral message, reliability enabled, no store peer ever reachable.
-          - Expected: Ok(RequestId), Propagated event only, no Sent and no terminal error.
-        """
-        sender_collector = EventCollector()
-
-        node_config.update(
-            {
-                "relay": True,
-                "store": False,
-                "discv5Discovery": False,
-                "numShardsInNetwork": 1,
-                "reliabilityEnabled": True,
-            }
-        )
-
-        sender_result = WrapperManager.create_and_start(
-            config=node_config,
-            event_cb=sender_collector.event_callback,
-        )
-        assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
-
-        with sender_result.ok_value as sender_node:
-            message = create_message_bindings(ephemeral=False)
-            send_result = sender_node.send_message(message=message)
-            assert send_result.is_ok(), f"send() must return Ok(RequestId) even with no peers, got: {send_result.err()}"
-
-            request_id = send_result.ok_value
-            assert request_id, "send() returned an empty RequestId"
-
-            relay_config = {
-                **node_config,
-                "staticnodes": [get_node_multiaddr(sender_node)],
-                "portsshift": 1,
-                "store": False,
-            }
-
-            relay_result = WrapperManager.create_and_start(config=relay_config)
-            assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
-
-            with relay_result.ok_value:
-                propagated_event = wait_for_propagated(
-                    collector=sender_collector,
-                    request_id=request_id,
-                    timeout_s=PROPAGATED_TIMEOUT_S,
-                )
-                assert propagated_event is not None, (
-                    f"No MessagePropagatedEvent received within {PROPAGATED_TIMEOUT_S}s "
-                    f"after relay peer joined. Collected events: {sender_collector.events}"
-                )
-
-                sent_event = wait_for_sent(
-                    collector=sender_collector,
-                    request_id=request_id,
-                    timeout_s=NO_STORE_OBSERVATION_S,
-                )
-                assert sent_event is None, (
-                    f"Unexpected MessageSentEvent within {NO_STORE_OBSERVATION_S}s "
-                    f"when relay peer has store=false.\n"
-                    f"Sent event: {sent_event}\n"
-                    f"Collected events: {sender_collector.events}"
-                )
-
-                # Regression guard: current behavior must NOT convert "no store
-                # reachable" into an immediate terminal error. If a future change
-                # starts emitting one, this assertion will catch it.
-                error_event = wait_for_error(
-                    collector=sender_collector,
-                    request_id=request_id,
-                    timeout_s=0,
-                )
-                assert error_event is None, (
-                    f"Unexpected terminal error event when no store peer is reachable. "
-                    f"S23 expects silent behavior (Propagated only).\n"
-                    f"Error event: {error_event}\n"
-                    f"Collected events: {sender_collector.events}"
                 )
 
     # @pytest.mark.xfail(reason="scenario might be not possible to simulate")
@@ -540,11 +461,90 @@ class TestSendBeforeRelay(StepsStore):
                 sent_event = wait_for_sent(
                     collector=sender_collector,
                     request_id=request_id,
-                    timeout_s=SENT_TIMEOUT_S,
+                    timeout_s=NO_SENT_OBSERVATION_S,
                 )
                 assert sent_event is None, (
                     f"Unexpected MessageSentEvent received when reliabilityEnabled is disabled.\n"
                     f"Sent event: {sent_event}\n"
+                    f"Collected events: {sender_collector.events}"
+                )
+
+    def test_s23_no_sent_event_when_relay_has_no_store(self, node_config):
+        """
+        S23: non-ephemeral message, reliability enabled, no store peer ever reachable.
+          - Expected: Ok(RequestId), Propagated event only, no Sent and no terminal error.
+        """
+        sender_collector = EventCollector()
+
+        node_config.update(
+            {
+                "relay": True,
+                "store": False,
+                "discv5Discovery": False,
+                "numShardsInNetwork": 1,
+                "reliabilityEnabled": True,
+            }
+        )
+
+        sender_result = WrapperManager.create_and_start(
+            config=node_config,
+            event_cb=sender_collector.event_callback,
+        )
+        assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
+
+        with sender_result.ok_value as sender_node:
+            message = create_message_bindings(ephemeral=False)
+            send_result = sender_node.send_message(message=message)
+            assert send_result.is_ok(), f"send() must return Ok(RequestId) even with no peers, got: {send_result.err()}"
+
+            request_id = send_result.ok_value
+            assert request_id, "send() returned an empty RequestId"
+
+            relay_config = {
+                **node_config,
+                "staticnodes": [get_node_multiaddr(sender_node)],
+                "portsshift": 1,
+                "store": False,
+            }
+
+            relay_result = WrapperManager.create_and_start(config=relay_config)
+            assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
+
+            with relay_result.ok_value:
+                propagated_event = wait_for_propagated(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=PROPAGATED_TIMEOUT_S,
+                )
+                assert propagated_event is not None, (
+                    f"No MessagePropagatedEvent received within {PROPAGATED_TIMEOUT_S}s "
+                    f"after relay peer joined. Collected events: {sender_collector.events}"
+                )
+
+                sent_event = wait_for_sent(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=NO_STORE_OBSERVATION_S,
+                )
+                assert sent_event is None, (
+                    f"Unexpected MessageSentEvent within {NO_STORE_OBSERVATION_S}s "
+                    f"when relay peer has store=false.\n"
+                    f"Sent event: {sent_event}\n"
+                    f"Collected events: {sender_collector.events}"
+                )
+
+                # Regression guard: current behavior must NOT convert "no store
+                # reachable" into an immediate terminal error. If a future change
+                # starts emitting one, this assertion will catch it.
+                error_event = wait_for_error(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=0,
+                )
+                assert error_event is None, (
+                    f"Unexpected terminal error event when no store peer is reachable. "
+                    f"S23 expects silent behavior (Propagated only).\n"
+                    f"Error event: {error_event}\n"
                     f"Collected events: {sender_collector.events}"
                 )
 
