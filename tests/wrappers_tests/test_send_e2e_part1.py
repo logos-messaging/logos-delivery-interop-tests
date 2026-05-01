@@ -12,11 +12,13 @@ from src.node.wrapper_helpers import (
     EventCollector,
     create_message_bindings,
     get_node_multiaddr,
+    wait_for_connected,
     wait_for_propagated,
     wait_for_sent,
     wait_for_error,
 )
 from src.steps.store import StepsStore
+from tests.wrappers_tests.conftest import free_port
 
 logger = get_custom_logger(__name__)
 
@@ -100,6 +102,14 @@ class TestSendBeforeRelay(StepsStore):
             assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
 
             with relay_result.ok_value:
+                # Match the gating part2's tests use: wait until the sender
+                # actually reports Connected/PartiallyConnected before asserting
+                # on propagation. Without this, the wait_for_propagated poll can
+                # miss the event because the sender's mesh hasn't formed yet.
+                assert wait_for_connected(sender_collector) is not None, (
+                    f"Sender did not reach Connected/PartiallyConnected after " f"relay peer joined. Collected events: {sender_collector.events}"
+                )
+
                 propagated_event = wait_for_propagated(
                     collector=sender_collector,
                     request_id=request_id,
@@ -504,6 +514,13 @@ class TestSendBeforeRelay(StepsStore):
             assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
 
             with relay_result.ok_value:
+                # Wait for the sender to actually establish the mesh before
+                # publishing, matching part2's pattern. Otherwise the publish
+                # races with mesh formation and message_propagated may not fire.
+                assert wait_for_connected(sender_collector) is not None, (
+                    f"Sender did not reach Connected/PartiallyConnected. " f"Collected events: {sender_collector.events}"
+                )
+
                 message = create_message_bindings(ephemeral=False)
                 send_result = sender_node.send_message(message=message)
                 assert send_result.is_ok(), f"send() must return Ok(RequestId), got: {send_result.err()}"
@@ -607,6 +624,9 @@ class TestSendBeforeRelay(StepsStore):
         sender_collector = EventCollector()
 
         # Two lightpush server peers: relay+lightpush, connected to each other.
+        # Each peer that enables discv5 needs its own UDP port; portsshift only
+        # offsets TCP/REST, so leaving them on the same base discv5UdpPort
+        # collides with EADDRINUSE on the second peer.
         peer1_config = {
             **node_config,
             "relay": True,
@@ -616,6 +636,7 @@ class TestSendBeforeRelay(StepsStore):
             "discv5Discovery": True,
             "numShardsInNetwork": 1,
             "portsshift": 1,
+            "discv5UdpPort": free_port(),
         }
         peer1_result = WrapperManager.create_and_start(config=peer1_config)
         assert peer1_result.is_ok(), f"Failed to start lightpush peer1: {peer1_result.err()}"
@@ -643,6 +664,7 @@ class TestSendBeforeRelay(StepsStore):
                     get_node_multiaddr(relay_peer),
                 ],
                 "portsshift": 2,
+                "discv5UdpPort": free_port(),
             }
 
             peer2_result = WrapperManager.create_and_start(config=peer2_config)
