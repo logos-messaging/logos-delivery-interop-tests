@@ -265,8 +265,13 @@ def configure_fleet_cluster(request, pubsub_cfg):
     # rln-relay with no credentials causes nwaku to crash.
     #
     # Fix: replace setup_lightpush_node with a fleet-aware version that
-    #   1. routes lightpush requests to FLEET_N1_MULTIADDR so the fleet relay
-    #      network delivers messages to fleet-connected receiving nodes.
+    #   1. routes lightpush requests to receiving_node1 (self.multiaddr_list[0]),
+    #      which has RLN membership #1 and is fleet-peered.  nwaku injects an RLN
+    #      proof when the lightpush server relays the message, so gossipsub carries
+    #      the message through the fleet mesh to receiving_node2.
+    #      NOTE: routing directly to FLEET_N1_MULTIADDR does NOT work because
+    #      nwaku's lightpush service does not inject RLN proofs – the fleet relay
+    #      layer then rejects the proof-less message and it never propagates.
     #   2. starts the client with relay=false so no RLN membership is needed.
     #   3. does NOT add the client to main_receiving_nodes; assertion peers
     #      remain receiving_node1 and receiving_node2 only.
@@ -275,19 +280,28 @@ def configure_fleet_cluster(request, pubsub_cfg):
 
         node = WakuNode(image, f"lightpush_node{node_index}_{self.test_id}")
         fleet_kwargs = dict(kwargs)
-        # Force relay=false – pure lightpush client, no RLN membership required.
+        # Force relay=false and lightpush=false – pure lightpush *client*, no
+        # RLN membership required and no server-side lightpush protocol mounted.
+        # nwaku v0.38+ refuses to mount lightpush (server) when relay is not
+        # mounted, so both flags must be false together.
         # skip_fleet_peering prevents the bootstrap hook from injecting a fleet
         # staticnode + RLN creds (which would fail for the same reason).
         fleet_kwargs["relay"] = "false"
+        fleet_kwargs["lightpush"] = "false"
         fleet_kwargs["skip_fleet_peering"] = True
         fleet_kwargs.setdefault("cluster_id", FLEET_CLUSTER_ID)
         fleet_kwargs.setdefault("shard", list(range(8)))
-        node.start(lightpushnode=FLEET_N1_MULTIADDR, **fleet_kwargs)
+        # Use receiving_node1 (self.multiaddr_list[0]) as the lightpush service
+        # node.  receiving_node1 holds RLN membership #1 and is fleet-peered, so
+        # it generates a valid RLN proof when relaying – the message then flows
+        # through the fleet gossipsub mesh and reaches receiving_node2.
+        lightpush_service_addr = self.multiaddr_list[0]
+        node.start(lightpushnode=lightpush_service_addr, **fleet_kwargs)
         self.add_node_peer(node, self.multiaddr_list)
         logger.debug(
             "fleet _fleet_setup_lightpush_node: node %d started with relay=false, " "skip_fleet_peering=True, lightpushnode=%s",
             node_index,
-            FLEET_N1_MULTIADDR,
+            lightpush_service_addr,
         )
         return node
 
@@ -296,11 +310,13 @@ def configure_fleet_cluster(request, pubsub_cfg):
     logger.info(
         "Fleet cluster config active – pubsub topics overridden to cluster-id=%s "
         "(shards 0-7, e.g. relay_test_topic=%s  rln_test_topic=%s); "
-        "StepsLightPush.setup_lightpush_node overridden to use fleet relay %s",
+        "StepsLightPush.setup_lightpush_node overridden to use receiving_node1 as "
+        "lightpush service (fleet-peered with RLN membership #1; messages relay "
+        "through fleet mesh to receiving_node2 peered with %s)",
         FLEET_CLUSTER_ID,
         pubsub_cfg.relay_test_topic,
         pubsub_cfg.rln_test_topic,
-        FLEET_N1_MULTIADDR,
+        FLEET_N2_MULTIADDR,
     )
     yield
 
