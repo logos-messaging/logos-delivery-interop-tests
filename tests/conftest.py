@@ -194,6 +194,7 @@ def configure_fleet_cluster(request, pubsub_cfg):
         return node
 
     StepsLightPush.setup_lightpush_node = _fleet_setup_lightpush_node
+    StepsLightPush.default_message_propagation_delay = 0.5
 
     logger.info(
         "Fleet cluster config active – pubsub topics overridden to cluster-id=%s "
