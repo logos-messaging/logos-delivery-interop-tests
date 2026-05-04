@@ -23,12 +23,17 @@ class TestGetMessages(StepsStore):
                 logger.error(f'Payload {payload["description"]} failed: {str(e)}')
                 failed_payloads.append(payload["description"])
         assert not failed_payloads, f"Payloads failed: {failed_payloads}"
-        # In fleet mode the archive may also store background fleet messages; count
-        # only the messages that belong to the test by matching the test content topic.
-        test_msgs = [m for m in self.store_response.messages if m.get("message", {}).get("contentTopic") == self.test_content_topic]
-        assert len(test_msgs) == len(SAMPLE_INPUTS), (
-            f"Expected {len(SAMPLE_INPUTS)} test messages but found {len(test_msgs)} " f"(total in store: {len(self.store_response.messages)})"
-        )
+        # Content-topic-scoped query to accommodate fleet tests
+        for node in self.store_nodes:
+            scoped = self.get_messages_from_store(
+                node,
+                page_size=len(SAMPLE_INPUTS) + 10,
+                content_topics=self.test_content_topic,
+                ascending="true",
+            )
+            assert len(scoped.messages) == len(SAMPLE_INPUTS), (
+                f"Expected {len(SAMPLE_INPUTS)} test messages on {node.image} " f"but found {len(scoped.messages)}"
+            )
 
     @pytest.mark.waku_test_fleet
     def test_get_store_messages_with_different_content_topics(self):
