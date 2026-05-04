@@ -94,7 +94,7 @@ class TestSendBeforeRelay(StepsStore):
             relay_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender_node)],
-                "portsshift": 1,
+                "portsShift": 1,
                 "store": True,
             }
 
@@ -255,21 +255,21 @@ class TestSendBeforeRelay(StepsStore):
             relay_a_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender_node)],
-                "portsshift": 1,
+                "portsShift": 1,
                 "store": False,
                 "reliabilityEnabled": True,
             }
             relay_b_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender_node)],
-                "portsshift": 2,
+                "portsShift": 2,
                 "store": False,
                 "reliabilityEnabled": True,
             }
             relay_c_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender_node)],
-                "portsshift": 3,
+                "portsShift": 3,
                 "store": False,
             }
 
@@ -444,7 +444,7 @@ class TestSendBeforeRelay(StepsStore):
             relay_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender_node)],
-                "portsshift": 1,
+                "portsShift": 1,
                 "store": True,
             }
 
@@ -520,7 +520,7 @@ class TestSendBeforeRelay(StepsStore):
             relay_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender_node)],
-                "portsshift": 1,
+                "portsShift": 1,
                 "store": False,
             }
 
@@ -594,7 +594,7 @@ class TestSendBeforeRelay(StepsStore):
             relay_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender_node)],
-                "portsshift": 1,
+                "portsShift": 1,
                 "store": True,
             }
 
@@ -641,7 +641,7 @@ class TestSendBeforeRelay(StepsStore):
         sender_collector = EventCollector()
 
         # Two lightpush server peers: relay+lightpush, connected to each other.
-        # Each peer that enables discv5 needs its own UDP port; portsshift only
+        # Each peer that enables discv5 needs its own UDP port; portsShift only
         # offsets TCP/REST, so leaving them on the same base discv5UdpPort
         # collides with EADDRINUSE on the second peer.
         peer1_config = {
@@ -652,7 +652,7 @@ class TestSendBeforeRelay(StepsStore):
             "filter": False,
             "discv5Discovery": True,
             "numShardsInNetwork": 1,
-            "portsshift": 1,
+            "portsShift": 1,
             "discv5UdpPort": free_port(),
         }
         peer1_result = WrapperManager.create_and_start(config=peer1_config)
@@ -667,7 +667,7 @@ class TestSendBeforeRelay(StepsStore):
             "filter": False,
             "discv5Discovery": False,
             "numShardsInNetwork": 1,
-            "portsshift": 4,
+            "portsShift": 4,
         }
 
         relay_result = WrapperManager.create_and_start(config=relay_config)
@@ -680,7 +680,7 @@ class TestSendBeforeRelay(StepsStore):
                     get_node_multiaddr(peer1),
                     get_node_multiaddr(relay_peer),
                 ],
-                "portsshift": 2,
+                "portsShift": 2,
                 "discv5UdpPort": free_port(),
             }
 
@@ -697,7 +697,7 @@ class TestSendBeforeRelay(StepsStore):
                     "filter": False,
                     "discv5Discovery": False,
                     "numShardsInNetwork": 1,
-                    "portsshift": 3,
+                    "portsShift": 3,
                     "staticnodes": [
                         get_node_multiaddr(peer1),
                         get_node_multiaddr(peer2),
@@ -773,7 +773,7 @@ class TestSendBeforeRelay(StepsStore):
             relay_config = {
                 **node_config,
                 "staticnodes": [get_node_multiaddr(sender_node)],
-                "portsshift": 1,
+                "portsShift": 1,
             }
 
             relay_result = WrapperManager.create_and_start(config=relay_config)
