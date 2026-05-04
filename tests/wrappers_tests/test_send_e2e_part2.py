@@ -300,7 +300,7 @@ class TestRelayToLightpushFallback(StepsCommon):
             with relay_result.ok_value:
                 sender_config = {
                     **node_config,
-                    # "lightpushnode": service_addr,
+                    # "lightpushnode": service_addr, #this comment currently raise issues
                     "portsShift": 2,
                 }
                 sender_result = WrapperManager.create_and_start(
@@ -370,7 +370,6 @@ class TestRelayToLightpushFallback(StepsCommon):
                 sender_config = {
                     **node_config,
                     "reliabilityEnabled": True,
-                    "lightpushnode": service_addr,
                     "storenode": service_addr,
                     "portsShift": 2,
                 }
@@ -452,7 +451,6 @@ class TestS10EdgeSenderLightpushOnly(StepsCommon):
             with relay_result.ok_value:
                 edge_config = build_node_config(
                     mode="Edge",
-                    # lightpushnode=service_multiaddr,
                     staticnodes=[service_multiaddr],
                     **common,
                 )
@@ -578,7 +576,6 @@ class TestS14LightpushNonRetryableError(StepsCommon):
 
             edge_config = build_node_config(
                 mode="Edge",
-                # lightpushnode=service_multiaddr,
                 staticnodes=[service_multiaddr],
                 **common,
             )
@@ -653,7 +650,6 @@ class TestS15LightpushRetryableErrorRecovery(StepsCommon):
 
             edge_config = build_node_config(
                 mode="Edge",
-                # lightpushnode=service_multiaddr,
                 staticnodes=[service_multiaddr],
                 **common,
             )
