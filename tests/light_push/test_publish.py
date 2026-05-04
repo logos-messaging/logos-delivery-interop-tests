@@ -4,7 +4,15 @@ from src.libs.custom_logger import get_custom_logger
 from time import time
 from src.libs.common import delay, to_base64
 from src.steps.light_push import StepsLightPush
-from src.test_data import INVALID_CONTENT_TOPICS, INVALID_PAYLOADS, PUBSUB_TOPICS_WRONG_FORMAT, SAMPLE_INPUTS, SAMPLE_TIMESTAMPS, VALID_PUBSUB_TOPICS
+from src.test_data import (
+    INVALID_CONTENT_TOPICS,
+    INVALID_PAYLOADS,
+    PUBSUB_TOPICS_WRONG_FORMAT,
+    SAMPLE_INPUTS,
+    SAMPLE_TIMESTAMPS,
+    VALID_PUBSUB_TOPICS,
+    get_sample_timestamps,
+)
 
 logger = get_custom_logger(__name__)
 
@@ -156,7 +164,7 @@ class TestLightPushPublish(StepsLightPush):
     @pytest.mark.waku_test_fleet
     def test_light_push_with_valid_timestamps(self):
         failed_timestamps = []
-        for timestamp in SAMPLE_TIMESTAMPS:
+        for timestamp in get_sample_timestamps():
             if self.light_push_node1.type() in timestamp["valid_for"]:
                 logger.debug(f'Running test with timestamp {timestamp["description"]}')
                 message = self.create_message(timestamp=timestamp["value"])

@@ -173,6 +173,44 @@ SAMPLE_TIMESTAMPS = [
     {"description": "Missing", "value": None, "valid_for": []},
 ]
 
+
+def get_sample_timestamps():
+    """Return timestamp test-cases with values evaluated fresh at call time.
+
+    This factory function MUST be called from inside each test (never at module
+    import time) so that the "Now" value maps to the active RLN epoch when the
+    message is actually published.
+
+    valid_for semantics
+    -------------------
+    ``["nwaku"]`` – accepted by nwaku in both standalone and fleet (RLN) mode.
+    ``[]``        – rejected by nwaku in fleet (RLN) mode; kept for completeness
+                    and for use by the companion invalid-timestamp tests.
+    """
+    now_ns = int(time() * 1e9)
+    now_dt = datetime.now()
+    return [
+        # Current epoch – the only value accepted by nwaku RLN relay without delay.
+        {"description": "Now", "value": now_ns, "valid_for": ["nwaku"]},
+        # Out-of-range epochs: valid as arbitrary metadata on non-RLN nwaku but
+        # rejected by RLN relay because they do not match the current epoch.
+        {"description": "Far future", "value": int((now_dt + timedelta(days=365 * 10)).timestamp() * 1e9), "valid_for": []},
+        {"description": "Recent past", "value": int((now_dt - timedelta(hours=1)).timestamp() * 1e9), "valid_for": []},
+        {"description": "Near future", "value": int((now_dt + timedelta(hours=1)).timestamp() * 1e9), "valid_for": []},
+        {"description": "Positive number", "value": 1, "valid_for": []},
+        {"description": "Negative number", "value": -1, "valid_for": []},
+        {"description": "DST change", "value": int(datetime(2020, 3, 8, 2, 0, 0).timestamp() * 1e9), "valid_for": []},
+        # Wrong types – rejected by the nwaku REST API regardless of value.
+        {"description": "Timestamp as string number", "value": str(now_ns), "valid_for": []},
+        {"description": "Invalid large number", "value": 2**63, "valid_for": []},
+        {"description": "Float number", "value": float(now_ns), "valid_for": []},
+        {"description": "Array instead of timestamp", "value": [now_ns], "valid_for": []},
+        {"description": "Object instead of timestamp", "value": {"time": now_ns}, "valid_for": []},
+        {"description": "ISO 8601 timestamp", "value": "2023-12-26T10:58:51", "valid_for": []},
+        {"description": "Missing", "value": None, "valid_for": []},
+    ]
+
+
 PUBSUB_TOPICS_RLN = [f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/0"]
 
 LOG_ERROR_KEYWORDS = [
