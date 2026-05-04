@@ -148,11 +148,12 @@ class TestSendBeforeRelay(StepsStore):
         assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
 
         with sender_result.ok_value as sender_node:
-            # relay peer
             relay_config = {
                 **node_config,
+                "tcpPort": free_port(),
+                "discv5UdpPort": free_port(),
+                "restPort": free_port(),
                 "staticnodes": [get_node_multiaddr(sender_node)],
-                "portsshift": 1,
                 "store": False,
                 "reliabilityEnabled": True,
             }
@@ -161,6 +162,13 @@ class TestSendBeforeRelay(StepsStore):
             assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
 
             with relay_result.ok_value as relay_peer:
+                # Wait until the sender actually reports a connection before
+                # sending. Without this, send() can race the static-peer
+                # dial on slower runners (same gate S17 uses).
+                assert wait_for_connected(sender_collector) is not None, (
+                    f"Sender did not reach Connected/PartiallyConnected after " f"relay peer joined. Collected events: {sender_collector.events}"
+                )
+
                 # send(). Must return Ok(RequestId) immediately.
                 message = create_message_bindings()
                 send_result = sender_node.send_message(message=message)
