@@ -232,12 +232,34 @@ jobs:
           path: all-results
           merge-multiple: true
 
-      - name: Get allure history
-        if: always()
+      - name: Check out gh-pages history if it exists
+        id: checkout_gh_pages
+        continue-on-error: true
         uses: actions/checkout@v4
         with:
           ref: gh-pages
           path: gh-pages
+          fetch-depth: 1
+
+      - name: Prepare empty gh-pages fallback
+        if: steps.checkout_gh_pages.outcome != 'success'
+        run: |
+          mkdir -p gh-pages/${{ env.CALLER }}/last-history
+
+      - name: Remove oversized Allure text attachments
+        if: always()
+        run: |
+          set -euo pipefail
+
+          echo "Before cleanup:"
+          find all-results -type f | wc -l || true
+          du -sh all-results || true
+
+          find all-results -type f -name "*.txt" -delete || true
+
+          echo "After cleanup:"
+          find all-results -type f | wc -l || true
+          du -sh all-results || true
 
       - name: Setup allure report
         uses: simple-elf/allure-report-action@master
@@ -247,17 +269,61 @@ jobs:
           allure_results: all-results
           gh_pages: gh-pages/${{ env.CALLER }}
           allure_history: allure-history
-          keep_reports: 30
+          keep_reports: 10
           report_url: https://logos-messaging.github.io/logos-delivery-interop-tests/${{ env.CALLER }}
+
+      - name: Fix permissions (CRITICAL)
+        if: always()
+        run: |
+          echo "Fixing permissions..."
+          sudo chown -R $USER:$USER allure-history || true
+          sudo chmod -R u+rwX allure-history || true
+
+      - name: Clean allure-history
+        if: always()
+        run: |
+          echo "Cleaning allure-history..."
+
+          # Remove ALL txt attachments from history
+          find allure-history -type f -name "*.txt" -delete || true
+
+          echo "After cleanup:"
+          du -sh allure-history || true
+
+      - name: Verify generated report content
+        if: always()
+        run: |
+          set -euo pipefail
+
+          test -d allure-history
+          test -d "allure-history/${{ github.run_number }}"
+          test -f "allure-history/${{ github.run_number }}/index.html"
+          test -d "allure-history/last-history"
+
+          echo "=== allure-history size ==="
+          du -sh allure-history || true
+
+          echo "=== largest files ==="
+          find allure-history -type f -printf '%s %p\n' | sort -nr | head -50 || true
+
+          echo "=== symlinks ==="
+          find allure-history -type l -ls || true
+
+          echo "=== hard-linked files ==="
+          find allure-history -type f -links +1 -ls || true
+
+          echo "=== top-level tree ==="
+          find allure-history -maxdepth 2 -type f | sort | head -100 || true
 
       - name: Deploy report to Github Pages
         uses: peaceiris/actions-gh-pages@v3
-        if: always()
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: allure-history
+          publish_dir: ./allure-history
           destination_dir: ${{ env.CALLER }}
+          keep_files: false
+          enable_jekyll: false
 
       - name: Store output from matrix jobs
         run: |
