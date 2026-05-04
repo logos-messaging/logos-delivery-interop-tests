@@ -30,7 +30,7 @@ SENT_AFTER_STORE_TIMEOUT_S = 60.0
 NO_STORE_OBSERVATION_S = 60.0
 
 # S20 stabilization delays for gossipsub mesh formation.
-MESH_STABILIZATION_S = 5
+MESH_STABILIZATION_S = 10
 STORE_JOIN_STABILIZATION_S = 10
 
 # MaxTimeInCache from send_service.nim.
@@ -148,6 +148,7 @@ class TestSendBeforeRelay(StepsStore):
         assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
 
         with sender_result.ok_value as sender_node:
+            # relay peer
             relay_config = {
                 **node_config,
                 "tcpPort": free_port(),
@@ -168,8 +169,6 @@ class TestSendBeforeRelay(StepsStore):
                 assert wait_for_connected(sender_collector) is not None, (
                     f"Sender did not reach Connected/PartiallyConnected after " f"relay peer joined. Collected events: {sender_collector.events}"
                 )
-
-                # send(). Must return Ok(RequestId) immediately.
                 message = create_message_bindings()
                 send_result = sender_node.send_message(message=message)
                 assert send_result.is_ok(), f"send() must return Ok(RequestId), got: {send_result.err()}"
@@ -320,17 +319,27 @@ class TestSendBeforeRelay(StepsStore):
                 )
 
                 store_node = WakuNode(NODE_2, f"s20_store_node_{self.test_id}")
-                store_node.start(relay="true", store="true", discv5_discovery="false")
+                store_node.start(
+                    relay="true",
+                    store="true",
+                    discv5_discovery="false",
+                    cluster_id=node_config["clusterId"],
+                    shard=0,
+                )
                 store_node.set_relay_subscriptions([self.test_pubsub_topic])
 
-                # Connect relay peers first, then the sender, so mesh churn on
-                # the sender doesn't disrupt the store-archival path.
+                # Connect the relay path first and let the mesh settle, then
+                # connect the sender so its mesh churn doesn't drop the store
+                # from the topic peer set.
                 sender_multiaddr = get_node_multiaddr(sender_node)
                 relay_a_multiaddr = get_node_multiaddr(relay_peer_a)
                 relay_b_multiaddr = get_node_multiaddr(relay_peer_b)
                 relay_c_multiaddr = get_node_multiaddr(relay_peer_c)
+
                 store_node.add_peers([relay_a_multiaddr, relay_b_multiaddr, relay_c_multiaddr])
+                self.wait_for_autoconnection([store_node], hard_wait=10)
                 delay(STORE_JOIN_STABILIZATION_S)
+
                 store_node.add_peers([sender_multiaddr])
                 delay(STORE_JOIN_STABILIZATION_S)
 
