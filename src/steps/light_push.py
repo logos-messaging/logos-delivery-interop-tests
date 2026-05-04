@@ -124,9 +124,6 @@ class StepsLightPush(StepsCommon):
         for index, peer in enumerate(peer_list):
             logger.debug(f"Checking that peer NODE_{index + 1}:{peer.image} can find the lightpushed message")
             get_messages_response = peer.get_relay_messages(pubsub_topic)
-            # In fleet mode the relay cache may contain background messages from other
-            # fleet participants.  Filter to only messages whose contentTopic matches
-            # the test message so that fleet noise does not break the count assertion.
             test_messages = [m for m in get_messages_response if m.get("contentTopic") == payload["message"]["contentTopic"]]
             assert test_messages, f"Peer NODE_{index + 1}:{peer.image} couldn't find any messages"
             assert len(test_messages) == 1, (

@@ -2,13 +2,7 @@
 
 When fleet bootstrap is active (``--fleet`` CLI flag or ``FLEET_BOOTSTRAP=true``
 env var), an instance of :class:`FleetBootstrapConfig` is assigned to
-``WakuNode._pre_start_hook``.  ``WakuNode.start()`` calls this hook before
-processing any start arguments, injecting fleet-specific bootstrap parameters
-into every local Docker node.
-
-This module encapsulates all fleet injection logic that was previously an
-ad-hoc closure inside ``tests/conftest.py``, making it independently testable
-and reusable.
+``WakuNode._pre_start_hook``.
 """
 from __future__ import annotations
 
@@ -57,39 +51,13 @@ class FleetBootstrapConfig:
       - NODE1 (1st started) → FLEET_N1_MULTIADDR (node-01.do-ams3)
       - NODE2 (2nd started) → FLEET_N2_MULTIADDR (node-01.gc-us-central1-a)
       - additional nodes    → FLEET_PRIMARY_MULTIADDR (Amsterdam, same as NODE1)
-
-    Direct bootstrap coupling between NODE1 and NODE2 is suppressed: any
-    ``discv5_bootstrap_node`` kwarg pointing to a local node ENR is removed;
-    fleet DNS discovery (``dns_discovery_url``) replaces it.
-
-    Attributes:
-        fleet_rln_state: Dict with keys ``keystore_prefixes`` and
-            ``rln_membership_indexes`` populated by the ``fleet_rln_state``
-            session fixture.
     """
 
     fleet_rln_state: dict
 
     def prepare_start_kwargs(self, node: "WakuNode", kwargs: dict) -> dict:
-        """Inject fleet bootstrap arguments into *kwargs* before node start.
+        """Inject fleet bootstrap arguments into *kwargs* before node start."""
 
-        Transparent to callers:
-
-        - Existing ``staticnode`` entries are preserved; the fleet multiaddr is
-          *appended* as an additional entry.
-        - ``dns_discovery`` / ``dns_discovery_url`` use ``setdefault`` semantics.
-        - RLN credentials are injected only when not already present and relay
-          is enabled.
-        - ``discv5_bootstrap_node`` pointing to a local ENR is removed so each
-          node bootstraps independently from its assigned fleet peer.
-
-        The ``skip_fleet_peering`` kwarg (not a real nwaku flag) acts as an
-        escape-hatch: when ``True``, only ``discv5_bootstrap_node`` removal
-        happens; all other fleet injection is skipped.
-
-        Returns:
-            The (possibly modified) *kwargs* dict.
-        """
         logger.debug("FleetBootstrapConfig.prepare_start_kwargs: injecting waku.test bootstrap args")
 
         if kwargs.pop("skip_fleet_peering", False):
@@ -101,9 +69,6 @@ class FleetBootstrapConfig:
 
         # Determine which fleet peer to connect to based on node creation order
         # within the current test (DS.waku_nodes is reset to [] before each test).
-        # The append to DS.waku_nodes happens inside _start_docker/_start_wrapper,
-        # *after* start() returns, so len() here reflects the count of nodes
-        # already fully started.
         node_index = len(DS.waku_nodes)
         if node_index == 0:
             fleet_multiaddr = FLEET_N1_MULTIADDR
@@ -128,16 +93,11 @@ class FleetBootstrapConfig:
         _append_fleet_kwarg(kwargs, "staticnode", fleet_multiaddr)
         kwargs.setdefault("dns_discovery", "true")
         kwargs.setdefault("dns_discovery_url", FLEET_DNS_DISCOVERY_URL)
-        # Align local node cluster and shards with the fleet node configs
-        # (config-n1.toml / config-n2.toml both use cluster-id=1, shards 0-7).
         kwargs.setdefault("cluster_id", FLEET_CLUSTER_ID)
         kwargs.setdefault("shard", list(range(8)))
 
-        # Inject session-level RLN credentials into nodes that don't already
-        # carry explicit RLN args.  Uses the same node_index as the fleet
-        # multiaddr assignment so NODE1 gets creds-id=1 and NODE2 gets creds-id=2.
-        # Only inject into nodes with relay enabled – filter/lightpush/store service
-        # nodes run without relay and nwaku rejects rln-relay when WakuRelay is not mounted.
+        # Inject session-level RLN credentials into relay enabled nodes that
+        # don't already carry explicit RLN args.
         rln_prefixes = self.fleet_rln_state.get("keystore_prefixes", [])
         if rln_prefixes and kwargs.get("rln_creds_source") is None:
             if str(kwargs.get("relay", "")).lower() == "true":

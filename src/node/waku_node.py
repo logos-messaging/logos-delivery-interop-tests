@@ -96,10 +96,7 @@ def resolve_sharding_flags(kwargs):
 
 
 class WakuNode:
-    # Optional pre-start hook: when set to a callable, it is invoked at the
-    # beginning of every start() call with (self, kwargs_dict) and must return
-    # the (possibly modified) kwargs dict.  Set by tests/conftest.py when
-    # fleet bootstrap is active; None by default so all normal tests are unaffected.
+    # Optional pre-start hook to allow modifications for fleet tests
     _pre_start_hook = None
 
     def __init__(self, docker_image, docker_log_prefix=""):
