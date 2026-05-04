@@ -300,7 +300,7 @@ class TestRelayToLightpushFallback(StepsCommon):
             with relay_result.ok_value:
                 sender_config = {
                     **node_config,
-                    # "lightpushnode": service_addr, #this comment currently raise issues
+                    # "lightpushnode": service_addr, #this comment currently raise issue
                     "portsShift": 2,
                 }
                 sender_result = WrapperManager.create_and_start(

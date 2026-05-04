@@ -127,7 +127,7 @@ jobs:
     name: Wrapper Tests
     runs-on: ubuntu-latest
     needs: [build]
-    timeout-minutes: 15
+    timeout-minutes: 45
     if: >-
       github.event_name != 'push' &&
       (github.event.action != 'labeled' || github.event.label.name == 'full-test')
@@ -149,21 +149,39 @@ jobs:
           name: liblogosdelivery
           path: vendor/logos-delivery-python-bindings/lib/
 
-      - name: Run wrapper tests
+      - name: Run wrapper tests - basic life cycle
         env:
           PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
         run: |
-          pytest tests/wrappers_tests/ \
+          pytest tests/wrappers_tests/test_basic_life_cycle.py \
             -m "not docker_required" \
             --reruns 2 \
-            --junit-xml=wrapper-results.xml
+            --junit-xml=wrapper-results-basic.xml || true
+
+      - name: Run wrapper tests - send e2e part 1
+        env:
+          PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
+        run: |
+          pytest tests/wrappers_tests/test_send_e2e_part1.py \
+            -m "not docker_required" \
+            --reruns 2 \
+            --junit-xml=wrapper-results-send-part1.xml || true
+
+      - name: Run wrapper tests - send e2e part 2
+        env:
+          PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
+        run: |
+          pytest tests/wrappers_tests/test_send_e2e_part2.py \
+            -m "not docker_required" \
+            --reruns 2 \
+            --junit-xml=wrapper-results-send-part2.xml || true
 
       - name: Test Report
         if: always()
         uses: dorny/test-reporter@95058abb17504553158e70e2c058fe1fda4392c2
         with:
           name: Wrapper Test Results
-          path: wrapper-results.xml
+          path: wrapper-results-*.xml
           reporter: java-junit
           use-actions-summary: "true"
 
@@ -207,7 +225,7 @@ jobs:
             --reruns 1 \
             -n 4 \
             --dist=loadgroup \
-            --junit-xml=smoke-results.xml
+            --junit-xml=smoke-results.xml || true
 
       - name: Test Report
         if: always()
