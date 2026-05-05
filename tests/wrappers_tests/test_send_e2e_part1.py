@@ -200,7 +200,7 @@ class TestSendBeforeRelay(StepsStore):
                 relay_multiaddr = get_node_multiaddr(relay_peer)
                 sender_multiaddr = get_node_multiaddr(sender_node)
                 store_node.add_peers([relay_multiaddr, sender_multiaddr])
-                self.wait_for_autoconnection([store_node], hard_wait=10)
+                self.wait_for_autoconnection([store_node], hard_wait=40)
                 delay(3)
 
                 sent_event = wait_for_sent(

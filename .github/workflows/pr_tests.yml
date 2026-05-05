@@ -157,6 +157,7 @@ jobs:
             -m "not docker_required" \
             --reruns 2 \
             --junit-xml=wrapper-results-basic.xml || true
+          continue-on-error: true
 
       - name: Run wrapper tests - send e2e part 1
         env:
@@ -165,7 +166,8 @@ jobs:
           pytest tests/wrappers_tests/test_send_e2e_part1.py \
             -m "not docker_required" \
             --reruns 2 \
-            --junit-xml=wrapper-results-send-part1.xml || true
+            --junit-xml=wrapper-results-send-part1.xml 
+          continue-on-error: true
 
       - name: Run wrapper tests - send e2e part 2
         env:
@@ -174,7 +176,8 @@ jobs:
           pytest tests/wrappers_tests/test_send_e2e_part2.py \
             -m "not docker_required" \
             --reruns 2 \
-            --junit-xml=wrapper-results-send-part2.xml || true
+            --junit-xml=wrapper-results-send-part2.xml 
+          continue-on-error: true
 
       - name: Test Report
         if: always()
@@ -225,7 +228,7 @@ jobs:
             --reruns 1 \
             -n 4 \
             --dist=loadgroup \
-            --junit-xml=smoke-results.xml || true
+            --junit-xml=smoke-results.xml 
 
       - name: Test Report
         if: always()
