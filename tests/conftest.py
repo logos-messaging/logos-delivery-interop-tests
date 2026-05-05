@@ -197,11 +197,7 @@ def configure_fleet_cluster(request, pubsub_cfg):
     StepsLightPush.default_message_propagation_delay = 0.5
 
     logger.info(
-        "Fleet cluster config active – pubsub topics overridden to cluster-id=%s "
-        "(shards 0-7, e.g. relay_test_topic=%s  rln_test_topic=%s); "
-        "StepsLightPush.setup_lightpush_node overridden to use receiving_node1 as "
-        "lightpush service (fleet-peered with RLN membership #1; messages relay "
-        "through fleet mesh to receiving_node2 peered with %s)",
+        "Fleet cluster config active – pubsub topics overridden to cluster-id=%s " "(shards 0-7, e.g. relay_test_topic=%s  rln_test_topic=%s)",
         FLEET_CLUSTER_ID,
         pubsub_cfg.relay_test_topic,
         pubsub_cfg.rln_test_topic,
