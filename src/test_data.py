@@ -105,8 +105,6 @@ VALID_PUBSUB_TOPICS = [
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/1000",
 ]
 
-# Fleet cluster configuration – mirrors config-n1.toml / config-n2.toml
-# Both fleet nodes run cluster-id=1 with shards 0-7.
 FLEET_CLUSTER_ID = "1"
 FLEET_PUBSUB_TOPICS = [f"/waku/2/rs/{FLEET_CLUSTER_ID}/{i}" for i in range(8)]
 
@@ -181,8 +179,7 @@ def get_sample_timestamps():
     import time) so that the "Now" value maps to the active RLN epoch when the
     message is actually published.
 
-    valid_for semantics
-    -------------------
+    Valid_for semantics:
     ``["nwaku"]`` – accepted by nwaku in both standalone and fleet (RLN) mode.
     ``[]``        – rejected by nwaku in fleet (RLN) mode; kept for completeness
                     and for use by the companion invalid-timestamp tests.
@@ -190,17 +187,13 @@ def get_sample_timestamps():
     now_ns = int(time() * 1e9)
     now_dt = datetime.now()
     return [
-        # Current epoch – the only value accepted by nwaku RLN relay without delay.
         {"description": "Now", "value": now_ns, "valid_for": ["nwaku"]},
-        # Out-of-range epochs: valid as arbitrary metadata on non-RLN nwaku but
-        # rejected by RLN relay because they do not match the current epoch.
         {"description": "Far future", "value": int((now_dt + timedelta(days=365 * 10)).timestamp() * 1e9), "valid_for": []},
         {"description": "Recent past", "value": int((now_dt - timedelta(hours=1)).timestamp() * 1e9), "valid_for": []},
         {"description": "Near future", "value": int((now_dt + timedelta(hours=1)).timestamp() * 1e9), "valid_for": []},
         {"description": "Positive number", "value": 1, "valid_for": []},
         {"description": "Negative number", "value": -1, "valid_for": []},
         {"description": "DST change", "value": int(datetime(2020, 3, 8, 2, 0, 0).timestamp() * 1e9), "valid_for": []},
-        # Wrong types – rejected by the nwaku REST API regardless of value.
         {"description": "Timestamp as string number", "value": str(now_ns), "valid_for": []},
         {"description": "Invalid large number", "value": 2**63, "valid_for": []},
         {"description": "Float number", "value": float(now_ns), "valid_for": []},
