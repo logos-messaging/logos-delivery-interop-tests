@@ -150,34 +150,34 @@ jobs:
           path: vendor/logos-delivery-python-bindings/lib/
 
       - name: Run wrapper tests - basic life cycle
+        continue-on-error: true
         env:
           PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
         run: |
           pytest tests/wrappers_tests/test_basic_life_cycle.py \
             -m "not docker_required" \
             --reruns 2 \
-            --junit-xml=wrapper-results-basic.xml || true
-          continue-on-error: true
+            --junit-xml=wrapper-results-basic.xml
 
       - name: Run wrapper tests - send e2e part 1
+        continue-on-error: true
         env:
           PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
         run: |
           pytest tests/wrappers_tests/test_send_e2e_part1.py \
             -m "not docker_required" \
             --reruns 2 \
-            --junit-xml=wrapper-results-send-part1.xml 
-          continue-on-error: true
+            --junit-xml=wrapper-results-send-part1.xml
 
       - name: Run wrapper tests - send e2e part 2
+        continue-on-error: true
         env:
           PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
         run: |
           pytest tests/wrappers_tests/test_send_e2e_part2.py \
             -m "not docker_required" \
             --reruns 2 \
-            --junit-xml=wrapper-results-send-part2.xml 
-          continue-on-error: true
+            --junit-xml=wrapper-results-send-part2.xml
 
       - name: Test Report
         if: always()
