@@ -5,6 +5,8 @@ concurrency:
   cancel-in-progress: false
 
 on:
+  schedule:
+    - cron: '0 2 * * *'
   push:
     branches:
       - test-waku-fleet
@@ -36,3 +38,4 @@ jobs:
       node2: ${{ inputs.node2 || 'wakuorg/nwaku:latest' }}
       additional_nodes: ${{ inputs.additional_nodes || 'wakuorg/nwaku:latest,wakuorg/nwaku:latest,wakuorg/nwaku:latest' }}
       fleet_tests: true
+      caller: "fleet"
