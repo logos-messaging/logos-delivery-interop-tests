@@ -142,7 +142,7 @@ def skip_fleet_test_without_rln(request, fleet_rln_state):
     if not request.node.get_closest_marker("waku_test_fleet"):
         return
     if not fleet_rln_state.get("keystore_prefixes"):
-        pytest.skip("Skipping fleet test: RLN keystore not available " "(RLN_CREDENTIALS not set or on-chain registration failed)")
+        pytest.fail("Failing fleet tests: RLN keystore not available " "(RLN_CREDENTIALS not set or on-chain registration failed)")
 
 
 @pytest.fixture(scope="session", autouse=True)
