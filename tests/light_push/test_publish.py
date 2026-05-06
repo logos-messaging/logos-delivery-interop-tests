@@ -9,7 +9,6 @@ from src.test_data import (
     INVALID_PAYLOADS,
     PUBSUB_TOPICS_WRONG_FORMAT,
     SAMPLE_INPUTS,
-    SAMPLE_TIMESTAMPS,
     VALID_PUBSUB_TOPICS,
     get_sample_timestamps,
 )
@@ -177,7 +176,7 @@ class TestLightPushPublish(StepsLightPush):
 
     def test_light_push_with_invalid_timestamps(self):
         success_timestamps = []
-        for timestamp in SAMPLE_TIMESTAMPS:
+        for timestamp in get_sample_timestamps():
             if self.light_push_node1.type() not in timestamp["valid_for"]:
                 logger.debug(f'Running test with timestamp {timestamp["description"]}')
                 message = self.create_message(timestamp=timestamp["value"])

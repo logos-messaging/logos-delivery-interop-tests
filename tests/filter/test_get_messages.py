@@ -2,7 +2,7 @@ import pytest
 from src.env_vars import NODE_1, NODE_2
 from src.libs.common import delay, to_base64
 from src.libs.custom_logger import get_custom_logger
-from src.test_data import SAMPLE_INPUTS, SAMPLE_TIMESTAMPS, get_sample_timestamps
+from src.test_data import SAMPLE_INPUTS, get_sample_timestamps
 from src.steps.filter import StepsFilter
 
 logger = get_custom_logger(__name__)

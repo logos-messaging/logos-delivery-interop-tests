@@ -116,6 +116,8 @@ def configure_fleet_bootstrap(request, fleet_rln_state):
         yield
         return
 
+    os.environ["FLEET_BOOTSTRAP"] = "true"
+
     from src.node.fleet_waku_node import FleetBootstrapConfig
     from src.node.waku_node import WakuNode
 
