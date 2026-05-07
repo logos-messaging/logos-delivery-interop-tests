@@ -1,5 +1,4 @@
 import base64
-
 import pytest
 from src.steps.common import StepsCommon
 from src.libs.common import delay, to_base64
@@ -15,7 +14,6 @@ from src.node.wrapper_helpers import (
     wait_for_sent,
     wait_for_error,
 )
-from src.steps.store import StepsStore
 from tests.wrappers_tests.conftest import build_node_config
 
 logger = get_custom_logger(__name__)

@@ -1,6 +1,4 @@
 from concurrent.futures import ThreadPoolExecutor
-from time import time_ns
-
 import pytest
 from src.env_vars import NODE_2
 from src.steps.common import StepsCommon
@@ -235,6 +233,7 @@ class TestSendBeforeRelay(StepsStore):
               -> SuccessfullyPropagated -> SuccessfullyValidated
 
         """
+        sender_collector = EventCollector()
         store_node = WakuNode(NODE_2, f"s20_store_node_{self.test_id}")
         store_node.start(
             relay="true",
