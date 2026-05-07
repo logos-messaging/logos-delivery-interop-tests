@@ -122,10 +122,10 @@ class TestSendBeforeRelay(StepsStore):
                 sent_event = wait_for_sent(
                     collector=sender_collector,
                     request_id=request_id,
-                    timeout_s=NO_SENT_OBSERVATION_S,
+                    timeout_s=SENT_TIMEOUT_S,
                 )
                 assert sent_event is not None, (
-                    f"No MessageSentEvent received within {NO_SENT_OBSERVATION_S}s "
+                    f"No MessageSentEvent received within {SENT_TIMEOUT_S}s "
                     f"from a store-enabled relay peer. Collected events: {sender_collector.events}"
                 )
 
