@@ -27,6 +27,7 @@ SENT_TIMEOUT_S = 10.0
 NO_SENT_OBSERVATION_S = 5.0
 SENT_AFTER_STORE_TIMEOUT_S = 60.0
 NO_STORE_OBSERVATION_S = 60.0
+RECOVERY_TIMEOUT_S = 45.0
 
 # S20 stabilization delays for gossipsub mesh formation.
 MESH_STABILIZATION_S = 10
@@ -890,24 +891,32 @@ class TestSendBeforeRelay(StepsStore):
 
             assert len(set(all_request_ids)) == len(all_request_ids), f"Duplicate RequestIds across bursts: {all_request_ids}"
 
-            for request_id in phase1_ids + phase3_ids:
-                propagated_event = wait_for_propagated(
-                    collector=sender_collector,
-                    request_id=request_id,
-                    timeout_s=PROPAGATED_TIMEOUT_S,
-                )
-                assert propagated_event is not None, (
-                    f"No MessagePropagatedEvent for stable-phase "
-                    f"request_id={request_id} within {PROPAGATED_TIMEOUT_S}s. "
-                    f"Collected events: {sender_collector.events}"
-                )
+            # Phase 1 ran before any churn, so the mesh was stable — standard timeout.
+            # Phase 3 ran right after restart + re-attach, so the mesh needed to
+            # re-stabilize — use the recovery timeout to avoid CI flakiness.
+            phase_timeouts = [
+                (phase1_ids, PROPAGATED_TIMEOUT_S),
+                (phase3_ids, RECOVERY_TIMEOUT_S),
+            ]
+            for request_ids, timeout_s in phase_timeouts:
+                for request_id in request_ids:
+                    propagated_event = wait_for_propagated(
+                        collector=sender_collector,
+                        request_id=request_id,
+                        timeout_s=timeout_s,
+                    )
+                    assert propagated_event is not None, (
+                        f"No MessagePropagatedEvent for stable-phase "
+                        f"request_id={request_id} within {timeout_s}s. "
+                        f"Collected events: {sender_collector.events}"
+                    )
 
-                error_event = wait_for_error(
-                    collector=sender_collector,
-                    request_id=request_id,
-                    timeout_s=0,
-                )
-                assert error_event is None, f"Unexpected message_error event for stable-phase " f"request_id={request_id}: {error_event}"
+                    error_event = wait_for_error(
+                        collector=sender_collector,
+                        request_id=request_id,
+                        timeout_s=0,
+                    )
+                    assert error_event is None, f"Unexpected message_error event for stable-phase " f"request_id={request_id}: {error_event}"
 
             for request_id in phase2_ids:
                 error_event = wait_for_error(
@@ -933,11 +942,11 @@ class TestSendBeforeRelay(StepsStore):
                 sent_event = wait_for_sent(
                     collector=sender_collector,
                     request_id=request_id,
-                    timeout_s=PROPAGATED_TIMEOUT_S,
+                    timeout_s=RECOVERY_TIMEOUT_S,
                 )
                 assert sent_event is not None, (
                     f"No message_sent event for phase-3 request_id={request_id} "
-                    f"within {PROPAGATED_TIMEOUT_S}s. Collected events: {sender_collector.events}"
+                    f"within {RECOVERY_TIMEOUT_S}s. Collected events: {sender_collector.events}"
                 )
                 msg_hash = sent_event.get("messageHash")
                 assert msg_hash, f"message_sent event missing messageHash: {sent_event}"
