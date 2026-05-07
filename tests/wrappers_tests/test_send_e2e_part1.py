@@ -132,6 +132,7 @@ class TestSendBeforeRelay(StepsStore):
 
                 assert_event_invariants(sender_collector, request_id)
 
+    @pytest.mark.docker_required
     @pytest.mark.xfail(reason="fails to republish after store peer joins mesh see https://github.com/logos-messaging/logos-delivery/issues/3848")
     def test_s19_store_peer_appears_after_propagation(self, node_config):
         """
@@ -227,6 +228,7 @@ class TestSendBeforeRelay(StepsStore):
 
                 assert_event_invariants(sender_collector, request_id)
 
+    @pytest.mark.docker_required
     @pytest.mark.skip(reason="Forcing the miss store round not possible")
     def test_s20_store_misses_initially_then_retry_succeeds(self, node_config):
         """
@@ -840,6 +842,7 @@ class TestSendBeforeRelay(StepsStore):
                 for request_id in request_ids:
                     assert_event_invariants(sender_collector, request_id)
 
+    @pytest.mark.docker_required
     def test_s31_concurrent_sends_mixed_topics_during_churn(self, node_config):
         """
         S31: concurrent sends across mixed content topics during peer churn.
