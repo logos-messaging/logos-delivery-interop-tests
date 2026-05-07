@@ -1,4 +1,9 @@
 import base64
+import json
+import subprocess
+import sys
+import textwrap
+
 import pytest
 from src.steps.common import StepsCommon
 from src.libs.common import delay, to_base64
@@ -32,6 +37,122 @@ MAX_TIME_IN_CACHE_S = 60.0
 CACHE_EXPIRY_SLACK_S = 10.0
 ERROR_AFTER_CACHE_EXPIRY_TIMEOUT_S = MAX_TIME_IN_CACHE_S + CACHE_EXPIRY_SLACK_S
 RETRY_WINDOW_EXPIRED_MSG = "Unable to send within retry time window"
+
+# S01: spec error message for nil/uninitialized handle.
+S01_EXPECTED_ERROR_FRAGMENT = "not initialized"
+S01_SUBPROCESS_TIMEOUT_S = 30
+S01_RESULT_MARKER = "__S01_RESULT__"
+
+
+# S01 subprocess script: builds a WrapperManager around a NodeWrapper whose
+# ctx is ffi.NULL (never-created handle), calls the wrapped send_message
+# API, and prints the Result on a single marked JSON line.
+#
+# Why subprocess: the library's checkApiAvailability() guard is what S01 is
+# verifying. If that guard is missing or broken, send() can crash the process
+# (already observed on the destroyed-handle path). Isolating the call lets the
+# parent observe a crash via exit code instead of dying with the runner.
+_S01_SUBPROCESS_SCRIPT = textwrap.dedent(
+    f"""
+    import json
+    import sys
+    from pathlib import Path
+
+    # Resolve the bindings path the same way wrappers_manager does.
+    _project_root = Path({repr(__file__)}).resolve().parents[2]
+    _bindings_path = _project_root / "vendor" / "logos-delivery-python-bindings" / "waku"
+    if str(_bindings_path) not in sys.path:
+        sys.path.insert(0, str(_bindings_path))
+    if str(_project_root) not in sys.path:
+        sys.path.insert(0, str(_project_root))
+
+    from wrapper import NodeWrapper, ffi
+    from src.node.wrappers_manager import WrapperManager
+    from src.node.wrapper_helpers import create_message_bindings
+
+    uninitialized_node = NodeWrapper(
+        ctx=ffi.NULL,
+        config_buffer=None,
+        event_cb_handler=None,
+    )
+    manager = WrapperManager(uninitialized_node)
+
+    envelope = create_message_bindings()
+    send_result = manager.send_message(message=envelope)
+
+    payload = {{
+        "is_ok": send_result.is_ok(),
+        "ok": send_result.ok_value if send_result.is_ok() else None,
+        "err": send_result.err() if send_result.is_err() else None,
+    }}
+    print({repr(S01_RESULT_MARKER)} + json.dumps(payload))
+    sys.exit(0)
+    """
+).strip()
+
+
+class TestS01NilOrUninitializedHandle(StepsCommon):
+    """
+    S01 — Nil or uninitialized Waku handle.
+
+    Setup: call send() on a nil or not-yet-created Waku handle.
+    Action: invoke send(envelope).
+    Expected API result: Err("Waku node is not initialized").
+    Expected events: none.
+    Purpose: covers checkApiAvailability() hard failure.
+
+    Implementation notes:
+      - The handle is constructed with ctx=ffi.NULL (never went through
+        create_node), which is the literal "not-yet-created" state.
+      - send_message() is invoked through the public WrapperManager API,
+        identical to every other test in this file.
+      - The call runs in a subprocess so a missing checkApiAvailability()
+    """
+
+    def test_s01_send_on_uninitialized_handle(self):
+        completed = subprocess.run(
+            [sys.executable, "-c", _S01_SUBPROCESS_SCRIPT],
+            capture_output=True,
+            text=True,
+            timeout=S01_SUBPROCESS_TIMEOUT_S,
+        )
+
+        # Outcome 1: the library crashed instead of guarding the nil handle.
+        # Negative returncode on POSIX = killed by signal (e.g. -11 = SIGSEGV).
+        assert completed.returncode == 0, (
+            f"send() on a nil/uninitialized handle crashed the child process "
+            f"(returncode={completed.returncode}). The library is expected to "
+            f"reject the call via checkApiAvailability() and return "
+            f"Err('Waku node is not initialized'), not crash. "
+            f"stdout={completed.stdout!r} stderr={completed.stderr!r}"
+        )
+
+        # Outcome 2: the child exited cleanly but didn't emit our marker —
+        # something in the script itself failed before reaching send_result.
+        result_line = next(
+            (line for line in completed.stdout.splitlines() if line.startswith(S01_RESULT_MARKER)),
+            None,
+        )
+        assert result_line is not None, (
+            f"Subprocess exited cleanly but did not emit the S01 result marker. " f"stdout={completed.stdout!r} stderr={completed.stderr!r}"
+        )
+
+        result = json.loads(result_line[len(S01_RESULT_MARKER) :])
+
+        # Outcome 3: send() returned Ok — false success, the worst kind of bug.
+        assert result["is_ok"] is False, (
+            f"send() on a nil/uninitialized handle must return Err, "
+            f"got Ok({result['ok']!r}). "
+            f"This means checkApiAvailability() did not reject the call."
+        )
+
+        # Outcome 4: send() returned Err but with the wrong message.
+        error_message = result["err"] or ""
+        assert S01_EXPECTED_ERROR_FRAGMENT in error_message, (
+            f"send() returned Err but the message does not match the spec. "
+            f"Expected error to mention {S01_EXPECTED_ERROR_FRAGMENT!r} "
+            f"(spec: 'Waku node is not initialized'), got: {error_message!r}"
+        )
 
 
 class TestS02AutoSubscribeOnFirstSend(StepsCommon):
