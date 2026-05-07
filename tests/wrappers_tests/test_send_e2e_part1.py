@@ -626,16 +626,18 @@ class TestSendBeforeRelay(StepsStore):
         """
         S26: multiple lightpush peers, the selected one disappears,
              an alternate remains.
-          - send() returns Ok(RequestId) during peer churn.
-          - Propagated event eventually arrives (via the surviving peer, peer2).
-          - No message_error event.
+
+        Topology (3 peers + sender):
+          - peer1: relay + lightpush. The lightpush server initially selected
+            by the sender. Stopped mid-test to simulate churn.
+          - relay_peer: relay-only. Kept alive throughout the test as a
+            stable gossipsub mesh neighbour, so that after peer1 disappears
+            peer2 still has a relay path to propagate the message.
+          - peer2: relay + lightpush. The surviving lightpush server that
+            must take over once peer1 is gone.
+          - sender: edge node with peer1 and peer2 as static lightpush peers.
         """
         sender_collector = EventCollector()
-
-        # Two lightpush server peers: relay+lightpush, connected to each other.
-        # Each peer that enables discv5 needs its own UDP port; portsShift only
-        # offsets TCP/REST, so leaving them on the same base discv5UdpPort
-        # collides with EADDRINUSE on the second peer.
         peer1_config = {
             **node_config,
             "relay": True,
