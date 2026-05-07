@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+
 import pytest
 from src.env_vars import NODE_2
 from src.steps.common import StepsCommon
@@ -805,7 +806,7 @@ class TestSendBeforeRelay(StepsStore):
                 # Cross-association guard: every event with a requestId must
                 # belong to exactly one of the request ids we issued.
                 issued = set(request_ids)
-                for event in sender_collector.events:
+                for event in sender_collector.snapshot():
                     event_request_id = event.get("requestId")
                     if event_request_id is None:
                         continue
@@ -917,7 +918,7 @@ class TestSendBeforeRelay(StepsStore):
                 assert error_event is None, f"Unexpected terminal message_error for phase-2 " f"request_id={request_id} after recovery: {error_event}"
 
             issued = set(all_request_ids)
-            for event in sender_collector.events:
+            for event in sender_collector.snapshot():
                 event_request_id = event.get("requestId")
                 if event_request_id is None:
                     continue

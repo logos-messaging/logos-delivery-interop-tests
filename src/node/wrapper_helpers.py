@@ -45,6 +45,17 @@ class EventCollector:
         with self._lock:
             return [e for e in self.events if e.get("requestId") == request_id]
 
+    def snapshot(self) -> list[dict]:
+        """Return a thread-safe copy of all collected events.
+
+        Use this whenever you need to iterate over every event (rather than
+        events for a single request_id). Iterating `self.events` directly is
+        unsafe because `event_callback` appends from the wrapper's event
+        thread.
+        """
+        with self._lock:
+            return list(self.events)
+
 
 def is_propagated_event(event: dict) -> bool:
     return event.get("eventType") == EVENT_PROPAGATED
@@ -120,10 +131,9 @@ def wait_for_connected(
     """Wait until a connection_status_change event with PartiallyConnected or Connected arrives."""
     deadline = time.monotonic() + timeout_s
     while time.monotonic() < deadline:
-        with collector._lock:
-            for event in collector.events:
-                if event.get("eventType") == "connection_status_change" and event.get("connectionStatus") in ("PartiallyConnected", "Connected"):
-                    return event
+        for event in collector.snapshot():
+            if event.get("eventType") == "connection_status_change" and event.get("connectionStatus") in ("PartiallyConnected", "Connected"):
+                return event
         time.sleep(poll_interval_s)
     return None
 
@@ -201,7 +211,7 @@ def assert_no_unknown_request_ids(collector: EventCollector, issued_request_ids)
     the wrong request id under concurrency.
     """
     issued = set(issued_request_ids)
-    for event in collector.events:
+    for event in collector.snapshot():
         event_request_id = event.get("requestId")
         if event_request_id is None:
             continue
