@@ -267,7 +267,7 @@ class TestRelayToLightpushFallback(StepsCommon):
                      (no staticnodes → zero gossipsub relay peers → fallback)
     """
 
-    @pytest.mark.xfail(reason="the test fail without lightpushnode")
+    @pytest.mark.xfail(reason="the test fail without lightpushnode, see https://github.com/logos-messaging/logos-delivery/issues/3847")
     def test_s08_relay_fallback_to_lightpush(self, node_config):
         """S08: no store peer → Propagated only."""
         sender_collector = EventCollector()

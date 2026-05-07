@@ -129,7 +129,7 @@ class TestSendBeforeRelay(StepsStore):
                     f"from a store-enabled relay peer. Collected events: {sender_collector.events}"
                 )
 
-    # @pytest.mark.xfail(reason="scenario might be not possible to simulate")
+    @pytest.mark.xfail(reason="fails to republish after store peer joins mesh see https://github.com/logos-messaging/logos-delivery/issues/3848")
     def test_s19_store_peer_appears_after_propagation(self, node_config):
         """
         S19: a store peer comes online later.
