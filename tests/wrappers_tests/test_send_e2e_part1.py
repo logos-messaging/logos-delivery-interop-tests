@@ -9,6 +9,7 @@ from src.node.waku_node import WakuNode
 from src.node.wrappers_manager import WrapperManager
 from src.node.wrapper_helpers import (
     EventCollector,
+    assert_event_invariants,
     create_message_bindings,
     get_node_multiaddr,
     wait_for_connected,
@@ -129,6 +130,8 @@ class TestSendBeforeRelay(StepsStore):
                     f"from a store-enabled relay peer. Collected events: {sender_collector.events}"
                 )
 
+                assert_event_invariants(sender_collector, request_id)
+
     @pytest.mark.xfail(reason="fails to republish after store peer joins mesh see https://github.com/logos-messaging/logos-delivery/issues/3848")
     def test_s19_store_peer_appears_after_propagation(self, node_config):
         """
@@ -221,6 +224,8 @@ class TestSendBeforeRelay(StepsStore):
                     page_size=5,
                     ascending="true",
                 )
+
+                assert_event_invariants(sender_collector, request_id)
 
     @pytest.mark.skip(reason="Forcing the miss store round not possible")
     def test_s20_store_misses_initially_then_retry_succeeds(self, node_config):
@@ -341,6 +346,8 @@ class TestSendBeforeRelay(StepsStore):
                     ascending="true",
                 )
 
+                assert_event_invariants(sender_collector, request_id)
+
     def test_s21_error_when_retry_window_expires(self, node_config):
         """
         S21: delivery retry window expires before any valid path recovers.
@@ -391,6 +398,8 @@ class TestSendBeforeRelay(StepsStore):
                 f"Got:      {error_event.get('error')!r}\n"
                 f"Full event: {error_event}"
             )
+
+            assert_event_invariants(sender_collector, request_id)
 
     def test_s22_non_ephemeral_message_with_reliability_disabled(self, node_config):
         """
@@ -462,6 +471,8 @@ class TestSendBeforeRelay(StepsStore):
                     f"Sent event: {sent_event}\n"
                     f"Collected events: {sender_collector.events}"
                 )
+
+                assert_event_invariants(sender_collector, request_id)
 
     def test_s23_no_sent_event_when_relay_has_no_store(self, node_config):
         """
@@ -542,6 +553,8 @@ class TestSendBeforeRelay(StepsStore):
                     f"Collected events: {sender_collector.events}"
                 )
 
+                assert_event_invariants(sender_collector, request_id)
+
     def test_s24_ephemeral_message_with_reachable_store(self, node_config):
         """
         S24: ephemeral message, reliability enabled, reachable store peer.
@@ -606,6 +619,8 @@ class TestSendBeforeRelay(StepsStore):
                     f"Sent event: {sent_event}\n"
                     f"Collected events: {sender_collector.events}"
                 )
+
+                assert_event_invariants(sender_collector, request_id)
 
     def test_s26_lightpush_peer_churn_alternate_remains(self, node_config):
         """
@@ -719,6 +734,8 @@ class TestSendBeforeRelay(StepsStore):
                     )
                     assert error_event is None, f"Unexpected message_error event during peer churn: {error_event}"
 
+                    assert_event_invariants(sender_collector, request_id)
+
     def test_s30_concurrent_sends_during_auto_subscribe(self, node_config):
         """
         S30: concurrent sends on the same content topic during initial auto-subscribe.
@@ -814,6 +831,12 @@ class TestSendBeforeRelay(StepsStore):
                     assert event_request_id in issued, (
                         f"Event carries an unknown requestId={event_request_id!r}, " f"not in issued set {issued}. Event: {event}"
                     )
+
+                # Per-request invariants apply to every concurrent send
+                # (correct requestId, no duplicate terminal events,
+                # Sent never before Propagated).
+                for request_id in request_ids:
+                    assert_event_invariants(sender_collector, request_id)
 
     def test_s31_concurrent_sends_mixed_topics_during_churn(self, node_config):
         """
@@ -961,6 +984,12 @@ class TestSendBeforeRelay(StepsStore):
                 page_size=S31_BURST_SIZE * 3,
                 ascending="true",
             )
+
+            # Per-request invariants apply across all phases, including the
+            # retry-path bursts (phase 2). If retries ever emit duplicate
+            # Propagated events or reorder Sent before Propagated, this catches it.
+            for request_id in all_request_ids:
+                assert_event_invariants(sender_collector, request_id)
 
     def _s31_fire_burst(self, sender_node, *, phase_label: str) -> list[str]:
         """Fire S31_BURST_SIZE concurrent sends, one per topic in S31_CONTENT_TOPICS.
