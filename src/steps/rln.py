@@ -26,6 +26,7 @@ class StepsRLN(StepsCommon):
     multiaddr_list = []
     lightpush_nodes = []
     keystore_prefixes = []
+    rln_membership_indexes = []
 
     @allure.step
     def generate_keystore_prefixes(self, count=2):
@@ -38,15 +39,19 @@ class StepsRLN(StepsCommon):
     @allure.step
     def register_rln_relay_nodes(self, count, orig_prefixes):
         if count > 0:
-            logger.debug(111111111111111)
             self.keystore_prefixes = self.generate_keystore_prefixes(count)
+            self.rln_membership_indexes = []
             for i, prefix in enumerate(self.keystore_prefixes):
-                logger.debug(000000000000000000000)
-                self.register_rln_single_node(prefix=prefix, rln_creds_source=RLN_CREDENTIALS, rln_creds_id=f"{i+1}")
+                membership_index = self.register_rln_single_node(prefix=prefix, rln_creds_source=RLN_CREDENTIALS, rln_creds_id=f"{i+1}")
+                self.rln_membership_indexes.append(membership_index)
         else:
-            self.keystore_prefixes = orig_prefixes
+            self.keystore_prefixes = orig_prefixes.get("keystore_prefixes", [])
+            self.rln_membership_indexes = orig_prefixes.get("rln_membership_indexes", [])
 
-        return self.keystore_prefixes
+        return {
+            "keystore_prefixes": self.keystore_prefixes,
+            "rln_membership_indexes": self.rln_membership_indexes,
+        }
 
     @allure.step
     def setup_main_rln_relay_nodes(self, **kwargs):
@@ -60,7 +65,7 @@ class StepsRLN(StepsCommon):
             relay="true",
             rln_creds_source=RLN_CREDENTIALS,
             rln_creds_id="1",
-            rln_relay_membership_index="1",
+            rln_relay_membership_index=self.resolve_rln_membership_index(0, **kwargs),
             rln_keystore_prefix=self.keystore_prefixes[0],
             **kwargs,
         )
@@ -78,7 +83,7 @@ class StepsRLN(StepsCommon):
             discv5_bootstrap_node=self.enr_uri,
             rln_creds_source=RLN_CREDENTIALS,
             rln_creds_id="2",
-            rln_relay_membership_index="1",
+            rln_relay_membership_index=self.resolve_rln_membership_index(1, **kwargs),
             rln_keystore_prefix=self.keystore_prefixes[1],
             **kwargs,
         )
@@ -101,7 +106,7 @@ class StepsRLN(StepsCommon):
                 discv5_bootstrap_node=self.enr_uri,
                 rln_creds_source=RLN_CREDENTIALS,
                 rln_creds_id=f"{index + 3}",
-                rln_relay_membership_index="1",
+                rln_relay_membership_index=self.resolve_rln_membership_index(index + 2, **kwargs),
                 rln_keystore_prefix=self.keystore_prefixes[index + 2],
                 **kwargs,
             )
@@ -118,7 +123,7 @@ class StepsRLN(StepsCommon):
             lightpushnode=self.multiaddr_list[0],
             rln_creds_source=RLN_CREDENTIALS,
             rln_creds_id="2",
-            rln_relay_membership_index="1",
+            rln_relay_membership_index=self.resolve_rln_membership_index(1, **kwargs),
             rln_keystore_prefix=self.keystore_prefixes[1],
             **kwargs,
         )
@@ -131,7 +136,23 @@ class StepsRLN(StepsCommon):
     def register_rln_single_node(self, prefix="", **kwargs):
         logger.debug("Registering RLN credentials for single node")
         self.node = WakuNode(DEFAULT_NWAKU, f"node_{gen_step_id()}")
-        self.node.register_rln(rln_keystore_prefix=prefix, rln_creds_source=kwargs["rln_creds_source"], rln_creds_id=kwargs["rln_creds_id"])
+        return self.node.register_rln(rln_keystore_prefix=prefix, rln_creds_source=kwargs["rln_creds_source"], rln_creds_id=kwargs["rln_creds_id"])
+
+    @allure.step
+    def resolve_rln_membership_index(self, index, **kwargs):
+        explicit_index = kwargs.get("rln_relay_membership_index")
+        if explicit_index is not None:
+            return str(explicit_index)
+
+        if len(self.rln_membership_indexes) > index and self.rln_membership_indexes[index] is not None:
+            inferred_index = str(self.rln_membership_indexes[index])
+            logger.debug(f"Using inferred RLN membership index for position {index}: {inferred_index}")
+            return inferred_index
+
+        raise ValueError(
+            f"RLN membership index for position {index} is not available. "
+            "Register credentials and persist rln_membership_indexes together with keystore_prefixes before node startup."
+        )
 
     @allure.step
     def check_rln_registration(self, prefix, key_id):

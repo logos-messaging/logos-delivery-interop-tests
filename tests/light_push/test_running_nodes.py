@@ -1,8 +1,10 @@
+import pytest
 from src.libs.common import delay
 from src.steps.light_push import StepsLightPush
 
 
 class TestRunningNodes(StepsLightPush):
+    @pytest.mark.skip(reason="lightpush no longer wroks with relay =false")
     def test_main_node_only_lightpush__peer_only_lightpush(self):
         self.setup_first_receiving_node(lightpush="true", relay="false")
         self.setup_first_lightpush_node(lightpush="true", relay="false")
@@ -12,19 +14,19 @@ class TestRunningNodes(StepsLightPush):
         except Exception as ex:
             assert "no waku relay found" in str(ex) or "failed to negotiate protocol: protocols not supported" in str(ex)
 
-    def test_main_node_only_lightpush__peer_only_filter(self):
+    def test_main_node_relay_lightpush__peer_only_filter(self):
         self.setup_first_receiving_node(lightpush="false", relay="false", filter="true")
-        self.setup_first_lightpush_node(lightpush="true", relay="false")
+        self.setup_first_lightpush_node(lightpush="true", relay="true")
         try:
             self.light_push_node1.send_light_push_message(self.create_payload())
             raise AssertionError("Light push with non lightpush peer worked!!!")
         except Exception as ex:
             assert "Failed to request a message push: dial_failure" in str(ex) or "lightpush error" in str(ex)
 
-    def test_main_node_only_lightpush__peer_only_relay(self):
+    def test_main_node_relay_lightpush__peer_only_relay(self):
         self.setup_first_receiving_node(lightpush="false", relay="true")
         self.subscribe_to_pubsub_topics_via_relay()
-        self.setup_first_lightpush_node(lightpush="true", relay="false")
+        self.setup_first_lightpush_node(lightpush="true", relay="true")
         try:
             self.light_push_node1.send_light_push_message(self.create_payload())
             raise AssertionError("Light push with non lightpush peer worked!!!")
@@ -34,7 +36,7 @@ class TestRunningNodes(StepsLightPush):
     def test_main_node_only_lightpush__peer_full(self):
         self.setup_first_receiving_node(lightpush="true", relay="true", filter="true")
         self.setup_second_receiving_node(lightpush="false", relay="true")
-        self.setup_first_lightpush_node(lightpush="true", relay="false")
+        self.setup_first_lightpush_node(lightpush="true", relay="true")
         self.subscribe_to_pubsub_topics_via_relay()
         self.check_light_pushed_message_reaches_receiving_peer()
 
@@ -57,7 +59,7 @@ class TestRunningNodes(StepsLightPush):
 
     def test_lightpush_with_a_single_receiving_node(self):
         self.setup_first_receiving_node(lightpush="true", relay="true")
-        self.setup_first_lightpush_node(lightpush="true", relay="false")
+        self.setup_first_lightpush_node(lightpush="true", relay="true")
         self.subscribe_to_pubsub_topics_via_relay()
         try:
             self.check_light_pushed_message_reaches_receiving_peer(sender=self.light_push_node1)

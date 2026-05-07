@@ -5,16 +5,19 @@ import random
 import re
 import shutil
 import string
+import subprocess
 import pytest
 import requests
 from src.libs.common import delay
 from src.libs.custom_logger import get_custom_logger
-from tenacity import retry, stop_after_delay, wait_fixed
+from tenacity import retry, stop_after_delay, wait_fixed, sleep
+from docker.errors import NotFound as DockerNotFound
 from src.node.api_clients.rest import REST
 from src.node.docker_mananger import DockerManager
 from src.env_vars import DOCKER_LOG_DIR
 from src.data_storage import DS
 from src.test_data import DEFAULT_CLUSTER_ID, LOG_ERROR_KEYWORDS, VALID_PUBSUB_TOPICS
+from src.node.wrappers_manager import WrapperManager
 
 logger = get_custom_logger(__name__)
 
@@ -37,8 +40,24 @@ def sanitize_docker_flags(input_flags):
 
 
 @retry(stop=stop_after_delay(180), wait=wait_fixed(0.5), reraise=True)
-def rln_credential_store_ready(creds_file_path, single_check=False):
+def rln_credential_store_ready(creds_file_path, single_check=False, require_credentials=False):
     if os.path.exists(creds_file_path):
+        subprocess.run(["sudo", "-n", "chmod", "a+r", creds_file_path], check=False)
+        if require_credentials:
+            try:
+                with open(creds_file_path, "r", encoding="utf-8") as creds_file:
+                    keystore_data = json.load(creds_file)
+            except (OSError, json.JSONDecodeError) as ex:
+                if single_check:
+                    return False
+                raise ValueError(f"Failed to parse RLN keystore at {creds_file_path}: {ex}")
+
+            credentials = keystore_data.get("credentials", {}) if isinstance(keystore_data, dict) else {}
+            if not credentials:
+                if single_check:
+                    return False
+                raise ValueError(f"RLN keystore exists but has no credentials yet: {creds_file_path}")
+
         return True
     elif not single_check:
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), creds_file_path)
@@ -82,12 +101,27 @@ class WakuNode:
         self._log_path = os.path.join(DOCKER_LOG_DIR, f"{docker_log_prefix}__{self._image_name.replace('/', '_')}.log")
         self._docker_manager = DockerManager(self._image_name)
         self._container = None
+        self.rln_membership_index = None
         self.start_args = {}
+        self._wrapper_node = None
+        self._rln_creds_set = False
         logger.debug(f"WakuNode instance initialized with log path {self._log_path}")
 
+    @property
+    def _is_wrapper(self) -> bool:
+        return self._wrapper_node is not None
+
     @retry(stop=stop_after_delay(60), wait=wait_fixed(0.1), reraise=True)
-    def start(self, wait_for_node_sec=20, **kwargs):
+    def start(self, wait_for_node_sec=20, use_wrapper=False, **kwargs):
         logger.debug("Starting Node...")
+        default_args, remove_container = self._prepare_start_context(**kwargs)
+
+        if use_wrapper:
+            self._start_wrapper(default_args, wait_for_node_sec)
+        else:
+            self._start_docker(default_args, remove_container, wait_for_node_sec)
+
+    def _prepare_start_context(self, **kwargs):
         self._docker_manager.create_network()
         self._ext_ip = self._docker_manager.generate_random_ext_ip()
         self._ports = self._docker_manager.generate_ports()
@@ -164,19 +198,24 @@ class WakuNode:
             del default_args["pubsub-topic"]
 
         rln_args, rln_creds_set, keystore_path = self.parse_rln_credentials(default_args, False)
+        self._rln_creds_set = rln_creds_set
 
         default_args.pop("rln-creds-id", None)
         default_args.pop("rln-creds-source", None)
         default_args.pop("rln-keystore-prefix", None)
 
         if rln_creds_set:
-            rln_credential_store_ready(keystore_path)
+            rln_credential_store_ready(keystore_path, require_credentials=True)
             default_args.update(rln_args)
         else:
             logger.info(f"RLN credentials not set or credential store not available, starting without RLN")
 
-        logger.debug(f"Using volumes {self._volumes}")
         self.start_args = dict(default_args)
+        return default_args, remove_container
+
+    def _start_docker(self, default_args, remove_container, wait_for_node_sec):
+        logger.debug(f"Using volumes {self._volumes}")
+
         self._container = self._docker_manager.start_container(
             self._docker_manager.image,
             ports=self._ports,
@@ -186,15 +225,60 @@ class WakuNode:
             volumes=self._volumes,
             remove_container=remove_container,
         )
-
         logger.debug(f"Started container from image {self._image_name}. REST: {self._rest_port}")
         DS.waku_nodes.append(self)
-        delay(1)  # if we fire requests to soon after starting the node will sometimes fail to start correctly
+        delay(1)
+        try:
+            self.ensure_ready(timeout_duration=wait_for_node_sec, rln_required=self._rln_creds_set)
+        except Exception as ex:
+            logger.error(f"REST service did not become ready in time: {ex}")
+            raise
+
+    def _start_wrapper(self, default_args, wait_for_node_sec):
+        logger.debug("Starting node using wrappers")
+        wrapper_config = self._default_args_to_wrapper_config(default_args)
+
+        result = WrapperManager.create_and_start(config=wrapper_config, timeout_s=wait_for_node_sec)
+        if result.is_err():
+            raise RuntimeError(f"Failed to start wrapper node: {result.err()}")
+        self._wrapper_node = result.ok_value
+
+        logger.debug(f"Started wrapper node. REST: {self._rest_port}")
+        DS.waku_nodes.append(self)
+        delay(1)
         try:
             self.ensure_ready(timeout_duration=wait_for_node_sec)
         except Exception as ex:
             logger.error(f"REST service did not become ready in time: {ex}")
             raise
+
+    def _default_args_to_wrapper_config(self, default_args):
+        def _bool(key, default="false"):
+            return default_args.get(key, default).lower() == "true"
+
+        bootstrap = default_args.get("discv5-bootstrap-node")
+
+        return {
+            "logLevel": default_args.get("log-level", "DEBUG"),
+            "mode": "Core",
+            "networkingConfig": {
+                "listenIpv4": default_args.get("listen-address", "0.0.0.0"),
+                "p2pTcpPort": int(default_args["tcp-port"]),
+                "discv5UdpPort": int(default_args["discv5-udp-port"]),
+                "restPort": int(default_args["rest-port"]),
+                "restAddress": default_args.get("rest-address", "0.0.0.0"),
+            },
+            "protocolsConfig": {
+                "clusterId": int(default_args.get("cluster-id", DEFAULT_CLUSTER_ID)),
+                "relay": _bool("relay"),
+                "store": _bool("store"),
+                "filter": _bool("filter"),
+                "lightpush": _bool("lightpush"),
+                "peerExchange": _bool("peer-exchange"),
+                "discv5Discovery": _bool("discv5-discovery", "true"),
+                "discv5BootstrapNodes": [bootstrap] if bootstrap else [],
+            },
+        }
 
     @retry(stop=stop_after_delay(250), wait=wait_fixed(0.1), reraise=True)
     def register_rln(self, **kwargs):
@@ -221,24 +305,62 @@ class WakuNode:
 
             logger.debug(f"Waiting for keystore {keystore_path}")
             try:
-                rln_credential_store_ready(keystore_path)
+                rln_credential_store_ready(keystore_path, require_credentials=True)
+                self.rln_membership_index = str(self.get_rln_membership_index_from_log())
+                logger.debug(f"Detected RLN membership index from registration logs: {self.rln_membership_index}")
+                self.stop()
             except Exception as ex:
                 logger.error(f"File {keystore_path} with RLN credentials did not become available in time {ex}")
                 raise
         else:
             logger.warn("RLN credentials not set, no action performed")
 
+        return self.rln_membership_index
+
+    @retry(stop=stop_after_delay(10), wait=wait_fixed(0.2), reraise=True)
+    def get_rln_membership_index_from_log(self):
+        if not os.path.exists(self._log_path):
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), self._log_path)
+
+        with open(self._log_path, "r", encoding="utf-8", errors="ignore") as log_file:
+            log_data = log_file.read()
+
+        matches = re.findall(r"membershipIndex=(\d+)", log_data)
+        if not matches:
+            raise ValueError("Could not infer RLN membership index from registration logs")
+
+        return int(matches[-1])
+
     @retry(stop=stop_after_delay(5), wait=wait_fixed(0.1), reraise=True)
     def stop(self):
+        if self._is_wrapper:
+            self._stop_wrapper()
+        else:
+            self._stop_docker()
+
+    def _stop_docker(self):
         if self._container:
             logger.debug(f"Stopping container with id {self._container.short_id}")
-            self._container.stop()
+            try:
+                self._container.stop()
+            except DockerNotFound:
+                logger.debug(f"Container {self._container.short_id} already exited and removed, treating as stopped.")
+                self._container = None
+                return
             try:
                 self._container.remove()
             except:
                 pass
             self._container = None
             logger.debug("Container stopped.")
+
+    def _stop_wrapper(self):
+        logger.debug("Stopping wrapper node")
+        result = self._wrapper_node.stop_and_destroy()
+        if result.is_err():
+            logger.error(f"Failed to stop wrapper node: {result.err()}")
+        self._wrapper_node = None
+        logger.debug("Wrapper node stopped and destroyed.")
 
     @retry(stop=stop_after_delay(5), wait=wait_fixed(0.1), reraise=True)
     def kill(self):
@@ -267,7 +389,7 @@ class WakuNode:
             logger.debug(f"Unpause container with id {self._container.short_id}")
             self._container.unpause()
 
-    def ensure_ready(self, timeout_duration=10):
+    def ensure_ready(self, timeout_duration=10, rln_required=False):
         @retry(stop=stop_after_delay(timeout_duration), wait=wait_fixed(0.1), reraise=True)
         def check_healthy(node=self):
             self.health_response = node.health()
@@ -280,9 +402,12 @@ class WakuNode:
             if self.health_response.get("nodeHealth") != "READY":
                 raise AssertionError("Waiting for the node health status: READY")
 
-            # for p in self.health_response.get("protocolsHealth"):
-            #     if p.get("Rln Relay") != "READY":
-            #         raise AssertionError("Waiting for the Rln relay status: READY")
+            for p in self.health_response.get("protocolsHealth"):
+                if rln_required and "Rln Relay" in p:
+                    if p["Rln Relay"] != "READY":
+                        raise AssertionError("Waiting for the Rln relay status: READY")
+                    # TODO: Remove once Rln Relay reflects true RLN status
+                    sleep(20)
 
             logger.info("Node protocols are initialized !!")
 
@@ -319,6 +444,33 @@ class WakuNode:
 
     def get_tcp_address(self):
         return f"/ip4/{self._ext_ip}/tcp/{self._tcp_port}"
+
+    def subscribe_content_topic(self, content_topic: str, *, timeout_s: float = 20.0):
+        if self._is_wrapper:
+            result = self._wrapper_node.subscribe_content_topic(content_topic, timeout_s=timeout_s)
+            if result.is_err():
+                raise RuntimeError(f"subscribe_content_topic failed: {result.err()}")
+            return result.ok_value
+        else:
+            return self._api.set_relay_auto_subscriptions([content_topic])
+
+    def unsubscribe_content_topic(self, content_topic: str, *, timeout_s: float = 20.0):
+        if self._is_wrapper:
+            result = self._wrapper_node.unsubscribe_content_topic(content_topic, timeout_s=timeout_s)
+            if result.is_err():
+                raise RuntimeError(f"unsubscribe_content_topic failed: {result.err()}")
+            return result.ok_value
+        else:
+            return self._api.delete_relay_auto_subscriptions([content_topic])
+
+    def send_message(self, message: dict, *, timeout_s: float = 20.0):
+        if self._is_wrapper:
+            result = self._wrapper_node.send_message(message, timeout_s=timeout_s)
+            if result.is_err():
+                raise RuntimeError(f"send_message failed: {result.err()}")
+            return result.ok_value
+        else:
+            return self._api.send_relay_auto_message(message)
 
     def info(self):
         return self._api.info()
@@ -428,6 +580,21 @@ class WakuNode:
     def is_nwaku(self):
         return "nwaku" in self.image
 
+    def prepare_rln_storage_paths(self, cwd, keystore_prefix, selected_id, reset_existing=False):
+        keystore_dir = os.path.join(cwd, f"keystore_{keystore_prefix}_{selected_id}")
+        rln_tree_dir = os.path.join(cwd, f"rln_tree_{keystore_prefix}_{selected_id}")
+
+        if reset_existing:
+            for path, path_name in [(keystore_dir, "keystore"), (rln_tree_dir, "rln tree")]:
+                if os.path.exists(path):
+                    logger.warning(f"Resetting existing RLN {path_name} directory before registration: {path}")
+                    shutil.rmtree(path, ignore_errors=True)
+
+        os.makedirs(keystore_dir, exist_ok=True)
+        os.makedirs(rln_tree_dir, exist_ok=True)
+
+        return keystore_dir, rln_tree_dir
+
     def parse_rln_credentials(self, default_args, is_registration):
         rln_args = {}
         keystore_path = None
@@ -440,6 +607,13 @@ class WakuNode:
             return rln_args, False, keystore_path
 
         imported_creds = json.loads(rln_creds_source)
+        rln_chain_id = imported_creds.get("rln-relay-chain-id")
+        if rln_chain_id is None:
+            eth_client_address = imported_creds.get("rln-relay-eth-client-address", "")
+            if "linea" in eth_client_address:
+                rln_chain_id = "59141"
+            elif "sepolia" in eth_client_address:
+                rln_chain_id = "11155111"
 
         if len(imported_creds) < 4 or any(value is None for value in imported_creds.values()):
             logger.warn(f"One or more of required RLN credentials were not set properly")
@@ -448,6 +622,13 @@ class WakuNode:
         eth_private_key = select_private_key(imported_creds, selected_id)
 
         cwd = os.getcwd()
+        keystore_prefix = default_args.get("rln-keystore-prefix")
+
+        if not keystore_prefix:
+            logger.warn("rln-keystore-prefix is missing, cannot mount RLN state and keystore")
+            return rln_args, False, keystore_path
+
+        keystore_dir, rln_tree_dir = self.prepare_rln_storage_paths(cwd, keystore_prefix, selected_id, reset_existing=is_registration)
 
         if self.is_nwaku():
             if is_registration:
@@ -470,6 +651,8 @@ class WakuNode:
                     {
                         "rln-relay-cred-path": "/keystore/keystore.json",
                         "rln-relay-cred-password": imported_creds["rln-relay-cred-password"],
+                        "rln-relay-eth-client-address": imported_creds["rln-relay-eth-client-address"],
+                        "rln-relay-eth-contract-address": imported_creds["rln-relay-eth-contract-address"],
                     }
                 )
             else:
@@ -483,12 +666,15 @@ class WakuNode:
                     }
                 )
 
-            keystore_path = cwd + "/keystore_" + default_args["rln-keystore-prefix"] + "_" + selected_id + "/keystore.json"
+            if rln_chain_id is not None:
+                rln_args["rln-relay-chain-id"] = str(rln_chain_id)
+
+            keystore_path = os.path.join(keystore_dir, "keystore.json")
 
             self._volumes.extend(
                 [
-                    cwd + "/rln_tree_" + default_args["rln-keystore-prefix"] + "_" + selected_id + ":/etc/rln_tree",
-                    cwd + "/keystore_" + default_args["rln-keystore-prefix"] + "_" + selected_id + ":/keystore",
+                    f"{rln_tree_dir}:/etc/rln_tree",
+                    f"{keystore_dir}:/keystore",
                 ]
             )
 
@@ -577,3 +763,9 @@ class WakuNode:
 
     def get_peer_info(self, peer_id: str):
         return self._api.get_peer(peer_id)
+
+    @property
+    def container_id(self) -> str:
+        if not self._container:
+            raise RuntimeError("Node container not started yet")
+        return self._container.id

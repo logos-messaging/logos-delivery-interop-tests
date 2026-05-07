@@ -68,11 +68,11 @@ class StepsLightPush(StepsCommon):
             self.start_receiving_node(node, node_index=index + 2, lightpush="true", relay="true", pubsub_topic=self.test_pubsub_topic, **kwargs)
 
     @allure.step
-    def setup_first_lightpush_node(self, lightpush="true", relay="false", **kwargs):
+    def setup_first_lightpush_node(self, lightpush="true", relay="true", **kwargs):
         self.light_push_node1 = self.setup_lightpush_node(NODE_2, node_index=1, lightpush=lightpush, relay=relay, **kwargs)
 
     @allure.step
-    def setup_second_lightpush_node(self, lightpush="true", relay="false", **kwargs):
+    def setup_second_lightpush_node(self, lightpush="true", relay="true", **kwargs):
         self.light_push_node2 = self.setup_lightpush_node(NODE_2, node_index=2, lightpush=lightpush, relay=relay, **kwargs)
 
     @allure.step
@@ -83,7 +83,7 @@ class StepsLightPush(StepsCommon):
             pytest.skip("ADDITIONAL_NODES/node_list is empty, cannot run test")
         self.additional_lightpush_nodes = []
         for index, node in enumerate(nodes):
-            node = self.setup_lightpush_node(node, node_index=index + 2, lightpush="true", relay="false", **kwargs)
+            node = self.setup_lightpush_node(node, node_index=index + 2, lightpush="true", relay="true", **kwargs)
             self.additional_lightpush_nodes.append(node)
 
     @allure.step

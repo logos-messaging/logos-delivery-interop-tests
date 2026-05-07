@@ -22,12 +22,12 @@ SAMPLE_INPUTS = [
     {"description": "Email format", "value": "user@example.com"},
     {"description": "URL format", "value": "http://example.com"},
     {"description": "Date and time in ISO format", "value": "2023-11-01T12:00:00Z"},
-    # {"description": "String with escaped quotes", "value": '"Escaped" \\"quotes\\"'}, # https://github.com/waku-org/nwaku/issues/3572
+    {"description": "String with escaped quotes", "value": '"Escaped" \\"quotes\\"'},
     {"description": "A regular expression", "value": "Regular expression: ^[a-z0-9_-]{3,16}$"},
     {"description": "A very long string", "value": "x" * 1000},
     {"description": "A JSON string", "value": '{"name": "John", "age": 30, "city": "New York"}'},
     {"description": "A Unix path", "value": "/usr/local/bin"},
-    # {"description": "A Windows path", "value": "C:\\Windows\\System32"},  # https://github.com/waku-org/nwaku/issues/3572
+    {"description": "A Windows path", "value": "C:\\Windows\\System32"},
     {"description": "An SQL query", "value": "SELECT * FROM users WHERE id = 1;"},
     {"description": "JavaScript code snippet", "value": "function test() { console.log('Hello World'); }"},
     {"description": "A CSS snippet", "value": "body { background-color: #fff; }"},
@@ -96,7 +96,7 @@ CONTENT_TOPICS_SHARD_7 = [
     "/newsService/4.0/updates/yaml",
 ]
 
-DEFAULT_CLUSTER_ID = "3"
+DEFAULT_CLUSTER_ID = "198"
 VALID_PUBSUB_TOPICS = [
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/0",
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/1",
@@ -130,14 +130,14 @@ PUBSUB_TOPICS_DIFFERENT_CLUSTERS = [
 ]
 
 PUBSUB_TOPICS_SAME_CLUSTER = [
-    "/waku/2/rs/2/0",
-    "/waku/2/rs/2/1",
-    "/waku/2/rs/2/2",
-    "/waku/2/rs/2/3",
-    "/waku/2/rs/2/4",
-    "/waku/2/rs/2/5",
-    "/waku/2/rs/2/6",
-    "/waku/2/rs/2/7",
+    "/waku/2/rs/199/0",
+    "/waku/2/rs/199/1",
+    "/waku/2/rs/199/2",
+    "/waku/2/rs/199/3",
+    "/waku/2/rs/199/4",
+    "/waku/2/rs/199/5",
+    "/waku/2/rs/199/6",
+    "/waku/2/rs/199/7",
 ]
 
 PUBSUB_TOPICS_WRONG_FORMAT = [
@@ -168,7 +168,7 @@ SAMPLE_TIMESTAMPS = [
     {"description": "Missing", "value": None, "valid_for": []},
 ]
 
-PUBSUB_TOPICS_RLN = ["/waku/2/rs/1/0"]
+PUBSUB_TOPICS_RLN = [f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/0"]
 
 LOG_ERROR_KEYWORDS = [
     "crash",
@@ -203,14 +203,6 @@ METRICS_WITH_INITIAL_VALUE_ZERO = [
     "libp2p_failed_dials_total",
     "waku_rln_messages_total_total",
     "waku_rln_spam_messages_total_total",
-    "waku_rln_valid_messages_total_sum",
-    "waku_rln_valid_messages_total_count",
-    'waku_rln_valid_messages_total_bucket{le="10.0"}',
-    'waku_rln_valid_messages_total_bucket{le="20.0"}',
-    'waku_rln_valid_messages_total_bucket{le="30.0"}',
-    'waku_rln_valid_messages_total_bucket{le="40.0"}',
-    'waku_rln_valid_messages_total_bucket{le="50.0"}',
-    'waku_rln_valid_messages_total_bucket{le="+Inf"}',
     "waku_rln_proof_verification_total_total",
     "waku_rln_number_registered_memberships",
     "waku_rln_proof_verification_duration_seconds",
@@ -285,40 +277,6 @@ METRICS_WITH_INITIAL_VALUE_ZERO = [
     'waku_archive_query_duration_seconds_bucket{le="7.5"}',
     'waku_archive_query_duration_seconds_bucket{le="10.0"}',
     'waku_archive_query_duration_seconds_bucket{le="+Inf"}',
-    "waku_legacy_archive_insert_duration_seconds_sum",
-    "waku_legacy_archive_insert_duration_seconds_count",
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.005"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.01"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.025"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.05"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.075"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.1"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.25"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.5"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.75"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="1.0"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="2.5"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="5.0"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="7.5"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="10.0"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="+Inf"}',
-    "waku_legacy_archive_query_duration_seconds_sum",
-    "waku_legacy_archive_query_duration_seconds_count",
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.005"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.01"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.025"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.05"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.075"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.1"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.25"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.5"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.75"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="1.0"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="2.5"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="5.0"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="7.5"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="10.0"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="+Inf"}',
     "waku_filter_subscriptions",
     "waku_filter_handle_message_duration_seconds_sum",
     "waku_filter_handle_message_duration_seconds_count",
@@ -345,7 +303,7 @@ METRICS_WITH_INITIAL_VALUE_ZERO = [
     "waku_px_peers_received_total",
     "waku_px_peers_received_unknown",
     "waku_px_peers_sent_total",
-    "waku_px_peers_cached",
+    "waku_px_peers",
     "waku_histogram_message_size_sum",
     "waku_histogram_message_size_count",
     'waku_histogram_message_size_bucket{le="0.0"}',
@@ -391,8 +349,8 @@ METRICS_WITH_INITIAL_VALUE_ZERO = [
     'waku_filter_handle_message_duration_seconds_bucket{le="20.0"}',
     'waku_filter_handle_message_duration_seconds_bucket{le="30.0"}',
     "total_messages_cached",
-    "waku_legacy_store_queries_total",
     "waku_store_queries_total",
     "mix_pool_size",
     "libp2p_gossipsub_imreceiving_saved_messages_total",
+    "postgres_payload_size_bytes",
 ]
