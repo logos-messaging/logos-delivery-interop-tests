@@ -136,16 +136,23 @@ def assert_event_invariants(collector: EventCollector, request_id: str) -> None:
 
 
 def get_node_multiaddr(node) -> str:
-    """Return the first TCP multiaddr (with peer-id) from a WrapperManager node."""
+    """Return the TCP multiaddr (with peer-id) from a WrapperManager node.
+
+    Asserts that the wrapper returned exactly one address. If the wrapper ever
+    starts returning multiple addresses (newline/comma-separated or a JSON
+    list), this fails loudly instead of silently passing a malformed string
+    downstream to staticnodes / add_peers.
+    """
     result = node.get_node_info_raw("MyMultiaddresses")
     if result.is_err():
         raise RuntimeError(f"get_node_info_raw failed: {result.err()}")
 
     addr = result.ok_value.strip()
-    if not addr:
+    if not addr or not addr.startswith("/"):
         raise RuntimeError(f"Unexpected multiaddr format: {addr!r}")
-    if not addr.startswith("/"):
-        raise RuntimeError(f"Unexpected start multiaddr format: {addr!r}")
+
+    if "\n" in addr or "," in addr or addr.startswith("["):
+        raise AssertionError(f"Expected a single multiaddr from MyMultiaddresses, got multiple: {addr!r}")
 
     return addr
 

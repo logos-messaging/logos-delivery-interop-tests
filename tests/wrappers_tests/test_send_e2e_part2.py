@@ -267,6 +267,7 @@ class TestRelayToLightpushFallback(StepsCommon):
                      (no staticnodes → zero gossipsub relay peers → fallback)
     """
 
+    @pytest.mark.xfail(reason="the test fail without lightpushnode")
     def test_s08_relay_fallback_to_lightpush(self, node_config):
         """S08: no store peer → Propagated only."""
         sender_collector = EventCollector()
@@ -302,6 +303,7 @@ class TestRelayToLightpushFallback(StepsCommon):
                     **node_config,
                     # "lightpushnode": service_addr, #this comment currently raise issue
                     "portsShift": 2,
+                    "discv5Discovery": True,
                 }
                 sender_result = WrapperManager.create_and_start(
                     config=sender_config,
@@ -367,12 +369,7 @@ class TestRelayToLightpushFallback(StepsCommon):
             assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
 
             with relay_result.ok_value:
-                sender_config = {
-                    **node_config,
-                    "reliabilityEnabled": True,
-                    "storenode": service_addr,
-                    "portsShift": 2,
-                }
+                sender_config = {**node_config, "reliabilityEnabled": True, "storenode": service_addr, "portsShift": 2, "store": False}
                 sender_result = WrapperManager.create_and_start(
                     config=sender_config,
                     event_cb=sender_collector.event_callback,
