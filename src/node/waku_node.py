@@ -10,7 +10,7 @@ import pytest
 import requests
 from src.libs.common import delay
 from src.libs.custom_logger import get_custom_logger
-from tenacity import retry, stop_after_delay, wait_fixed, sleep
+from tenacity import retry, stop_after_attempt, stop_after_delay, wait_fixed, sleep
 from docker.errors import NotFound as DockerNotFound
 from src.node.api_clients.rest import REST
 from src.node.docker_mananger import DockerManager
@@ -96,6 +96,9 @@ def resolve_sharding_flags(kwargs):
 
 
 class WakuNode:
+    # Optional pre-start hook to allow modifications for fleet tests
+    _pre_start_hook = None
+
     def __init__(self, docker_image, docker_log_prefix=""):
         self._image_name = docker_image
         self._log_path = os.path.join(DOCKER_LOG_DIR, f"{docker_log_prefix}__{self._image_name.replace('/', '_')}.log")
@@ -113,6 +116,8 @@ class WakuNode:
 
     @retry(stop=stop_after_delay(60), wait=wait_fixed(0.1), reraise=True)
     def start(self, wait_for_node_sec=20, use_wrapper=False, **kwargs):
+        if WakuNode._pre_start_hook is not None:
+            kwargs = WakuNode._pre_start_hook(self, kwargs)
         logger.debug("Starting Node...")
         default_args, remove_container = self._prepare_start_context(**kwargs)
 
@@ -280,7 +285,7 @@ class WakuNode:
             },
         }
 
-    @retry(stop=stop_after_delay(250), wait=wait_fixed(0.1), reraise=True)
+    @retry(stop=stop_after_attempt(1), wait=wait_fixed(0.1), reraise=True)
     def register_rln(self, **kwargs):
         logger.debug("Registering RLN credentials...")
         self._docker_manager.create_network()

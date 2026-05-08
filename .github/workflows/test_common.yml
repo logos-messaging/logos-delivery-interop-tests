@@ -22,6 +22,11 @@ on:
         required: false
         description: "Workflow caller. Used in reporting"
         type: string
+      fleet_tests:
+        required: false
+        description: "Run fleet tests only"
+        type: boolean
+        default: false
 
 env:
   FORCE_COLOR: "1"
@@ -37,7 +42,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17] 
+        shard: ${{ inputs.fleet_tests && fromJSON('[0]') || fromJSON('[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]') }}
     # total number of shards =18 means tests will split into 18 thread and run in parallel to increase execution speed
     # command for sharding :
     # pytest --shard-id=<shard_number> --num-shards=<total_shards>
@@ -142,6 +147,10 @@ jobs:
 
           echo "Built library:"
           ls -l "$BINDINGS_DIR/lib/liblogosdelivery.so"
+          
+          # Cleanup build artifacts        
+          rm -rf .gh-pages/nim 
+
 
       - name: Verify wrapper library
         run: |
@@ -170,7 +179,15 @@ jobs:
           export PATH="$HOME/.nimble/bin:$PATH"
           export PYTHONPATH="$(pwd)/vendor/logos-delivery-python-bindings/waku:$PYTHONPATH"
 
-          if [ "${{ matrix.shard }}" == "16" ]; then
+          if [ "${{ inputs.fleet_tests }}" == "true" ]; then
+              if [ "${{ matrix.shard }}" == "0" ]; then
+                  pytest --fleet -m waku_test_fleet \
+                    --ignore=vendor/logos-delivery-python-bindings/tests \
+                    --alluredir=allure-results-${{ matrix.shard }}
+              else
+                  echo "Skipping shard ${{ matrix.shard }}: fleet tests run on shard 0 only"
+              fi
+          elif [ "${{ matrix.shard }}" == "16" ]; then
               pytest tests/relay/test_rln.py \
                 --ignore=vendor/logos-delivery-python-bindings/tests \
                 --alluredir=allure-results-${{ matrix.shard }}
@@ -328,7 +345,7 @@ jobs:
           for key in $(jq -r 'keys[]' results.json); do
             result=$(jq -r --arg key "$key" '.[$key]' results.json)
             echo "Key: $key, Value: $result"
-            if [ "$result" != "success" ]; then
+            if [ -n "$result" ] && [ "$result" != "success" ]; then
               echo "Value 'success' not found at key: $key"
               TESTS_RESULT="failure"
               break
