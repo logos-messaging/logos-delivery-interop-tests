@@ -359,6 +359,91 @@ class TestS03SendOnAlreadySubscribedTopic(StepsCommon):
                 assert_event_invariants(sender_collector, request_id)
 
 
+class TestS04UnsubscribeThenSendSameTopic(StepsCommon):
+    """
+    S04 — Unsubscribe, then send the same content topic again.
+    Sender subscribes to topic A, unsubscribes from A, then sends on A.
+    The send path must re-establish topic interest and deliver normally.
+    Topology mirrors S06 (relay-only sender + relay peer, no store).
+    Expected: send() returns Ok(RequestId), Propagated arrives,
+    no Sent (store disabled), no Error.
+    Purpose: verifies send() re-establishes topic interest after local unsubscribe.
+    """
+
+    def test_s04_unsubscribe_then_send_same_content_topic(self, node_config):
+        sender_collector = EventCollector()
+        content_topic = "/test/1/s04-unsubscribe-resend/proto"
+
+        node_config.update(
+            {
+                "relay": True,
+                "store": False,
+                "lightpush": False,
+                "filter": False,
+                "discv5Discovery": False,
+                "numShardsInNetwork": 1,
+                "reliabilityEnabled": True,
+            }
+        )
+
+        sender_result = WrapperManager.create_and_start(
+            config=node_config,
+            event_cb=sender_collector.event_callback,
+        )
+        assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
+
+        with sender_result.ok_value as sender:
+            peer_config = {
+                **node_config,
+                "staticnodes": [get_node_multiaddr(sender)],
+                "portsShift": 1,
+            }
+
+            peer_result = WrapperManager.create_and_start(config=peer_config)
+            assert peer_result.is_ok(), f"Failed to start relay peer: {peer_result.err()}"
+
+            with peer_result.ok_value:
+                assert wait_for_connected(sender_collector) is not None, "Sender did not reach Connected/PartiallyConnected state"
+
+                # subscribe -> unsubscribe -> send: send() must re-establish
+                # topic interest internally.
+                subscribe_result = sender.subscribe_content_topic(content_topic)
+                assert subscribe_result.is_ok(), f"subscribe_content_topic failed: {subscribe_result.err()}"
+
+                unsubscribe_result = sender.unsubscribe_content_topic(content_topic)
+                assert unsubscribe_result.is_ok(), f"unsubscribe_content_topic failed: {unsubscribe_result.err()}"
+
+                message = create_message_bindings(
+                    payload=to_base64("S04 unsubscribe-then-send test payload"),
+                    contentTopic=content_topic,
+                )
+
+                send_result = sender.send_message(message=message)
+                assert send_result.is_ok(), f"send() failed after unsubscribe: {send_result.err()}"
+
+                request_id = send_result.ok_value
+                assert request_id, "send() returned an empty RequestId"
+
+                propagated = wait_for_propagated(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=PROPAGATED_TIMEOUT_S,
+                )
+                assert propagated is not None, (
+                    f"No message_propagated event within {PROPAGATED_TIMEOUT_S}s "
+                    f"after unsubscribe + send. Collected events: {sender_collector.events}"
+                )
+                assert propagated["requestId"] == request_id
+
+                error = wait_for_error(sender_collector, request_id, timeout_s=0)
+                assert error is None, f"Unexpected message_error event: {error}"
+
+                sent = wait_for_sent(sender_collector, request_id, timeout_s=0)
+                assert sent is None, f"Unexpected message_sent event (store is disabled): {sent}"
+
+                assert_event_invariants(sender_collector, request_id)
+
+
 class TestS06CoreSenderRelayOnly(StepsCommon):
     """
     S06 — Core sender with relay peers only, no store.
