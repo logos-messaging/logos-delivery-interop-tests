@@ -278,6 +278,87 @@ class TestS02AutoSubscribeOnFirstSend(StepsCommon):
                 assert error is None, f"Unexpected message_error event: {error}"
 
 
+class TestS03SendOnAlreadySubscribedTopic(StepsCommon):
+    """
+    S03 — Send on already-subscribed content topic.
+    Sender explicitly calls subscribe_content_topic() before send().
+    The send path must behave identically to the auto-subscribe case:
+    Propagated arrives, no Sent (store disabled), no Error.
+    Topology mirrors S06 (relay-only sender + relay peer, no store).
+    Purpose: proves the send path is identical when auto-subscription is skipped.
+    """
+
+    def test_s03_send_on_already_subscribed_content_topic(self, node_config):
+        sender_collector = EventCollector()
+        content_topic = "/test/1/s03-already-subscribed/proto"
+
+        node_config.update(
+            {
+                "relay": True,
+                "store": False,
+                "lightpush": False,
+                "filter": False,
+                "discv5Discovery": False,
+                "numShardsInNetwork": 1,
+                "reliabilityEnabled": True,
+            }
+        )
+
+        sender_result = WrapperManager.create_and_start(
+            config=node_config,
+            event_cb=sender_collector.event_callback,
+        )
+        assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
+
+        with sender_result.ok_value as sender:
+            peer_config = {
+                **node_config,
+                "staticnodes": [get_node_multiaddr(sender)],
+                "portsShift": 1,
+            }
+
+            peer_result = WrapperManager.create_and_start(config=peer_config)
+            assert peer_result.is_ok(), f"Failed to start relay peer: {peer_result.err()}"
+
+            with peer_result.ok_value:
+                assert wait_for_connected(sender_collector) is not None, "Sender did not reach Connected/PartiallyConnected state"
+
+                # Explicit subscribe before send — this is what S03 is about.
+                # The send path must still return Ok(RequestId) and emit the
+                # same events as the auto-subscribe topology in S06.
+                subscribe_result = sender.subscribe_content_topic(content_topic)
+                assert subscribe_result.is_ok(), f"subscribe_content_topic failed: {subscribe_result.err()}"
+
+                message = create_message_bindings(
+                    payload=to_base64("S03 already-subscribed test payload"),
+                    contentTopic=content_topic,
+                )
+
+                send_result = sender.send_message(message=message)
+                assert send_result.is_ok(), f"send() failed: {send_result.err()}"
+
+                request_id = send_result.ok_value
+                assert request_id, "send() returned an empty RequestId"
+
+                propagated = wait_for_propagated(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=PROPAGATED_TIMEOUT_S,
+                )
+                assert propagated is not None, (
+                    f"No message_propagated event within {PROPAGATED_TIMEOUT_S}s. " f"Collected events: {sender_collector.events}"
+                )
+                assert propagated["requestId"] == request_id
+
+                error = wait_for_error(sender_collector, request_id, timeout_s=0)
+                assert error is None, f"Unexpected message_error event: {error}"
+
+                sent = wait_for_sent(sender_collector, request_id, timeout_s=0)
+                assert sent is None, f"Unexpected message_sent event (store is disabled): {sent}"
+
+                assert_event_invariants(sender_collector, request_id)
+
+
 class TestS06CoreSenderRelayOnly(StepsCommon):
     """
     S06 — Core sender with relay peers only, no store.
