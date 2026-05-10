@@ -831,6 +831,123 @@ class TestS10EdgeSenderLightpushOnly(StepsCommon):
                     assert_event_invariants(sender_collector, request_id)
 
 
+class TestS11EdgeSenderLightpushAndStore(StepsCommon):
+    """
+    S11 — Edge sender with lightpush path and store validation.
+    Edge sender has no local relay; it publishes via a dedicated lightpush
+    peer and validates delivery via a dedicated store peer. Reliability
+    enabled.
+    Topology:
+        [LightpushPeer] relay=True, lightpush=True, store=False
+        [StorePeer]     relay=True, store=True, lightpush=False,
+                        staticnodes=[lightpush_peer]  (joins the relay mesh
+                        so it archives propagated messages)
+        [Edge]          mode="Edge",
+                        staticnodes=[lightpush_peer],
+                        storenode=store_peer,
+                        reliabilityEnabled=True
+    Expected: send() returns Ok(RequestId), Propagated arrives, then Sent
+    (store validation succeeds), no Error.
+    Purpose: edge-mode fully validated success path.
+    """
+
+    def test_s11_edge_lightpush_with_store_validation(self, node_config):
+        sender_collector = EventCollector()
+
+        common = {
+            "filter": False,
+            "discv5Discovery": True,
+            "numShardsInNetwork": 1,
+        }
+
+        lightpush_config = build_node_config(
+            relay=True,
+            lightpush=True,
+            store=False,
+            **common,
+        )
+
+        lightpush_result = WrapperManager.create_and_start(config=lightpush_config)
+        assert lightpush_result.is_ok(), f"Failed to start lightpush peer: {lightpush_result.err()}"
+
+        with lightpush_result.ok_value as lightpush_peer:
+            lightpush_multiaddr = get_node_multiaddr(lightpush_peer)
+
+            # Store peer joins the lightpush peer's relay mesh so propagated
+            # messages are archived and become visible to store queries.
+            store_config = build_node_config(
+                relay=True,
+                lightpush=False,
+                store=True,
+                staticnodes=[lightpush_multiaddr],
+                **common,
+            )
+
+            store_result = WrapperManager.create_and_start(config=store_config)
+            assert store_result.is_ok(), f"Failed to start store peer: {store_result.err()}"
+
+            with store_result.ok_value as store_peer:
+                store_multiaddr = get_node_multiaddr(store_peer)
+
+                # Edge sender must dial BOTH peers: the lightpush peer for the
+                # publish path, and the store peer so the store-query channel
+                # is actually connected when reliability validation runs.
+                # storenode= alone registers it in service slots but does not
+                # dial it.
+                edge_config = build_node_config(
+                    mode="Edge",
+                    staticnodes=[lightpush_multiaddr],
+                    lightpushnode=lightpush_multiaddr,
+                    storenode=store_multiaddr,
+                    reliabilityEnabled=True,
+                    **common,
+                )
+
+                edge_result = WrapperManager.create_and_start(
+                    config=edge_config,
+                    event_cb=sender_collector.event_callback,
+                )
+                assert edge_result.is_ok(), f"Failed to start edge sender: {edge_result.err()}"
+
+                with edge_result.ok_value as edge_sender:
+                    message = create_message_bindings(
+                        payload=to_base64("S11 edge lightpush + store test payload"),
+                        contentTopic="/test/1/s11-edge-lightpush-store/proto",
+                    )
+
+                    send_result = edge_sender.send_message(message=message)
+                    assert send_result.is_ok(), f"send() failed: {send_result.err()}"
+
+                    request_id = send_result.ok_value
+                    assert request_id, "send() returned an empty RequestId"
+
+                    propagated = wait_for_propagated(
+                        collector=sender_collector,
+                        request_id=request_id,
+                        timeout_s=PROPAGATED_TIMEOUT_S,
+                    )
+                    assert propagated is not None, (
+                        f"No message_propagated event within {PROPAGATED_TIMEOUT_S}s. " f"Collected events: {sender_collector.events}"
+                    )
+                    assert propagated["requestId"] == request_id
+
+                    sent = wait_for_sent(
+                        collector=sender_collector,
+                        request_id=request_id,
+                        timeout_s=SENT_AFTER_STORE_TIMEOUT_S,
+                    )
+                    assert sent is not None, (
+                        f"No message_sent event within {SENT_AFTER_STORE_TIMEOUT_S}s "
+                        f"after propagation. Collected events: {sender_collector.events}"
+                    )
+                    assert sent["requestId"] == request_id
+
+                    error = wait_for_error(sender_collector, request_id, timeout_s=0)
+                    assert error is None, f"Unexpected message_error event: {error}"
+
+                    assert_event_invariants(sender_collector, request_id)
+
+
 class TestS12IsolatedSenderNoPeers(StepsCommon):
     """
     S12 — Isolated sender, no peers.
