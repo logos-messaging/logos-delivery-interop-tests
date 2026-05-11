@@ -8,6 +8,7 @@ logger = get_custom_logger(__name__)
 
 @pytest.mark.usefixtures("setup_main_relay_node", "setup_main_filter_node")
 class TestFilterSubscribeUpdate(StepsFilter):
+    @pytest.mark.waku_test_fleet
     def test_filter_update_subscription_add_a_new_content_topic(self):
         self.wait_for_subscriptions_on_main_nodes([self.test_content_topic], pubsub_topic=self.test_pubsub_topic)
         self.update_filter_subscription({"requestId": "1", "contentFilters": [self.second_content_topic], "pubsubTopic": self.test_pubsub_topic})
@@ -39,6 +40,7 @@ class TestFilterSubscribeUpdate(StepsFilter):
         except Exception as ex:
             assert "Bad Request" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_filter_update_subscription_refresh_existing(self):
         self.wait_for_subscriptions_on_main_nodes([self.test_content_topic], pubsub_topic=self.test_pubsub_topic)
         self.update_filter_subscription({"requestId": "1", "contentFilters": [self.test_content_topic], "pubsubTopic": self.test_pubsub_topic})

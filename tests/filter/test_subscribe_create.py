@@ -10,6 +10,7 @@ logger = get_custom_logger(__name__)
 
 @pytest.mark.usefixtures("setup_main_relay_node", "setup_main_filter_node")
 class TestFilterSubscribeCreate(StepsFilter):
+    @pytest.mark.waku_test_fleet
     def test_filter_subscribe_to_single_topics(self):
         self.wait_for_subscriptions_on_main_nodes([self.test_content_topic])
         self.check_published_message_reaches_filter_peer()
@@ -47,6 +48,7 @@ class TestFilterSubscribeCreate(StepsFilter):
                 failed_pubsub_topics.append(pubsub_topic)
         assert not failed_pubsub_topics, f"PubsubTopics failed: {failed_pubsub_topics}"
 
+    @pytest.mark.waku_test_fleet
     def test_filter_subscribe_to_100_content_topics_in_one_call(self):
         failed_content_topics = []
         _100_content_topics = [str(i) for i in range(100)]
@@ -98,6 +100,7 @@ class TestFilterSubscribeCreate(StepsFilter):
         except Exception as ex:
             assert "Bad Request" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_filter_subscribe_refresh(self):
         for _ in range(2):
             self.wait_for_subscriptions_on_main_nodes([self.test_content_topic])
@@ -159,6 +162,7 @@ class TestFilterSubscribeCreate(StepsFilter):
         except Exception as ex:
             assert "Bad Request" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_filter_subscribe_with_extra_field(self, subscribe_main_nodes):
         try:
             self.create_filter_subscription(

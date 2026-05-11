@@ -10,7 +10,7 @@ import pytest
 import requests
 from src.libs.common import delay
 from src.libs.custom_logger import get_custom_logger
-from tenacity import retry, stop_after_delay, wait_fixed, sleep
+from tenacity import retry, stop_after_attempt, stop_after_delay, wait_fixed, sleep
 from docker.errors import NotFound as DockerNotFound
 from src.node.api_clients.rest import REST
 from src.node.docker_mananger import DockerManager
@@ -95,6 +95,9 @@ def resolve_sharding_flags(kwargs):
 
 
 class WakuNode:
+    # Optional pre-start hook to allow modifications for fleet tests
+    _pre_start_hook = None
+
     def __init__(self, docker_image, docker_log_prefix=""):
         self._image_name = docker_image
         self._log_path = os.path.join(DOCKER_LOG_DIR, f"{docker_log_prefix}__{self._image_name.replace('/', '_')}.log")
@@ -106,7 +109,9 @@ class WakuNode:
         logger.debug(f"WakuNode instance initialized with log path {self._log_path}")
 
     @retry(stop=stop_after_delay(60), wait=wait_fixed(0.1), reraise=True)
-    def start(self, wait_for_node_sec=20, **kwargs):
+    def start(self, wait_for_node_sec=20, use_wrapper=False, **kwargs):
+        if WakuNode._pre_start_hook is not None:
+            kwargs = WakuNode._pre_start_hook(self, kwargs)
         logger.debug("Starting Node...")
         default_args, remove_container = self._prepare_start_context(**kwargs)
         self._start_docker(default_args, remove_container, wait_for_node_sec)
@@ -223,6 +228,52 @@ class WakuNode:
         except Exception as ex:
             logger.error(f"REST service did not become ready in time: {ex}")
             raise
+
+    def _start_wrapper(self, default_args, wait_for_node_sec):
+        logger.debug("Starting node using wrappers")
+        wrapper_config = self._default_args_to_wrapper_config(default_args)
+
+        result = WrapperManager.create_and_start(config=wrapper_config, timeout_s=wait_for_node_sec)
+        if result.is_err():
+            raise RuntimeError(f"Failed to start wrapper node: {result.err()}")
+        self._wrapper_node = result.ok_value
+
+        logger.debug(f"Started wrapper node. REST: {self._rest_port}")
+        DS.waku_nodes.append(self)
+        delay(1)
+        try:
+            self.ensure_ready(timeout_duration=wait_for_node_sec)
+        except Exception as ex:
+            logger.error(f"REST service did not become ready in time: {ex}")
+            raise
+
+    def _default_args_to_wrapper_config(self, default_args):
+        def _bool(key, default="false"):
+            return default_args.get(key, default).lower() == "true"
+
+        bootstrap = default_args.get("discv5-bootstrap-node")
+
+        return {
+            "logLevel": default_args.get("log-level", "DEBUG"),
+            "mode": "Core",
+            "networkingConfig": {
+                "listenIpv4": default_args.get("listen-address", "0.0.0.0"),
+                "p2pTcpPort": int(default_args["tcp-port"]),
+                "discv5UdpPort": int(default_args["discv5-udp-port"]),
+                "restPort": int(default_args["rest-port"]),
+                "restAddress": default_args.get("rest-address", "0.0.0.0"),
+            },
+            "protocolsConfig": {
+                "clusterId": int(default_args.get("cluster-id", DEFAULT_CLUSTER_ID)),
+                "relay": _bool("relay"),
+                "store": _bool("store"),
+                "filter": _bool("filter"),
+                "lightpush": _bool("lightpush"),
+                "peerExchange": _bool("peer-exchange"),
+                "discv5Discovery": _bool("discv5-discovery", "true"),
+                "discv5BootstrapNodes": [bootstrap] if bootstrap else [],
+            },
+        }
 
     @retry(stop=stop_after_delay(250), wait=wait_fixed(0.1), reraise=True)
     def register_rln(self, **kwargs):
