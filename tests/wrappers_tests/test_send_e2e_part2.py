@@ -416,6 +416,7 @@ class TestS10EdgeSenderLightpushOnly(StepsCommon):
     Expected: Propagated only (no Sent, no Error).
     """
 
+    @pytest.mark.xfail(reason="lightpush peer discovery via staticnodes is broken, see https://github.com/logos-messaging/logos-delivery/issues/3847")
     def test_s10_edge_lightpush_propagation(self, node_config):
         sender_collector = EventCollector()
 
