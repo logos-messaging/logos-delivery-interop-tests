@@ -627,6 +627,7 @@ class TestS15LightpushRetryableErrorRecovery(StepsCommon):
     Expected: send() returns Ok(RequestId), then eventually Propagated.
     """
 
+    @pytest.mark.xfail(reason="lightpush peer discovery via staticnodes is broken, see https://github.com/logos-messaging/logos-delivery/issues/3847")
     def test_s15_lightpush_retryable_error_then_recovery(self):
         sender_collector = EventCollector()
 
