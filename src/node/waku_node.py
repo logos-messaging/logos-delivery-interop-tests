@@ -17,7 +17,6 @@ from src.node.docker_mananger import DockerManager
 from src.env_vars import DOCKER_LOG_DIR
 from src.data_storage import DS
 from src.test_data import DEFAULT_CLUSTER_ID, LOG_ERROR_KEYWORDS, VALID_PUBSUB_TOPICS
-from src.node.wrappers_manager import WrapperManager
 
 logger = get_custom_logger(__name__)
 
@@ -106,13 +105,8 @@ class WakuNode:
         self._container = None
         self.rln_membership_index = None
         self.start_args = {}
-        self._wrapper_node = None
         self._rln_creds_set = False
         logger.debug(f"WakuNode instance initialized with log path {self._log_path}")
-
-    @property
-    def _is_wrapper(self) -> bool:
-        return self._wrapper_node is not None
 
     @retry(stop=stop_after_delay(60), wait=wait_fixed(0.1), reraise=True)
     def start(self, wait_for_node_sec=20, use_wrapper=False, **kwargs):
@@ -120,11 +114,7 @@ class WakuNode:
             kwargs = WakuNode._pre_start_hook(self, kwargs)
         logger.debug("Starting Node...")
         default_args, remove_container = self._prepare_start_context(**kwargs)
-
-        if use_wrapper:
-            self._start_wrapper(default_args, wait_for_node_sec)
-        else:
-            self._start_docker(default_args, remove_container, wait_for_node_sec)
+        self._start_docker(default_args, remove_container, wait_for_node_sec)
 
     def _prepare_start_context(self, **kwargs):
         self._docker_manager.create_network()
@@ -285,7 +275,7 @@ class WakuNode:
             },
         }
 
-    @retry(stop=stop_after_attempt(1), wait=wait_fixed(0.1), reraise=True)
+    @retry(stop=stop_after_delay(250), wait=wait_fixed(0.1), reraise=True)
     def register_rln(self, **kwargs):
         logger.debug("Registering RLN credentials...")
         self._docker_manager.create_network()
@@ -338,12 +328,6 @@ class WakuNode:
 
     @retry(stop=stop_after_delay(5), wait=wait_fixed(0.1), reraise=True)
     def stop(self):
-        if self._is_wrapper:
-            self._stop_wrapper()
-        else:
-            self._stop_docker()
-
-    def _stop_docker(self):
         if self._container:
             logger.debug(f"Stopping container with id {self._container.short_id}")
             try:
@@ -358,14 +342,6 @@ class WakuNode:
                 pass
             self._container = None
             logger.debug("Container stopped.")
-
-    def _stop_wrapper(self):
-        logger.debug("Stopping wrapper node")
-        result = self._wrapper_node.stop_and_destroy()
-        if result.is_err():
-            logger.error(f"Failed to stop wrapper node: {result.err()}")
-        self._wrapper_node = None
-        logger.debug("Wrapper node stopped and destroyed.")
 
     @retry(stop=stop_after_delay(5), wait=wait_fixed(0.1), reraise=True)
     def kill(self):
@@ -450,32 +426,14 @@ class WakuNode:
     def get_tcp_address(self):
         return f"/ip4/{self._ext_ip}/tcp/{self._tcp_port}"
 
-    def subscribe_content_topic(self, content_topic: str, *, timeout_s: float = 20.0):
-        if self._is_wrapper:
-            result = self._wrapper_node.subscribe_content_topic(content_topic, timeout_s=timeout_s)
-            if result.is_err():
-                raise RuntimeError(f"subscribe_content_topic failed: {result.err()}")
-            return result.ok_value
-        else:
-            return self._api.set_relay_auto_subscriptions([content_topic])
+    def subscribe_content_topic(self, content_topic: str):
+        return self._api.set_relay_auto_subscriptions([content_topic])
 
-    def unsubscribe_content_topic(self, content_topic: str, *, timeout_s: float = 20.0):
-        if self._is_wrapper:
-            result = self._wrapper_node.unsubscribe_content_topic(content_topic, timeout_s=timeout_s)
-            if result.is_err():
-                raise RuntimeError(f"unsubscribe_content_topic failed: {result.err()}")
-            return result.ok_value
-        else:
-            return self._api.delete_relay_auto_subscriptions([content_topic])
+    def unsubscribe_content_topic(self, content_topic: str):
+        return self._api.delete_relay_auto_subscriptions([content_topic])
 
-    def send_message(self, message: dict, *, timeout_s: float = 20.0):
-        if self._is_wrapper:
-            result = self._wrapper_node.send_message(message, timeout_s=timeout_s)
-            if result.is_err():
-                raise RuntimeError(f"send_message failed: {result.err()}")
-            return result.ok_value
-        else:
-            return self._api.send_relay_auto_message(message)
+    def send_message(self, message: dict):
+        return self._api.send_relay_auto_message(message)
 
     def info(self):
         return self._api.info()
