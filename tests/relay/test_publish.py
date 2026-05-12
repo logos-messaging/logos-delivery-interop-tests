@@ -4,7 +4,7 @@ from src.libs.custom_logger import get_custom_logger
 from time import time
 from src.libs.common import delay, to_base64
 from src.steps.relay import StepsRelay
-from src.test_data import INVALID_CONTENT_TOPICS, INVALID_PAYLOADS, SAMPLE_INPUTS, SAMPLE_TIMESTAMPS, VALID_PUBSUB_TOPICS
+from src.test_data import INVALID_CONTENT_TOPICS, INVALID_PAYLOADS, SAMPLE_INPUTS, VALID_PUBSUB_TOPICS, get_sample_timestamps
 from src.node.waku_message import WakuMessage
 
 logger = get_custom_logger(__name__)
@@ -12,6 +12,7 @@ logger = get_custom_logger(__name__)
 
 @pytest.mark.usefixtures("setup_main_relay_nodes", "subscribe_main_relay_nodes", "relay_warm_up")
 class TestRelayPublish(StepsRelay):
+    @pytest.mark.waku_test_fleet
     def test_publish_with_valid_payloads(self):
         failed_payloads = []
         for payload in SAMPLE_INPUTS:
@@ -44,6 +45,7 @@ class TestRelayPublish(StepsRelay):
         except Exception as ex:
             assert "Bad Request" in str(ex) or "Internal Server Error" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_publish_with_payload_less_than_150_kb(self):
         payload_length = 1024 * 100  # after encoding to base64 this will be close to 150KB
         logger.debug(f"Running test with payload length of {payload_length} bytes")
@@ -60,6 +62,7 @@ class TestRelayPublish(StepsRelay):
             except Exception as ex:
                 assert "couldn't find any messages" in str(ex) or "Bad Request" in str(ex) or "Internal Server Error" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_publish_with_valid_content_topics(self):
         failed_content_topics = []
         for content_topic in SAMPLE_INPUTS:
@@ -92,6 +95,7 @@ class TestRelayPublish(StepsRelay):
         except Exception as ex:
             assert "Bad Request" in str(ex) or "Internal Server Error" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_publish_on_multiple_pubsub_topics(self):
         self.ensure_relay_subscriptions_on_nodes(self.main_nodes, VALID_PUBSUB_TOPICS)
         failed_pubsub_topics = []
@@ -118,9 +122,10 @@ class TestRelayPublish(StepsRelay):
         except Exception as ex:
             assert "Bad Request" in str(ex) or "Internal Server Error" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_publish_with_valid_timestamps(self):
         failed_timestamps = []
-        for timestamp in SAMPLE_TIMESTAMPS:
+        for timestamp in get_sample_timestamps():
             if self.node1.type() in timestamp["valid_for"]:
                 logger.debug(f'Running test with timestamp {timestamp["description"]}')
                 message = self.create_message(timestamp=timestamp["value"])
@@ -133,7 +138,7 @@ class TestRelayPublish(StepsRelay):
 
     def test_publish_with_invalid_timestamps(self):
         success_timestamps = []
-        for timestamp in SAMPLE_TIMESTAMPS:
+        for timestamp in get_sample_timestamps():
             if self.node1.type() not in timestamp["valid_for"]:
                 logger.debug(f'Running test with timestamp {timestamp["description"]}')
                 message = self.create_message(timestamp=timestamp["value"])
@@ -144,10 +149,12 @@ class TestRelayPublish(StepsRelay):
                     pass
         assert not success_timestamps, f"Invalid Timestamps that didn't failed: {success_timestamps}"
 
+    @pytest.mark.waku_test_fleet
     def test_publish_with_no_timestamp(self):
         message = {"payload": to_base64(self.test_payload), "contentTopic": self.test_content_topic}
         self.check_published_message_reaches_relay_peer(message)
 
+    @pytest.mark.waku_test_fleet
     def test_publish_with_valid_version(self):
         self.check_published_message_reaches_relay_peer(self.create_message(version=10))
 
@@ -168,6 +175,7 @@ class TestRelayPublish(StepsRelay):
         except Exception as ex:
             assert "Bad Request" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_publish_with_ephemeral(self):
         failed_ephemeral = []
         for ephemeral in [True, False]:

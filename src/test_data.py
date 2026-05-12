@@ -1,3 +1,4 @@
+import os
 from time import time
 from datetime import datetime, timedelta
 
@@ -105,6 +106,9 @@ VALID_PUBSUB_TOPICS = [
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/1000",
 ]
 
+FLEET_CLUSTER_ID = "1"
+FLEET_PUBSUB_TOPICS = [f"/waku/2/rs/{FLEET_CLUSTER_ID}/{i}" for i in range(8)]
+
 PUBSUB_TOPICS_STORE = [
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/0",
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/1",
@@ -147,26 +151,45 @@ PUBSUB_TOPICS_WRONG_FORMAT = [
     {"description": "A bool", "value": True},
 ]
 
-SAMPLE_TIMESTAMPS = [
-    {"description": "Now", "value": int(time() * 1e9), "valid_for": ["nwaku"]},
-    {
-        "description": "Far future",
-        "value": int((NOW + timedelta(days=365 * 10)).timestamp() * 1e9),
-        "valid_for": ["nwaku"],
-    },  # 10 years from now
-    {"description": "Recent past", "value": int((NOW - timedelta(hours=1)).timestamp() * 1e9), "valid_for": ["nwaku"]},  # 1 hour ago
-    {"description": "Near future", "value": int((NOW + timedelta(hours=1)).timestamp() * 1e9), "valid_for": ["nwaku"]},  # 1 hour ahead
-    {"description": "Positive number", "value": 1, "valid_for": ["nwaku"]},
-    {"description": "Negative number", "value": -1, "valid_for": ["nwaku"]},
-    {"description": "DST change", "value": int(datetime(2020, 3, 8, 2, 0, 0).timestamp() * 1e9), "valid_for": ["nwaku"]},  # DST starts
-    {"description": "Timestamp as string number", "value": str(int(time() * 1e9)), "valid_for": []},
-    {"description": "Invalid large number", "value": 2**63, "valid_for": []},
-    {"description": "Float number", "value": float(time() * 1e9), "valid_for": []},
-    {"description": "Array instead of timestamp", "value": [int(time() * 1e9)], "valid_for": []},
-    {"description": "Object instead of timestamp", "value": {"time": int(time() * 1e9)}, "valid_for": []},
-    {"description": "ISO 8601 timestamp", "value": "2023-12-26T10:58:51", "valid_for": []},
-    {"description": "Missing", "value": None, "valid_for": []},
-]
+
+def get_sample_timestamps():
+    """Return timestamp test-cases with values evaluated fresh at call time.
+
+    This factory function MUST be called from inside each test (never at module
+    import time) so that the "Now" value reflects the actual time when the
+    message is published.
+
+    Valid_for semantics:
+    ``["nwaku"]`` – accepted by nwaku in the current run mode.
+    ``[]``        – rejected by nwaku in the current run mode (either
+                    structurally invalid type, or out-of-epoch in fleet/RLN
+                    mode).
+    """
+    now_ns = int(time() * 1e9)
+    now_dt = datetime.now()
+    fleet_mode = os.getenv("FLEET_BOOTSTRAP", "false").lower() == "true"
+    standalone_valid = [] if fleet_mode else ["nwaku"]
+    return [
+        {"description": "Now", "value": now_ns, "valid_for": ["nwaku"]},
+        # 10 years from now
+        {"description": "Far future", "value": int((now_dt + timedelta(days=365 * 10)).timestamp() * 1e9), "valid_for": standalone_valid},
+        # 1 hour ago
+        {"description": "Recent past", "value": int((now_dt - timedelta(hours=1)).timestamp() * 1e9), "valid_for": standalone_valid},
+        # 1 hour ahead
+        {"description": "Near future", "value": int((now_dt + timedelta(hours=1)).timestamp() * 1e9), "valid_for": standalone_valid},
+        {"description": "Positive number", "value": 1, "valid_for": standalone_valid},
+        {"description": "Negative number", "value": -1, "valid_for": standalone_valid},
+        # DST starts
+        {"description": "DST change", "value": int(datetime(2020, 3, 8, 2, 0, 0).timestamp() * 1e9), "valid_for": standalone_valid},
+        {"description": "Timestamp as string number", "value": str(now_ns), "valid_for": []},
+        {"description": "Invalid large number", "value": 2**63, "valid_for": []},
+        {"description": "Float number", "value": float(now_ns), "valid_for": []},
+        {"description": "Array instead of timestamp", "value": [now_ns], "valid_for": []},
+        {"description": "Object instead of timestamp", "value": {"time": now_ns}, "valid_for": []},
+        {"description": "ISO 8601 timestamp", "value": "2023-12-26T10:58:51", "valid_for": []},
+        {"description": "Missing", "value": None, "valid_for": []},
+    ]
+
 
 PUBSUB_TOPICS_RLN = [f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/0"]
 

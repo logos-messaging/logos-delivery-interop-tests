@@ -1,5 +1,4 @@
 import base64
-
 import pytest
 from src.steps.common import StepsCommon
 from src.libs.common import delay, to_base64
@@ -417,6 +416,7 @@ class TestS10EdgeSenderLightpushOnly(StepsCommon):
     Expected: Propagated only (no Sent, no Error).
     """
 
+    @pytest.mark.xfail(reason="lightpush peer discovery via staticnodes is broken, see https://github.com/logos-messaging/logos-delivery/issues/3847")
     def test_s10_edge_lightpush_propagation(self, node_config):
         sender_collector = EventCollector()
 
@@ -627,6 +627,7 @@ class TestS15LightpushRetryableErrorRecovery(StepsCommon):
     Expected: send() returns Ok(RequestId), then eventually Propagated.
     """
 
+    @pytest.mark.xfail(reason="lightpush peer discovery via staticnodes is broken, see https://github.com/logos-messaging/logos-delivery/issues/3847")
     def test_s15_lightpush_retryable_error_then_recovery(self):
         sender_collector = EventCollector()
 

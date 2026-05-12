@@ -6,6 +6,7 @@ from random import choice
 
 @pytest.mark.usefixtures("setup_main_relay_node", "setup_main_filter_node")
 class TestFilterUnSubscribeAll(StepsFilter):
+    @pytest.mark.waku_test_fleet
     def test_filter_unsubscribe_all_from_few_content_topics(self):
         content_topics = [input["value"] for input in SAMPLE_INPUTS[:5]]
         self.wait_for_subscriptions_on_main_nodes(content_topics)
@@ -30,6 +31,7 @@ class TestFilterUnSubscribeAll(StepsFilter):
         self.check_publish_without_filter_subscription(self.create_message(contentTopic=choice(second_list)))
         self.check_publish_without_filter_subscription(self.create_message(contentTopic=choice(third_list)))
 
+    @pytest.mark.waku_test_fleet
     def test_filter_unsubscribe_all_from_multiple_pubsub_topics(self):
         for pubsub_topic in VALID_PUBSUB_TOPICS:
             content_topic = pubsub_topic
