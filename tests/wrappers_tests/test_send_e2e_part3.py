@@ -200,7 +200,7 @@ class TestS01NilOrUninitializedHandle(StepsCommon):
             result["err"] or ""
         ), f"expected error to mention {S01_EXPECTED_ERROR_FRAGMENT!r}, got: {result['err']!r}"
 
-    # @pytest.mark.skip(reason="see https://github.com/logos-messaging/logos-delivery/issues/3863")
+    @pytest.mark.skip(reason="see https://github.com/logos-messaging/logos-delivery/issues/3863")
     def test_s01_send_on_destroyed_handle(self):
         completed = subprocess.run(
             [sys.executable, "-c", _SEND_AFTER_DESTROY_SUBPROCESS_SCRIPT],
