@@ -31,6 +31,9 @@ SENT_AFTER_STORE_TIMEOUT_S = 60.0
 STORE_PEER_PUBSUB_TOPIC = f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/0"
 
 S01_EXPECTED_ERROR_FRAGMENT = "not initialized"
+# Destroyed-handle path fails synchronously in the C layer (no callback),
+# so the binding surfaces a different string than the nil-handle path.
+S01_DESTROYED_HANDLE_ERROR_FRAGMENT = "immediate call failed"
 S01_SUBPROCESS_TIMEOUT_S = 30
 S01_RESULT_MARKER = "__S01_RESULT__"
 SEND_AFTER_DESTROY_RESULT_MARKER = "__SEND_AFTER_DESTROY_RESULT__"
@@ -218,9 +221,10 @@ class TestS01NilOrUninitializedHandle(StepsCommon):
 
         assert result["stage"] == "send_message", f"setup failed at stage {result['stage']!r}: {result['err']!r}"
         assert result["is_ok"] is False, f"expected Err, got Ok({result['ok']!r})"
-        assert S01_EXPECTED_ERROR_FRAGMENT in (
-            result["err"] or ""
-        ), f"expected error to mention {S01_EXPECTED_ERROR_FRAGMENT!r}, got: {result['err']!r}"
+        err_msg = result["err"] or ""
+        assert S01_EXPECTED_ERROR_FRAGMENT in err_msg or S01_DESTROYED_HANDLE_ERROR_FRAGMENT in err_msg, (
+            f"expected error to mention {S01_EXPECTED_ERROR_FRAGMENT!r} " f"or {S01_DESTROYED_HANDLE_ERROR_FRAGMENT!r}, got: {result['err']!r}"
+        )
         assert result["events_after_send"] == [], f"expected no events after send(), got: {result['events_after_send']}"
 
 
