@@ -179,6 +179,16 @@ jobs:
             --reruns 2 \
             --junit-xml=wrapper-results-send-part2.xml
 
+      - name: Run wrapper tests - send e2e part 3
+        continue-on-error: true
+        env:
+          PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
+        run: |
+          pytest tests/wrappers_tests/test_send_e2e_part3.py \
+            -m "not docker_required" \
+            --reruns 2 \
+            --junit-xml=wrapper-results-send-part3.xml
+
       - name: Test Report
         if: always()
         uses: dorny/test-reporter@95058abb17504553158e70e2c058fe1fda4392c2
