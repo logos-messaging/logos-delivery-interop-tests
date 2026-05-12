@@ -52,6 +52,26 @@ S01_RESULT_MARKER = "__S01_RESULT__"
 SEND_AFTER_DESTROY_RESULT_MARKER = "__SEND_AFTER_DESTROY_RESULT__"
 SEND_AFTER_DESTROY_SUBPROCESS_TIMEOUT_S = 60
 
+# S05: malformed content topics break shard resolution inside
+# SubscriptionManager.subscribe(), forcing the auto-subscribe step to fail.
+# Each case targets a distinct validator branch.
+# Fragment match: the bindings return Err("Failed to auto-subscribe before
+# sending: ..."). We match on the capitalized verb phrase "Failed to
+# auto-subscribe" because the bare word "auto-subscribe" also appears in
+# success-path log strings (e.g. "Auto-subscribing to topic on send") and
+# would produce false positives if we matched on that.
+S05_EXPECTED_ERROR_FRAGMENT = "Failed to auto-subscribe"
+S05_MALFORMED_CONTENT_TOPICS = [
+    # No leading slash — parser rejects with "must start with slash".
+    ("s05-invalid-no-leading-slash", "no-leading-slash"),
+    # Empty string — parser rejects empty content topic.
+    ("", "empty"),
+    # Only 3 segments — content topics need /app/version/name/encoding.
+    ("/app/1/name", "missing-encoding-segment"),
+    # Empty middle segment between slashes.
+    ("/app//name/proto", "empty-middle-segment"),
+]
+
 
 # Run send() in a subprocess so a missing C-ABI guard (which can SIGSEGV)
 # fails the test cleanly instead of taking the runner down.
@@ -450,6 +470,63 @@ class TestS04UnsubscribeThenSendSameTopic(StepsCommon):
                 assert sent is None, f"Unexpected message_sent event (store is disabled): {sent}"
 
                 assert_event_invariants(sender_collector, request_id)
+
+
+class TestS05AutoSubscribeFailureBeforeTaskCreation(StepsCommon):
+    """
+    S05 — Auto-subscribe failure before task creation.
+    Sender is initialized but auto-subscription is forced to fail by using a
+    malformed content topic that breaks shard resolution inside
+    SubscriptionManager.subscribe().
+    Expected: send() returns Err with an "auto-subscribe" message, no events.
+    Purpose: covers the last synchronous error path before request ID creation,
+    across several distinct validator branches.
+    """
+
+    @pytest.mark.parametrize(
+        "content_topic",
+        [topic for topic, _ in S05_MALFORMED_CONTENT_TOPICS],
+        ids=[case_id for _, case_id in S05_MALFORMED_CONTENT_TOPICS],
+    )
+    def test_s05_send_fails_when_auto_subscribe_fails(self, node_config, content_topic):
+        sender_collector = EventCollector()
+
+        node_config.update(
+            {
+                "relay": True,
+                "numShardsInNetwork": 1,
+            }
+        )
+
+        sender_result = WrapperManager.create_and_start(
+            config=node_config,
+            event_cb=sender_collector.event_callback,
+        )
+        assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
+
+        with sender_result.ok_value as sender:
+            # Malformed content topic — SubscriptionManager.subscribe() cannot
+            # resolve it to a shard, so auto-subscribe inside send() fails.
+            message = create_message_bindings(
+                payload=to_base64("S05 auto-subscribe failure payload"),
+                contentTopic=content_topic,
+            )
+
+            send_result = sender.send_message(message=message)
+
+            assert send_result.is_err(), (
+                f"send() must return Err when auto-subscribe fails for " f"content_topic={content_topic!r}, got Ok({send_result.ok_value!r})"
+            )
+
+            error_message = send_result.err() or ""
+            assert S05_EXPECTED_ERROR_FRAGMENT in error_message, (
+                f"expected error to mention {S05_EXPECTED_ERROR_FRAGMENT!r} " f"for content_topic={content_topic!r}, got: {error_message!r}"
+            )
+
+            # No request id was created, so no events should be emitted.
+            assert sender_collector.events == [] or all(
+                event.get("eventType") == "connection_status_change" for event in sender_collector.events
+            ), f"Unexpected events after a pre-task-creation failure: {sender_collector.events}"
 
 
 class TestS06CoreSenderRelayOnly(StepsCommon):
@@ -892,16 +969,10 @@ class TestS11EdgeSenderLightpushAndStore(StepsCommon):
             store_peer.set_relay_subscriptions([STORE_PEER_PUBSUB_TOPIC])
             store_multiaddr = store_peer.get_multiaddr_with_id()
 
-            # Edge sender must dial BOTH peers: the lightpush peer for the
-            # publish path, and the store peer so the store-query channel
-            # is actually connected when reliability validation runs.
-            # storenode= alone registers it in service slots but does not
-            # dial it.
             edge_config = build_node_config(
                 mode="Edge",
                 # assuming disc5v already happened
                 staticnodes=[lightpush_multiaddr, store_multiaddr],
-                storenode=store_multiaddr,
                 reliabilityEnabled=True,
                 **common,
             )
