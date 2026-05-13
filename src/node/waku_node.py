@@ -144,6 +144,7 @@ class WakuNode:
             "peer-exchange": "true",
             "discv5-discovery": "true",
             "cluster-id": DEFAULT_CLUSTER_ID,
+            # "num-shards-in-network": "8",
             "rln-creds-id": None,
             "rln-creds-source": None,
             "nodekey": self.generate_random_nodekey(),
