@@ -32,14 +32,7 @@ SEND_AFTER_DESTROY_SUBPROCESS_TIMEOUT_S = 60
 
 S01_INVALID_HANDLE_HELPER = "tests.wrappers_tests.helpers.send_invalid_handle"
 
-# S05: malformed content topics break shard resolution inside
-# SubscriptionManager.subscribe(), forcing the auto-subscribe step to fail.
-# Each case targets a distinct validator branch.
-# Fragment match: the bindings return Err("Failed to auto-subscribe before
-# sending: ..."). We match on the capitalized verb phrase "Failed to
-# auto-subscribe" because the bare word "auto-subscribe" also appears in
-# success-path log strings (e.g. "Auto-subscribing to topic on send") and
-# would produce false positives if we matched on that.
+# S05: malformed content topics
 S05_EXPECTED_ERROR_FRAGMENT = "Failed to auto-subscribe"
 S05_MALFORMED_CONTENT_TOPICS = [
     # No leading slash — parser rejects with "must start with slash".
