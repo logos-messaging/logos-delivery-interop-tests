@@ -229,52 +229,6 @@ class WakuNode:
             logger.error(f"REST service did not become ready in time: {ex}")
             raise
 
-    def _start_wrapper(self, default_args, wait_for_node_sec):
-        logger.debug("Starting node using wrappers")
-        wrapper_config = self._default_args_to_wrapper_config(default_args)
-
-        result = WrapperManager.create_and_start(config=wrapper_config, timeout_s=wait_for_node_sec)
-        if result.is_err():
-            raise RuntimeError(f"Failed to start wrapper node: {result.err()}")
-        self._wrapper_node = result.ok_value
-
-        logger.debug(f"Started wrapper node. REST: {self._rest_port}")
-        DS.waku_nodes.append(self)
-        delay(1)
-        try:
-            self.ensure_ready(timeout_duration=wait_for_node_sec)
-        except Exception as ex:
-            logger.error(f"REST service did not become ready in time: {ex}")
-            raise
-
-    def _default_args_to_wrapper_config(self, default_args):
-        def _bool(key, default="false"):
-            return default_args.get(key, default).lower() == "true"
-
-        bootstrap = default_args.get("discv5-bootstrap-node")
-
-        return {
-            "logLevel": default_args.get("log-level", "DEBUG"),
-            "mode": "Core",
-            "networkingConfig": {
-                "listenIpv4": default_args.get("listen-address", "0.0.0.0"),
-                "p2pTcpPort": int(default_args["tcp-port"]),
-                "discv5UdpPort": int(default_args["discv5-udp-port"]),
-                "restPort": int(default_args["rest-port"]),
-                "restAddress": default_args.get("rest-address", "0.0.0.0"),
-            },
-            "protocolsConfig": {
-                "clusterId": int(default_args.get("cluster-id", DEFAULT_CLUSTER_ID)),
-                "relay": _bool("relay"),
-                "store": _bool("store"),
-                "filter": _bool("filter"),
-                "lightpush": _bool("lightpush"),
-                "peerExchange": _bool("peer-exchange"),
-                "discv5Discovery": _bool("discv5-discovery", "true"),
-                "discv5BootstrapNodes": [bootstrap] if bootstrap else [],
-            },
-        }
-
     @retry(stop=stop_after_delay(250), wait=wait_fixed(0.1), reraise=True)
     def register_rln(self, **kwargs):
         logger.debug("Registering RLN credentials...")
