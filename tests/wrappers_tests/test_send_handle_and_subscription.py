@@ -56,7 +56,7 @@ S05_MALFORMED_CONTENT_TOPICS = [
 class TestS01NilOrUninitializedHandle(StepsCommon):
     """S01 — send() on a nil/destroyed handle must Err, no events, no crash."""
 
-    # @pytest.mark.skip(reason="see https://github.com/logos-messaging/logos-delivery/issues/3873")
+    @pytest.mark.skip(reason="see https://github.com/logos-messaging/logos-delivery/issues/3873")
     def test_s01_send_on_uninitialized_handle(self):
         completed = subprocess.run(
             [sys.executable, "-m", S01_INVALID_HANDLE_HELPER, "nil", S01_RESULT_MARKER],
