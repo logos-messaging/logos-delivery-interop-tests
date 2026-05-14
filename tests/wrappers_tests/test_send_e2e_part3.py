@@ -1,8 +1,6 @@
 import json
 import subprocess
 import sys
-import textwrap
-
 import pytest
 from src.steps.common import StepsCommon
 from src.libs.common import to_base64
@@ -59,125 +57,16 @@ S05_MALFORMED_CONTENT_TOPICS = [
     ("/app//name/proto", "empty-middle-segment"),
 ]
 
-
-# Run send() in a subprocess so a missing C-ABI guard (which can SIGSEGV)
-# fails the test cleanly instead of taking the runner down.
-_S01_SUBPROCESS_SCRIPT = textwrap.dedent(
-    f"""
-    import json
-    import sys
-    from pathlib import Path
-
-    _project_root = Path({repr(__file__)}).resolve().parents[2]
-    _bindings_path = _project_root / "vendor" / "logos-delivery-python-bindings" / "waku"
-    if str(_bindings_path) not in sys.path:
-        sys.path.insert(0, str(_bindings_path))
-    if str(_project_root) not in sys.path:
-        sys.path.insert(0, str(_project_root))
-
-    from wrapper import NodeWrapper, ffi
-    from src.node.wrappers_manager import WrapperManager
-    from src.node.wrapper_helpers import create_message_bindings
-
-    sender = WrapperManager(NodeWrapper(ctx=ffi.NULL, config_buffer=None, event_cb_handler=None))
-    send_result = sender.send_message(message=create_message_bindings())
-
-    print({repr(S01_RESULT_MARKER)} + json.dumps({{
-        "is_ok": send_result.is_ok(),
-        "ok": send_result.ok_value if send_result.is_ok() else None,
-        "err": send_result.err() if send_result.is_err() else None,
-    }}))
-    sys.exit(0)
-    """
-).strip()
-
-
-# Uses destroy_keep_ctx() so self.ctx stays non-nil after destroy — forces
-# the send call to reach the C side with the original (now-stale) pointer.
-_SEND_AFTER_DESTROY_SUBPROCESS_SCRIPT = textwrap.dedent(
-    f"""
-    import json
-    import sys
-    from pathlib import Path
-
-    _project_root = Path({repr(__file__)}).resolve().parents[2]
-    _bindings_path = _project_root / "vendor" / "logos-delivery-python-bindings" / "waku"
-    if str(_bindings_path) not in sys.path:
-        sys.path.insert(0, str(_bindings_path))
-    if str(_project_root) not in sys.path:
-        sys.path.insert(0, str(_project_root))
-
-    from src.node.wrappers_manager import WrapperManager
-    from src.node.wrapper_helpers import EventCollector, create_message_bindings
-    from tests.wrappers_tests.conftest import build_node_config
-
-    collector = EventCollector()
-
-    create_result = WrapperManager.create_and_start(
-        config=build_node_config(),
-        event_cb=collector.event_callback,
-    )
-    if create_result.is_err():
-        print({repr(SEND_AFTER_DESTROY_RESULT_MARKER)} + json.dumps({{
-            "stage": "create_and_start",
-            "is_ok": False,
-            "ok": None,
-            "err": create_result.err(),
-            "events_after_send": [],
-        }}))
-        sys.exit(0)
-
-    sender = create_result.ok_value
-
-    stop_result = sender.stop_node()
-    if stop_result.is_err():
-        print({repr(SEND_AFTER_DESTROY_RESULT_MARKER)} + json.dumps({{
-            "stage": "stop_node",
-            "is_ok": False,
-            "ok": None,
-            "err": stop_result.err(),
-            "events_after_send": [],
-        }}))
-        sys.exit(0)
-
-    destroy_result = sender.destroy_keep_ctx()
-    if destroy_result.is_err():
-        print({repr(SEND_AFTER_DESTROY_RESULT_MARKER)} + json.dumps({{
-            "stage": "destroy_keep_ctx",
-            "is_ok": False,
-            "ok": None,
-            "err": destroy_result.err(),
-            "events_after_send": [],
-        }}))
-        sys.exit(0)
-
-    events_before_send = len(collector.events)
-
-    envelope = create_message_bindings()
-    send_result = sender.send_message(message=envelope)
-
-    new_events = collector.events[events_before_send:]
-
-    payload = {{
-        "stage": "send_message",
-        "is_ok": send_result.is_ok(),
-        "ok": send_result.ok_value if send_result.is_ok() else None,
-        "err": send_result.err() if send_result.is_err() else None,
-        "events_after_send": [str(e) for e in new_events],
-    }}
-    print({repr(SEND_AFTER_DESTROY_RESULT_MARKER)} + json.dumps(payload))
-    sys.exit(0)
-    """
-).strip()
+S01_INVALID_HANDLE_HELPER = "tests.wrappers_tests.helpers.send_invalid_handle"
 
 
 class TestS01NilOrUninitializedHandle(StepsCommon):
     """S01 — send() on a nil/destroyed handle must Err, no events, no crash."""
 
-    @pytest.mark.skip(reason="see https://github.com/logos-messaging/logos-delivery/issues/3863")
+    # @pytest.mark.skip(reason="see https://github.com/logos-messaging/logos-delivery/issues/3873")
     def test_s01_send_on_uninitialized_handle(self):
         completed = subprocess.run(
-            [sys.executable, "-c", _S01_SUBPROCESS_SCRIPT],
+            [sys.executable, "-m", S01_INVALID_HANDLE_HELPER, "nil", S01_RESULT_MARKER],
             capture_output=True,
             text=True,
             timeout=S01_SUBPROCESS_TIMEOUT_S,
@@ -203,7 +92,7 @@ class TestS01NilOrUninitializedHandle(StepsCommon):
     @pytest.mark.skip(reason="see https://github.com/logos-messaging/logos-delivery/issues/3863")
     def test_s01_send_on_destroyed_handle(self):
         completed = subprocess.run(
-            [sys.executable, "-c", _SEND_AFTER_DESTROY_SUBPROCESS_SCRIPT],
+            [sys.executable, "-m", S01_INVALID_HANDLE_HELPER, "destroyed", SEND_AFTER_DESTROY_RESULT_MARKER],
             capture_output=True,
             text=True,
             timeout=SEND_AFTER_DESTROY_SUBPROCESS_TIMEOUT_S,
