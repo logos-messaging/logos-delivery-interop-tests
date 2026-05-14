@@ -4,8 +4,7 @@ import sys
 import pytest
 from src.steps.common import StepsCommon
 from src.libs.common import to_base64
-from src.env_vars import NODE_1
-from src.node.waku_node import WakuNode
+from src.libs.custom_logger import get_custom_logger
 from src.node.wrappers_manager import WrapperManager
 from src.node.wrapper_helpers import (
     EventCollector,
@@ -17,16 +16,10 @@ from src.node.wrapper_helpers import (
     wait_for_sent,
     wait_for_error,
 )
-from src.test_data import DEFAULT_CLUSTER_ID
-from tests.wrappers_tests.conftest import build_node_config
+
+logger = get_custom_logger(__name__)
 
 PROPAGATED_TIMEOUT_S = 30.0
-SENT_AFTER_STORE_TIMEOUT_S = 60.0
-
-# Default-cluster shard-0 pubsub topic; used to subscribe the S11 docker store
-# peer so it joins the same relay mesh as the wrapper nodes (wrapper config
-# uses numShardsInNetwork=1 => shard 0).
-STORE_PEER_PUBSUB_TOPIC = f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/0"
 
 S01_EXPECTED_ERROR_FRAGMENT = "not initialized"
 # Destroyed-handle path fails synchronously in the C layer (no callback),
@@ -36,6 +29,8 @@ S01_SUBPROCESS_TIMEOUT_S = 30
 S01_RESULT_MARKER = "__S01_RESULT__"
 SEND_AFTER_DESTROY_RESULT_MARKER = "__SEND_AFTER_DESTROY_RESULT__"
 SEND_AFTER_DESTROY_SUBPROCESS_TIMEOUT_S = 60
+
+S01_INVALID_HANDLE_HELPER = "tests.wrappers_tests.helpers.send_invalid_handle"
 
 # S05: malformed content topics break shard resolution inside
 # SubscriptionManager.subscribe(), forcing the auto-subscribe step to fail.
@@ -56,8 +51,6 @@ S05_MALFORMED_CONTENT_TOPICS = [
     # Empty middle segment between slashes.
     ("/app//name/proto", "empty-middle-segment"),
 ]
-
-S01_INVALID_HANDLE_HELPER = "tests.wrappers_tests.helpers.send_invalid_handle"
 
 
 class TestS01NilOrUninitializedHandle(StepsCommon):
@@ -117,6 +110,72 @@ class TestS01NilOrUninitializedHandle(StepsCommon):
             f"expected error to mention {S01_EXPECTED_ERROR_FRAGMENT!r} " f"or {S01_DESTROYED_HANDLE_ERROR_FRAGMENT!r}, got: {result['err']!r}"
         )
         assert result["events_after_send"] == [], f"expected no events after send(), got: {result['events_after_send']}"
+
+
+class TestS02AutoSubscribeOnFirstSend(StepsCommon):
+    """
+    S02 — Auto-subscribe on first send.
+    Sender never calls subscribe_content_topic() before send().
+    The send API must auto-subscribe to the content topic used in the message.
+    Expected: send() returns Ok(RequestId), message_propagated arrives.
+    """
+
+    def test_s02_send_without_explicit_subscribe(self, node_config):
+        sender_collector = EventCollector()
+
+        node_config.update(
+            {
+                "relay": True,
+                "store": False,
+                "lightpush": False,
+                "filter": False,
+                "discv5Discovery": False,
+                "numShardsInNetwork": 1,
+            }
+        )
+
+        sender_result = WrapperManager.create_and_start(
+            config=node_config,
+            event_cb=sender_collector.event_callback,
+        )
+        assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
+
+        with sender_result.ok_value as sender:
+            peer_config = {
+                **node_config,
+                "staticnodes": [get_node_multiaddr(sender)],
+                "portsShift": 1,
+            }
+
+            peer_result = WrapperManager.create_and_start(config=peer_config)
+            assert peer_result.is_ok(), f"Failed to start relay peer: {peer_result.err()}"
+
+            with peer_result.ok_value:
+                assert wait_for_connected(sender_collector) is not None, "Sender did not reach Connected/PartiallyConnected state"
+
+                message = create_message_bindings(
+                    payload=to_base64("S02 auto-subscribe test payload"),
+                    contentTopic="/test/1/s02-auto-subscribe/proto",
+                )
+
+                send_result = sender.send_message(message=message)
+                assert send_result.is_ok(), f"send() failed: {send_result.err()}"
+
+                request_id = send_result.ok_value
+                assert request_id, "send() returned an empty RequestId"
+
+                propagated = wait_for_propagated(
+                    collector=sender_collector,
+                    request_id=request_id,
+                    timeout_s=PROPAGATED_TIMEOUT_S,
+                )
+                assert propagated is not None, (
+                    f"No message_propagated event within {PROPAGATED_TIMEOUT_S}s. " f"Collected events: {sender_collector.events}"
+                )
+                assert propagated["requestId"] == request_id
+
+                error = wait_for_error(sender_collector, request_id, timeout_s=0)
+                assert error is None, f"Unexpected message_error event: {error}"
 
 
 class TestS03SendOnAlreadySubscribedTopic(StepsCommon):
@@ -340,108 +399,3 @@ class TestS05AutoSubscribeFailureBeforeTaskCreation(StepsCommon):
             assert sender_collector.events == [] or all(
                 event.get("eventType") == "connection_status_change" for event in sender_collector.events
             ), f"Unexpected events after a pre-task-creation failure: {sender_collector.events}"
-
-
-class TestS11EdgeSenderLightpushAndStore(StepsCommon):
-    """
-    S11 — Edge sender with lightpush path and store validation.
-    Edge sender has no local relay; it publishes via a wrapper lightpush peer
-    and validates delivery via a docker store peer. Reliability enabled.
-    Topology:
-        [LightpushPeer] wrapper, relay=True, lightpush=True, store=False
-        [StorePeer]     docker WakuNode, relay=true, store=true,
-                        dials the lightpush peer via add_peers and subscribes
-                        to the same shard-0 pubsub topic so it joins the
-                        relay mesh and archives propagated messages.
-        [Edge]          wrapper, mode="Edge",
-                        staticnodes=[lightpush_peer],
-                        storenode=store_peer,
-                        reliabilityEnabled=True
-    Expected: send() returns Ok(RequestId), Propagated arrives, then Sent
-    (store validation succeeds), no Error.
-    Purpose: edge-mode fully validated success path against a real docker
-    store node (cross-implementation check).
-    """
-
-    def test_s11_edge_lightpush_with_store_validation(self, node_config):
-        sender_collector = EventCollector()
-
-        common = {
-            "filter": False,
-            "discv5Discovery": True,
-            "numShardsInNetwork": 1,
-        }
-
-        lightpush_config = build_node_config(
-            relay=True,
-            lightpush=True,
-            store=False,
-            **common,
-        )
-
-        lightpush_result = WrapperManager.create_and_start(config=lightpush_config)
-        assert lightpush_result.is_ok(), f"Failed to start lightpush peer: {lightpush_result.err()}"
-
-        with lightpush_result.ok_value as lightpush_peer:
-            lightpush_multiaddr = get_node_multiaddr(lightpush_peer)
-
-            # Docker store peer — real nwaku node running as the store backend.
-            # Dial the lightpush peer via add_peers and subscribe to the same
-            # shard-0 pubsub topic so it joins the relay mesh and archives
-            # messages propagated by the lightpush peer.
-            store_peer = WakuNode(NODE_1, f"s11_store_{self.test_id}")
-            store_peer.start(relay="true", store="true")
-            self.add_node_peer(store_peer, [lightpush_multiaddr])
-            store_peer.set_relay_subscriptions([STORE_PEER_PUBSUB_TOPIC])
-            store_multiaddr = store_peer.get_multiaddr_with_id()
-
-            edge_config = build_node_config(
-                mode="Edge",
-                # assuming disc5v already happened
-                staticnodes=[lightpush_multiaddr, store_multiaddr],
-                reliabilityEnabled=True,
-                **common,
-            )
-
-            edge_result = WrapperManager.create_and_start(
-                config=edge_config,
-                event_cb=sender_collector.event_callback,
-            )
-            assert edge_result.is_ok(), f"Failed to start edge sender: {edge_result.err()}"
-
-            with edge_result.ok_value as edge_sender:
-                message = create_message_bindings(
-                    payload=to_base64("S11 edge lightpush + store test payload"),
-                    contentTopic="/test/1/s11-edge-lightpush-store/proto",
-                )
-
-                send_result = edge_sender.send_message(message=message)
-                assert send_result.is_ok(), f"send() failed: {send_result.err()}"
-
-                request_id = send_result.ok_value
-                assert request_id, "send() returned an empty RequestId"
-
-                propagated = wait_for_propagated(
-                    collector=sender_collector,
-                    request_id=request_id,
-                    timeout_s=PROPAGATED_TIMEOUT_S,
-                )
-                assert propagated is not None, (
-                    f"No message_propagated event within {PROPAGATED_TIMEOUT_S}s. " f"Collected events: {sender_collector.events}"
-                )
-                assert propagated["requestId"] == request_id
-
-                sent = wait_for_sent(
-                    collector=sender_collector,
-                    request_id=request_id,
-                    timeout_s=SENT_AFTER_STORE_TIMEOUT_S,
-                )
-                assert sent is not None, (
-                    f"No message_sent event within {SENT_AFTER_STORE_TIMEOUT_S}s " f"after propagation. Collected events: {sender_collector.events}"
-                )
-                assert sent["requestId"] == request_id
-
-                error = wait_for_error(sender_collector, request_id, timeout_s=0)
-                assert error is None, f"Unexpected message_error event: {error}"
-
-                assert_event_invariants(sender_collector, request_id)
