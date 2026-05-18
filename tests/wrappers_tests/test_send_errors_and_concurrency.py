@@ -36,6 +36,7 @@ RETRY_WINDOW_EXPIRED_MSG = "Unable to send within retry time window"
 # rejects it instead of failing with NO_PEERS_TO_RELAY.
 OVERSIZED_PAYLOAD_BYTES = 200 * 1024
 ERROR_TIMEOUT_S = 30.0
+MESSAGE_SIZE_EXCEEDED_MSG = "Message size exceeded"
 
 # S30: concurrent sends on the same content topic during initial auto-subscribe.
 S30_CONCURRENT_SENDS = 5
@@ -182,10 +183,6 @@ class TestS13RelayHardFailureWithoutFallback(StepsCommon):
         node_config.update(
             {
                 "relay": True,
-                "store": False,
-                "lightpush": False,
-                "filter": False,
-                "discv5Discovery": False,
                 "numShardsInNetwork": 1,
             }
         )
@@ -234,6 +231,9 @@ class TestS13RelayHardFailureWithoutFallback(StepsCommon):
                     f"No message_error event within {ERROR_TIMEOUT_S}s from the " f"relay processor. Collected events: {sender_collector.events}"
                 )
                 assert error_event["requestId"] == request_id
+                assert MESSAGE_SIZE_EXCEEDED_MSG in (error_event.get("error") or ""), (
+                    f"Expected error to contain {MESSAGE_SIZE_EXCEEDED_MSG!r}.\n" f"Got: {error_event.get('error')!r}\n" f"Full event: {error_event}"
+                )
 
                 propagated = wait_for_propagated(sender_collector, request_id, timeout_s=0)
                 assert propagated is None, f"Unexpected message_propagated event for a failed relay publish: {propagated}"
