@@ -535,13 +535,15 @@ class TestS15LightpushRetryableErrorRecovery(StepsCommon):
 class TestS16LightpushPeerAppearsLater(StepsCommon):
     """
     S16 — No delivery peers at T0, lightpush peer appears later.
-    The edge sender starts fully isolated and send() is called before any
-    peer exists. A lightpush service node joins during the retry window,
+    The edge sender has the lightpush service in its staticnodes, but the
+    service is stopped before the sender starts, so there is no reachable
+    delivery peer at T0. send() is called while the service is down. The
+    service is restarted during the retry window; the sender connects to it
     and a later retry delivers the message.
     Expected: send() returns Ok(RequestId), then eventually Propagated.
     """
 
-    @pytest.mark.xfail(reason="lightpush peer discovery via staticnodes is broken, see https://github.com/logos-messaging/logos-delivery/issues/3847")
+    @pytest.mark.xfail(reason="binding cannot restart a node or add peers at runtime")
     def test_s16_lightpush_peer_appears_later(self):
         sender_collector = EventCollector()
 
@@ -551,6 +553,10 @@ class TestS16LightpushPeerAppearsLater(StepsCommon):
             "discv5Discovery": False,
             "numShardsInNetwork": 1,
         }
+
+        # Start the lightpush service once to obtain its multiaddr, then stop
+        # it so the sender has no reachable peer at T0. The same node object
+        # is restarted later, so the address stays valid.
         service_config = build_node_config(relay=True, lightpush=True, **common)
         service_result = WrapperManager.create_and_start(config=service_config)
         assert service_result.is_ok(), f"Failed to start lightpush peer: {service_result.err()}"
@@ -562,8 +568,11 @@ class TestS16LightpushPeerAppearsLater(StepsCommon):
             assert stop_result.is_ok(), f"Failed to stop lightpush peer: {stop_result.err()}"
             delay(SERVICE_DOWN_SETTLE_S)
 
+            # Edge sender is a lightpush client; its only peer is the service,
+            # which is currently down.
             edge_config = build_node_config(
                 mode="Edge",
+                lightpush=True,
                 staticnodes=[service_multiaddr],
                 **common,
             )
@@ -574,7 +583,7 @@ class TestS16LightpushPeerAppearsLater(StepsCommon):
             assert edge_result.is_ok(), f"Failed to start edge sender: {edge_result.err()}"
 
             with edge_result.ok_value as edge_sender:
-                # send() is invoked while the sender is isolated; no peer exists yet.
+                # send() is invoked while the service is down.
                 msg = create_message_bindings(
                     payload=to_base64("S16 lightpush peer appears later"),
                     contentTopic="/test/1/s16-late-lightpush/proto",
@@ -587,7 +596,7 @@ class TestS16LightpushPeerAppearsLater(StepsCommon):
                 delay(SERVICE_DOWN_SETTLE_S)
 
                 early_propagated = wait_for_propagated(sender_collector, request_id, timeout_s=0)
-                assert early_propagated is None, f"message_propagated arrived before any lightpush peer existed: {early_propagated}"
+                assert early_propagated is None, f"message_propagated arrived before the lightpush peer was reachable: {early_propagated}"
 
                 # The lightpush peer comes back during the retry window.
                 restart_result = service.start_node()
