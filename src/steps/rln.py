@@ -8,7 +8,7 @@ import allure
 
 from src.steps.common import StepsCommon
 from src.test_data import PUBSUB_TOPICS_RLN
-from src.env_vars import DEFAULT_NWAKU, RLN_CREDENTIALS, NODE_1, NODE_2, ADDITIONAL_NODES
+from src.env_vars import RLN_CREDENTIALS, NODE_1, NODE_2, ADDITIONAL_NODES
 from src.libs.common import gen_step_id, delay
 from src.libs.custom_logger import get_custom_logger
 from src.node.waku_node import WakuNode, rln_credential_store_ready
@@ -135,7 +135,7 @@ class StepsRLN(StepsCommon):
     @allure.step
     def register_rln_single_node(self, prefix="", **kwargs):
         logger.debug("Registering RLN credentials for single node")
-        self.node = WakuNode(DEFAULT_NWAKU, f"node_{gen_step_id()}")
+        self.node = WakuNode(NODE_1, f"node_{gen_step_id()}")
         return self.node.register_rln(rln_keystore_prefix=prefix, rln_creds_source=kwargs["rln_creds_source"], rln_creds_id=kwargs["rln_creds_id"])
 
     @allure.step
