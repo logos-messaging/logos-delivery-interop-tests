@@ -50,7 +50,7 @@ def fleet_rln_state(request):
         return
 
     from src.node.waku_node import WakuNode
-    from src.env_vars import RLN_CREDENTIALS, DEFAULT_NWAKU
+    from src.env_vars import RLN_CREDENTIALS, NODE_1
 
     if not RLN_CREDENTIALS:
         logger.info("Fleet RLN: RLN_CREDENTIALS not set – nodes will start without RLN")
@@ -61,7 +61,7 @@ def fleet_rln_state(request):
     try:
         for i in range(2):
             prefix = "".join(random.choices(string.ascii_lowercase, k=4))
-            node = WakuNode(DEFAULT_NWAKU, f"rln_reg_{i + 1}_{gen_step_id()}")
+            node = WakuNode(NODE_1, f"rln_reg_{i + 1}_{gen_step_id()}")
             membership_index = node.register_rln(
                 rln_keystore_prefix=prefix,
                 rln_creds_source=RLN_CREDENTIALS,
