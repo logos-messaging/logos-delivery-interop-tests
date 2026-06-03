@@ -35,7 +35,6 @@ class TestWrapperAutoPortAllocation(StepsCommon):
     """
 
     def test_auto_port_starts_node_with_tcp_and_discv5_zero(self):
-        # restPort keeps its free_port() default from build_node_config.
         config = build_node_config(tcpPort=0, discv5UdpPort=0)
 
         result = WrapperManager.create_and_start(config=config)
