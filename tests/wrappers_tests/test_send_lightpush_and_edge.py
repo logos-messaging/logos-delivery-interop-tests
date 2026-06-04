@@ -292,6 +292,7 @@ class TestS11EdgeSenderLightpushAndStore(StepsCommon):
     store node (cross-implementation check).
     """
 
+    @pytest.mark.docker_required
     def test_s11_edge_lightpush_with_store_validation(self):
         sender_collector = EventCollector()
 
@@ -929,6 +930,7 @@ class TestS25EphemeralLightpushWithStore(StepsCommon):
                       staticnodes=[lightpush_peer, store_peer]
     """
 
+    @pytest.mark.docker_required
     def test_s25_ephemeral_lightpush_with_store(self):
         sender_collector = EventCollector()
 
