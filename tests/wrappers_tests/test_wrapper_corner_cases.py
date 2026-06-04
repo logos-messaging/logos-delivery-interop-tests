@@ -30,8 +30,7 @@ class TestWrapperAutoPortAllocation(StepsCommon):
 
     Tracks logos-messaging/logos-delivery#3828. Per that PR, auto-port is
     opt-in (caller passes 0 explicitly) and only applies to tcpPort,
-    discv5UdpPort and webSocketPort. restPort and metricsServerPort still
-    require a concrete value, so they are not exercised here.
+    discv5UdpPort and webSocketPort.
     """
 
     def test_auto_port_starts_node_with_tcp_and_discv5_zero(self):
