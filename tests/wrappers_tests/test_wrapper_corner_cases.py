@@ -50,7 +50,9 @@ class TestWrapperAutoPortAllocation(StepsCommon):
         # End-to-end: two nodes, sender uses auto-port for tcp + discv5.
         # restPort stays concrete because REST does not support auto-port.
         sender_collector = EventCollector()
-        sender_config = build_node_config(tcpPort=0, discv5UdpPort=0)
+        # numShardsInNetwork=1 enables autosharding, required by the send API
+        # (SubscriptionManager) — same as the other send-capable wrapper tests.
+        sender_config = build_node_config(tcpPort=0, discv5UdpPort=0, numShardsInNetwork=1)
 
         sender_result = WrapperManager.create_and_start(
             config=sender_config,
@@ -64,6 +66,7 @@ class TestWrapperAutoPortAllocation(StepsCommon):
             peer_config = build_node_config(
                 tcpPort=0,
                 discv5UdpPort=0,
+                numShardsInNetwork=1,
                 staticnodes=[sender_addr],
             )
             peer_result = WrapperManager.create_and_start(config=peer_config)
