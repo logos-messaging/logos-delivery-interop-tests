@@ -71,7 +71,7 @@ jobs:
             gcc \
             g++
 
-      - name: Install Nim 2.2.4
+      - name: Install Nim 2.2.4 and Nimble 0.22.3
         if: steps.cache-lib.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
@@ -79,6 +79,10 @@ jobs:
           echo "$HOME/.nimble/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.nimble/bin:$PATH"
           choosenim 2.2.4
+          # Pin the nimble that generated logos-delivery's nimble.lock. A newer
+          # nimble recomputes the locked Nim package checksum differently, which
+          # makes `nimble setup --localdeps` abort with a checksum mismatch.
+          (cd /tmp && nimble install "nimble@0.22.3" -y)
           nim --version
           nimble --version
 
@@ -98,10 +102,10 @@ jobs:
 
           ln -sf waku.nimble waku.nims
 
-          nimble install -y
-
-          make setup
-
+          # `make liblogosdelivery` resolves the locked deps via
+          # `nimble setup --localdeps` (build-deps prerequisite); a bare
+          # `nimble install -y` here is redundant and pulls Nim from the lock,
+          # which is what triggered the checksum mismatch.
           make liblogosdelivery
 
           SO_PATH="$(find . -type f -name 'liblogosdelivery.so' | head -n 1)"
