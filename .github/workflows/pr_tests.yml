@@ -71,7 +71,7 @@ jobs:
             gcc \
             g++
 
-      - name: Install Nim 2.2.4
+      - name: Install Nim 2.2.4 and Nimble 0.22.3
         if: steps.cache-lib.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
@@ -79,6 +79,8 @@ jobs:
           echo "$HOME/.nimble/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.nimble/bin:$PATH"
           choosenim 2.2.4
+          # Pin the nimble that generated nimble.lock; newer ones fail the checksum.
+          (cd /tmp && nimble install "nimble@0.22.3" -y)
           nim --version
           nimble --version
 
@@ -98,11 +100,9 @@ jobs:
 
           ln -sf waku.nimble waku.nims
 
-          nimble install -y
-
-          make setup
-
-          make liblogosdelivery
+          # Portable build (no -march=native) so the cached .so doesn't SIGILL
+          # on runners with older CPUs; via env so the Makefile's NIM_PARAMS apply.
+          NIM_PARAMS="-d:disableMarchNative -d:marchOptimized" make liblogosdelivery
 
           SO_PATH="$(find . -type f -name 'liblogosdelivery.so' | head -n 1)"
 
@@ -159,25 +159,55 @@ jobs:
             --reruns 2 \
             --junit-xml=wrapper-results-basic.xml
 
-      - name: Run wrapper tests - send e2e part 1
+      - name: Run wrapper tests - send handle and subscription
         continue-on-error: true
         env:
           PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
         run: |
-          pytest tests/wrappers_tests/test_send_e2e_part1.py \
+          pytest tests/wrappers_tests/test_send_handle_and_subscription.py \
             -m "not docker_required" \
             --reruns 2 \
-            --junit-xml=wrapper-results-send-part1.xml
+            --junit-xml=wrapper-results-send-handle-and-subscription.xml
 
-      - name: Run wrapper tests - send e2e part 2
+      - name: Run wrapper tests - send relay propagation
         continue-on-error: true
         env:
           PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
         run: |
-          pytest tests/wrappers_tests/test_send_e2e_part2.py \
+          pytest tests/wrappers_tests/test_send_relay_propagation.py \
             -m "not docker_required" \
             --reruns 2 \
-            --junit-xml=wrapper-results-send-part2.xml
+            --junit-xml=wrapper-results-send-relay-propagation.xml
+
+      - name: Run wrapper tests - send lightpush and edge
+        continue-on-error: true
+        env:
+          PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
+        run: |
+          pytest tests/wrappers_tests/test_send_lightpush_and_edge.py \
+            -m "not docker_required" \
+            --reruns 2 \
+            --junit-xml=wrapper-results-send-lightpush-and-edge.xml
+
+      - name: Run wrapper tests - send errors and concurrency
+        continue-on-error: true
+        env:
+          PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
+        run: |
+          pytest tests/wrappers_tests/test_send_errors_and_concurrency.py \
+            -m "not docker_required" \
+            --reruns 2 \
+            --junit-xml=wrapper-results-send-errors-and-concurrency.xml
+
+      - name: Run wrapper tests - corner cases
+        continue-on-error: true
+        env:
+          PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
+        run: |
+          pytest tests/wrappers_tests/test_wrapper_corner_cases.py \
+            -m "not docker_required" \
+            --reruns 2 \
+            --junit-xml=wrapper-results-corner-cases.xml
 
       - name: Test Report
         if: always()
