@@ -12,21 +12,27 @@ logger = get_custom_logger(__name__)
 class TestRunningNodesAutosharding(StepsSharding):
     @pytest.mark.parametrize("content_topic", CONTENT_TOPICS_DIFFERENT_SHARDS)
     def test_single_content_topic(self, content_topic):
-        self.setup_main_relay_nodes(cluster_id=self.auto_cluster, content_topic=content_topic)
+        self.setup_main_relay_nodes(cluster_id=self.auto_cluster, num_shards_in_network=self.num_shards_in_network, content_topic=content_topic)
         self.subscribe_first_relay_node(content_topics=[content_topic])
         self.subscribe_second_relay_node(content_topics=[content_topic])
         self.check_published_message_reaches_relay_peer(content_topic=content_topic)
 
     @pytest.mark.parametrize("content_topic_list", [CONTENT_TOPICS_SHARD_0, CONTENT_TOPICS_SHARD_7])
     def test_multiple_content_topics_same_shard(self, content_topic_list):
-        self.setup_main_relay_nodes(cluster_id=self.auto_cluster, content_topic=content_topic_list)
+        self.setup_main_relay_nodes(
+            cluster_id=self.auto_cluster,
+            num_shards_in_network=self.num_shards_in_network,
+            content_topic=content_topic_list,
+        )
         self.subscribe_first_relay_node(content_topics=content_topic_list)
         self.subscribe_second_relay_node(content_topics=content_topic_list)
         for content_topic in content_topic_list:
             self.check_published_message_reaches_relay_peer(content_topic=content_topic)
 
     def test_multiple_content_topics_different_shard(self):
-        self.setup_main_relay_nodes(cluster_id=self.auto_cluster, content_topic=CONTENT_TOPICS_DIFFERENT_SHARDS)
+        self.setup_main_relay_nodes(
+            cluster_id=self.auto_cluster, num_shards_in_network=self.num_shards_in_network, content_topic=CONTENT_TOPICS_DIFFERENT_SHARDS
+        )
         self.subscribe_first_relay_node(content_topics=CONTENT_TOPICS_DIFFERENT_SHARDS)
         self.subscribe_second_relay_node(content_topics=CONTENT_TOPICS_DIFFERENT_SHARDS)
         for content_topic in CONTENT_TOPICS_DIFFERENT_SHARDS:
@@ -115,7 +121,9 @@ class TestRunningNodesAutosharding(StepsSharding):
         assert len(get_messages_response) == 1, f"Expected 1 message but got {len(get_messages_response)}"
 
     def test_sender_uses_regular_api_receiver_uses_auto_api(self):
-        self.setup_main_relay_nodes(cluster_id=self.auto_cluster, pubsub_topic=self.test_pubsub_topic)
+        self.setup_main_relay_nodes(
+            cluster_id=self.auto_cluster, pubsub_topic=self.test_pubsub_topic, num_shards_in_network=self.num_shards_in_network
+        )
         self.subscribe_first_relay_node(pubsub_topics=[self.test_pubsub_topic])
         self.subscribe_second_relay_node(content_topics=[self.test_content_topic])
         self.relay_message(self.node1, self.create_message(contentTopic=self.test_content_topic), pubsub_topic=self.test_pubsub_topic)
