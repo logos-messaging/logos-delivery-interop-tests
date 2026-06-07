@@ -211,7 +211,7 @@ def get_node_tcp_port(node) -> int:
 
 
 def get_node_bound_ports(node) -> dict:
-    """Return the MyBoundPorts debug info (logos-delivery#3828) as a dict.
+    """Return the MyBoundPorts debug info .
 
     Keys: tcp, webSocket, rest, discv5Udp, metrics. A value of 0 means the
     service is disabled or did not bind.
