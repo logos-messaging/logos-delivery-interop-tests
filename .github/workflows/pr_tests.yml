@@ -44,7 +44,7 @@ jobs:
         run: |
           BINDINGS_HASH=$(git rev-parse HEAD:vendor/logos-delivery-python-bindings)
           DELIVERY_HASH=$(git -C vendor/logos-delivery-python-bindings rev-parse HEAD:vendor/logos-delivery)
-          echo "key=liblogosdelivery-${{ runner.os }}-nim2.2.4-v2-${BINDINGS_HASH}-${DELIVERY_HASH}" >> "$GITHUB_OUTPUT"
+          echo "key=liblogosdelivery-${{ runner.os }}-nim2.2.4-${BINDINGS_HASH}-${DELIVERY_HASH}" >> "$GITHUB_OUTPUT"
 
       - name: Cache liblogosdelivery.so
         id: cache-lib
@@ -79,9 +79,7 @@ jobs:
           echo "$HOME/.nimble/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.nimble/bin:$PATH"
           choosenim 2.2.4
-          # Pin the nimble that generated logos-delivery's nimble.lock. A newer
-          # nimble recomputes the locked Nim package checksum differently, which
-          # makes `nimble setup --localdeps` abort with a checksum mismatch.
+          # Pin the nimble that generated nimble.lock; newer ones fail the checksum.
           (cd /tmp && nimble install "nimble@0.22.3" -y)
           nim --version
           nimble --version
@@ -102,11 +100,9 @@ jobs:
 
           ln -sf waku.nimble waku.nims
 
-          # `make liblogosdelivery` resolves the locked deps via
-          # `nimble setup --localdeps` (build-deps prerequisite); a bare
-          # `nimble install -y` here is redundant and pulls Nim from the lock,
-          # which is what triggered the checksum mismatch.
-          make liblogosdelivery
+          # Portable build (no -march=native) so the cached .so doesn't SIGILL
+          # on runners with older CPUs; via env so the Makefile's NIM_PARAMS apply.
+          NIM_PARAMS="-d:disableMarchNative -d:marchOptimized" make liblogosdelivery
 
           SO_PATH="$(find . -type f -name 'liblogosdelivery.so' | head -n 1)"
 
