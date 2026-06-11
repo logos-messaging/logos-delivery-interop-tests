@@ -54,9 +54,6 @@ class TestRunningNodesAutosharding(StepsSharding):
             r"received relay message.*contentTopic.*/newsService/1.0/weekly/protobuf", use_regex=True
         ), "Message on the shared shard did not reach node2's relay"
 
-    @pytest.mark.skip(
-        reason="Pending confirmation from nwaku devs on expected cross-shard behavior: should node2 receive messages published by node1 when nodes are on different shards?"
-    )
     def test_2_nodes_different_content_topic_different_shard(self):
         self.setup_first_relay_node_with_filter(
             cluster_id=self.auto_cluster, content_topic="/myapp/1/latest/proto", num_shards_in_network=self.num_shards_in_network
