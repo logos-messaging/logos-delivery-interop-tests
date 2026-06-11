@@ -24,10 +24,15 @@ class TestAdminFlags(StepsFilter, StepsStore, StepsRelay, StepsLightPush):
 
     LEVEL_RE = re.compile(r'"lvl"\s*:\s*"(TRC|DBG|INF|NTC|WRN|ERR|FTL)"|\b(TRC|DBG|INF|NTC|WRN|ERR|FTL)\b')
 
+    # Newer nwaku images color log output; strip ANSI codes so the level tags
+    # aren't wrapped (e.g. "\x1b[33mWRN\x1b[0m") and LEVEL_RE can match them.
+    ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
     def _read_tail_counts(self, path: str, start_size: int) -> dict:
         with open(path, "rb") as f:
             f.seek(start_size)
             text = f.read().decode(errors="ignore")
+        text = self.ANSI_RE.sub("", text)
         counts = {t: 0 for t in self.TAGS}
         for a, b in self.LEVEL_RE.findall(text):
             counts[(a or b)] += 1
@@ -213,7 +218,6 @@ class TestAdminFlags(StepsFilter, StepsStore, StepsRelay, StepsLightPush):
                 break
             time.sleep(0.05)
 
-        # assert self.node1.set_log_level("DEBUG").status_code == 200
         assert self.node1.set_log_level("INFO").status_code == 200
 
         start = os.path.getsize(path)
