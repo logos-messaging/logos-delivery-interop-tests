@@ -23,6 +23,7 @@ class StepsLightPush(StepsCommon):
     test_pubsub_topic = VALID_PUBSUB_TOPICS[0]
     test_payload = "Light push works!!"
     default_message_propagation_delay = 0.1
+    num_shards_in_network = 8
 
     @pytest.fixture(scope="function", autouse=True)
     def light_push_setup(self):
