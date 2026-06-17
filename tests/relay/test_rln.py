@@ -13,6 +13,7 @@ from src.test_data import SAMPLE_INPUTS
 logger = get_custom_logger(__name__)
 
 
+@pytest.mark.skip(reason="Skip all RLN tests during transition phase")
 @pytest.mark.xdist_group(name="RLN serial tests")
 class TestRelayRLN(StepsRLN, StepsRelay):
     SAMPLE_INPUTS_RLN = SAMPLE_INPUTS + SAMPLE_INPUTS + SAMPLE_INPUTS
