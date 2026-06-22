@@ -237,7 +237,6 @@ METRICS_WITH_INITIAL_VALUE_ZERO = [
     "waku_rln_total_generated_proofs",
     "libp2p_pubsub_sig_verify_success_total",
     "libp2p_pubsub_sig_verify_failure_total",
-    "libp2p_pubsub_disconnects_over_non_priority_queue_limit_total",
     "libp2p_pubsub_peers",
     "libp2p_pubsub_unsubscriptions_total",
     "libp2p_pubsub_validation_success_total",

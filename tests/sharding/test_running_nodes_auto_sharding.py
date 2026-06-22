@@ -101,7 +101,9 @@ class TestRunningNodesAutosharding(StepsSharding):
             self.check_published_message_reaches_relay_peer(pubsub_topic=pubsub_topic)
 
     def test_node_uses_both_auto_and_regular_apis(self):
-        self.setup_main_relay_nodes(cluster_id=self.auto_cluster, pubsub_topic=self.test_pubsub_topic)
+        self.setup_main_relay_nodes(
+            cluster_id=self.auto_cluster, num_shards_in_network=self.num_shards_in_network, pubsub_topic=self.test_pubsub_topic
+        )
         self.subscribe_main_relay_nodes(content_topics=["/toychat/2/huilong/proto"])
         self.check_published_message_reaches_relay_peer(content_topic="/toychat/2/huilong/proto")
         self.subscribe_main_relay_nodes(pubsub_topics=[self.test_pubsub_topic])

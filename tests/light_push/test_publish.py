@@ -155,6 +155,8 @@ class TestLightPushPublish(StepsLightPush):
         assert not success_content_topics, f"Invalid Content topics that didn't failed: {success_content_topics}"
 
     def test_light_push_with_missing_pubsub_topics(self):
+        # use auto sharding so the shard is derived from the content topic instead of a pubsub topic
+        self.setup_first_lightpush_node(num_shards_in_network=self.num_shards_in_network)
         try:
             self.light_push_node1.send_light_push_message({"message": self.create_message()})
         except Exception as ex:
