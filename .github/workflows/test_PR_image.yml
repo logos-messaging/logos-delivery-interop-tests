@@ -44,6 +44,7 @@ jobs:
         with:
           repository: logos-messaging/logos-messaging-interop-tests
           ref: SMOKE_TEST_STABLE
+          submodules: recursive
       - uses: actions/setup-python@v4
         with:
 
@@ -52,8 +53,64 @@ jobs:
 
       - run: pip install -r requirements.txt
 
+      - name: Download nightly liblogosdelivery.so
+        id: download_lib
+        continue-on-error: true
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          # Reuse the portable .so built each night by test_common.yml against the
+          # latest logos-delivery commit, instead of rebuilding it here.
+          workflow: nim_waku_daily.yml
+          workflow_conclusion: success
+          name: liblogosdelivery
+          path: vendor/logos-delivery-python-bindings/lib/
+          if_no_artifact_found: warn
+
+      - name: Build liblogosdelivery.so (fallback)
+        if: steps.download_lib.outputs.found_artifact != 'true'
+        run: |
+          set -euo pipefail
+          # No nightly artifact available (nightly failed / never ran). Build a
+          # portable .so from source so smoke tests stay self-sufficient.
+          sudo apt-get update
+          sudo apt-get install -y \
+            util-linux iproute2 sudo ca-certificates curl make gcc g++
+
+          curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y
+          export PATH="$HOME/.nimble/bin:$PATH"
+          choosenim 2.2.4
+          # Pin the nimble that generated nimble.lock; newer ones fail the checksum.
+          (cd /tmp && nimble install "nimble@0.22.3" -y)
+
+          BINDINGS_DIR="$(pwd)/vendor/logos-delivery-python-bindings"
+          DELIVERY_DIR="$BINDINGS_DIR/vendor/logos-delivery"
+          mkdir -p "$BINDINGS_DIR/lib"
+
+          cd "$DELIVERY_DIR"
+          # Match the nightly: build against the latest logos-delivery HEAD.
+          git fetch origin
+          DEFAULT_REF=$(git remote show origin | awk '/HEAD branch/ {print $NF}')
+          git checkout "origin/$DEFAULT_REF"
+          git submodule sync --recursive
+          git submodule update --init --recursive
+
+          ln -sf waku.nimble waku.nims
+          NIM_PARAMS="-d:disableMarchNative -d:marchOptimized" make liblogosdelivery
+
+          SO_PATH="$(find . -type f -name 'liblogosdelivery.so' | head -n 1)"
+          if [ -z "$SO_PATH" ]; then
+            echo "liblogosdelivery.so was not built"
+            exit 1
+          fi
+          cp "$SO_PATH" "$BINDINGS_DIR/lib/liblogosdelivery.so"
+
+      - name: Verify wrapper library
+        run: test -f vendor/logos-delivery-python-bindings/lib/liblogosdelivery.so
+
       - name: Run tests
         timeout-minutes: 30
+        env:
+          PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
         run: |
           pytest -m 'smoke' -n 4 --dist=loadgroup --reruns 1 --junit-xml=pytest_results.xml
 

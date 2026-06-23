@@ -47,8 +47,106 @@ env:
   RLN_CREDENTIALS: ${{ secrets.RLN_CREDENTIALS }}
 
 jobs:
+  build:
+    name: Build liblogosdelivery (latest logos-delivery)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Remove unwanted software
+        uses: ./.github/actions/prune-vm
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            util-linux \
+            iproute2 \
+            sudo \
+            ca-certificates \
+            curl \
+            make \
+            gcc \
+            g++
+
+      - name: Install Nim 2.2.4 and Nimble 0.22.3
+        run: |
+          set -euo pipefail
+          curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y
+          echo "$HOME/.nimble/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.nimble/bin:$PATH"
+          choosenim 2.2.4
+          # Pin the nimble that generated nimble.lock; newer ones fail the checksum.
+          (cd /tmp && nimble install "nimble@0.22.3" -y)
+          nim --version
+          nimble --version
+
+      - name: Update logos-delivery to latest commit
+        run: |
+          set -euo pipefail
+          DELIVERY_DIR="$(pwd)/vendor/logos-delivery-python-bindings/vendor/logos-delivery"
+          cd "$DELIVERY_DIR"
+          # Build against the freshest logos-delivery HEAD rather than the pinned
+          # submodule commit. Relies on the auth context actions/checkout sets up
+          # for submodules (SSH URL rewritten to token-authenticated HTTPS).
+          git fetch origin
+          DEFAULT_REF=$(git remote show origin | awk '/HEAD branch/ {print $NF}')
+          echo "Building against latest logos-delivery: origin/$DEFAULT_REF"
+          git checkout "origin/$DEFAULT_REF"
+          git rev-parse HEAD
+          # The new commit may move nested submodule pointers needed by the build.
+          git submodule sync --recursive
+          git submodule update --init --recursive
+
+      - name: Build liblogosdelivery.so for python bindings
+        run: |
+          set -euo pipefail
+
+          export PATH="$HOME/.nimble/bin:$PATH"
+
+          BINDINGS_DIR="$(pwd)/vendor/logos-delivery-python-bindings"
+          DELIVERY_DIR="$BINDINGS_DIR/vendor/logos-delivery"
+
+          mkdir -p "$BINDINGS_DIR/lib"
+
+          cd "$DELIVERY_DIR"
+
+          ln -sf waku.nimble waku.nims
+
+          # Portable build (no -march=native) so the shared .so doesn't SIGILL on
+          # test runners with older CPUs; via env so the Makefile's NIM_PARAMS apply.
+          NIM_PARAMS="-d:disableMarchNative -d:marchOptimized" make liblogosdelivery
+
+          SO_PATH="$(find . -type f -name 'liblogosdelivery.so' | head -n 1)"
+
+          if [ -z "$SO_PATH" ]; then
+            echo "liblogosdelivery.so was not built"
+            exit 1
+          fi
+
+          cp "$SO_PATH" "$BINDINGS_DIR/lib/liblogosdelivery.so"
+
+          echo "Built library:"
+          ls -l "$BINDINGS_DIR/lib/liblogosdelivery.so"
+
+          # Cleanup build artifacts
+          rm -rf .gh-pages/nim
+
+      - name: Upload liblogosdelivery.so artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: liblogosdelivery
+          path: vendor/logos-delivery-python-bindings/lib/liblogosdelivery.so
+          # Consumed by the next nightly + by test_PR_image.yml smoke runs; a short
+          # window is enough since a fresh build is uploaded every night.
+          retention-days: 2
+
   tests:
     name: tests
+    needs: [build]
     strategy:
       fail-fast: false
       matrix:
@@ -110,58 +208,13 @@ jobs:
             gcc \
             g++
 
-      - name: Install Nim 2.2.4
-        run: |
-          set -euo pipefail
-          curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y
-          echo "$HOME/.nimble/bin" >> "$GITHUB_PATH"
-          export PATH="$HOME/.nimble/bin:$PATH"
-          choosenim 2.2.4
-          # Pin the nimble that generated logos-delivery's nimble.lock. A newer
-          # nimble recomputes the locked Nim package checksum differently, which
-          # makes `nimble setup --localdeps` abort with a checksum mismatch.
-          (cd /tmp && nimble install "nimble@0.22.3" -y)
-          nim --version
-          nimble --version
-
       - run: pip install -r requirements.txt
 
-      - name: Build liblogosdelivery.so for python bindings
-        run: |
-          set -euo pipefail
-
-          export PATH="$HOME/.nimble/bin:$PATH"
-
-          BINDINGS_DIR="$(pwd)/vendor/logos-delivery-python-bindings"
-          DELIVERY_DIR="$BINDINGS_DIR/vendor/logos-delivery"
-
-          mkdir -p "$BINDINGS_DIR/lib"
-
-          cd "$DELIVERY_DIR"
-
-          ln -sf waku.nimble waku.nims
-
-          # `make liblogosdelivery` resolves the locked deps via
-          # `nimble setup --localdeps` (build-deps prerequisite); a bare
-          # `nimble install -y` here is redundant and pulls Nim from the lock,
-          # which is what triggered the checksum mismatch.
-          make liblogosdelivery
-
-          SO_PATH="$(find . -type f -name 'liblogosdelivery.so' | head -n 1)"
-
-          if [ -z "$SO_PATH" ]; then
-            echo "liblogosdelivery.so was not built"
-            exit 1
-          fi
-
-          cp "$SO_PATH" "$BINDINGS_DIR/lib/liblogosdelivery.so"
-
-          echo "Built library:"
-          ls -l "$BINDINGS_DIR/lib/liblogosdelivery.so"
-          
-          # Cleanup build artifacts        
-          rm -rf .gh-pages/nim 
-
+      - name: Download liblogosdelivery.so
+        uses: actions/download-artifact@v4
+        with:
+          name: liblogosdelivery
+          path: vendor/logos-delivery-python-bindings/lib/
 
       - name: Verify wrapper library
         run: |
