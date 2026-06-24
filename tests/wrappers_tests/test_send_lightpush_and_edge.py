@@ -11,6 +11,7 @@ from src.node.wrapper_helpers import (
     assert_event_invariants,
     create_message_bindings,
     get_node_multiaddr,
+    wait_for_connected,
     wait_for_propagated,
     wait_for_sent,
     wait_for_error,
@@ -706,10 +707,17 @@ class TestS26LightpushPeerChurn(StepsCommon):
                 assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
 
                 with sender_result.ok_value as sender_node:
-                    delay(2)
+                    # Gate on the sender actually reporting Connected/
+                    # PartiallyConnected before inducing churn. The previous
+                    # blind delay raced the lightpush connection setup, so peer1
+                    # was sometimes stopped before the sender had a warm path to
+                    # the surviving peer2, leaving no propagation route.
+                    assert wait_for_connected(sender_collector) is not None, (
+                        f"Sender did not reach Connected/PartiallyConnected state " f"before peer churn. Collected events: {sender_collector.events}"
+                    )
                     stop_result = peer1.stop_and_destroy()
                     assert stop_result.is_ok(), f"Failed to stop peer1: {stop_result.err()}"
-                    delay(2)
+                    delay(SERVICE_DOWN_SETTLE_S)
 
                     message = create_message_bindings()
                     send_result = sender_node.send_message(message=message)
