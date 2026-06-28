@@ -11,13 +11,12 @@ from src.node.wrapper_helpers import (
     assert_event_invariants,
     create_message_bindings,
     get_node_multiaddr,
-    wait_for_connected,
     wait_for_propagated,
     wait_for_sent,
     wait_for_error,
 )
 from src.test_data import DEFAULT_CLUSTER_ID
-from tests.wrappers_tests.conftest import build_node_config, free_port
+from tests.wrappers_tests.conftest import build_node_config
 
 logger = get_custom_logger(__name__)
 
@@ -27,6 +26,8 @@ SENT_AFTER_STORE_TIMEOUT_S = 60.0
 OVERSIZED_PAYLOAD_BYTES = 200 * 1024
 RECOVERY_TIMEOUT_S = 45.0
 SERVICE_DOWN_SETTLE_S = 3.0
+# Warm-up for the Edge sender to establish lightpush links before churn.
+LIGHTPUSH_WARMUP_S = 5.0
 
 # Default-cluster shard-0 pubsub topic; used to subscribe the S11 docker store
 # peer so it joins the same relay mesh as the wrapper nodes (wrapper config
@@ -638,68 +639,66 @@ class TestS26LightpushPeerChurn(StepsCommon):
       - sender: edge node with peer1 and peer2 as static lightpush peers.
     """
 
-    @pytest.mark.skip(reason="test is failing")
-    def test_s26_lightpush_peer_churn_alternate_remains(self, node_config):
+    # @pytest.mark.skip(reason="test is failing")
+    def test_s26_lightpush_peer_churn_alternate_remains(self):
         sender_collector = EventCollector()
-        peer1_config = {
-            **node_config,
-            "relay": True,
-            "lightpush": True,
-            "store": False,
-            "filter": False,
-            "discv5Discovery": True,
-            "numShardsInNetwork": 1,
-            "portsShift": 1,
-            "discv5UdpPort": free_port(),
-        }
+        # Give each node its own fresh ports; do not share one config + portsShift
+        # (portsShift is double-applied in the build, so advertised ports collide).
+        peer1_config = build_node_config(
+            relay=True,
+            lightpush=True,
+            store=False,
+            filter=False,
+            discv5Discovery=True,
+            numShardsInNetwork=1,
+        )
         peer1_result = WrapperManager.create_and_start(config=peer1_config)
         assert peer1_result.is_ok(), f"Failed to start lightpush peer1: {peer1_result.err()}"
         peer1 = peer1_result.ok_value
 
-        relay_config = {
-            **node_config,
-            "relay": True,
-            "lightpush": False,
-            "store": False,
-            "filter": False,
-            "discv5Discovery": False,
-            "numShardsInNetwork": 1,
-            "portsShift": 4,
-        }
+        relay_config = build_node_config(
+            relay=True,
+            lightpush=False,
+            store=False,
+            filter=False,
+            discv5Discovery=False,
+            numShardsInNetwork=1,
+        )
 
         relay_result = WrapperManager.create_and_start(config=relay_config)
         assert relay_result.is_ok(), f"Failed to start relay peer: {relay_result.err()}"
 
         with relay_result.ok_value as relay_peer:
-            peer2_config = {
-                **peer1_config,
-                "staticnodes": [
+            peer2_config = build_node_config(
+                relay=True,
+                lightpush=True,
+                store=False,
+                filter=False,
+                discv5Discovery=True,
+                numShardsInNetwork=1,
+                staticnodes=[
                     get_node_multiaddr(peer1),
                     get_node_multiaddr(relay_peer),
                 ],
-                "portsShift": 2,
-                "discv5UdpPort": free_port(),
-            }
+            )
 
             peer2_result = WrapperManager.create_and_start(config=peer2_config)
             assert peer2_result.is_ok(), f"Failed to start lightpush peer2: {peer2_result.err()}"
 
             with peer2_result.ok_value as peer2:
-                sender_config = {
-                    **node_config,
-                    "mode": "Edge",
-                    "relay": True,
-                    "lightpush": True,
-                    "store": False,
-                    "filter": False,
-                    "discv5Discovery": False,
-                    "numShardsInNetwork": 1,
-                    "portsShift": 3,
-                    "staticnodes": [
+                sender_config = build_node_config(
+                    mode="Edge",
+                    relay=True,
+                    lightpush=True,
+                    store=False,
+                    filter=False,
+                    discv5Discovery=False,
+                    numShardsInNetwork=1,
+                    staticnodes=[
                         get_node_multiaddr(peer1),
                         get_node_multiaddr(peer2),
                     ],
-                }
+                )
 
                 sender_result = WrapperManager.create_and_start(
                     config=sender_config,
@@ -708,14 +707,10 @@ class TestS26LightpushPeerChurn(StepsCommon):
                 assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
 
                 with sender_result.ok_value as sender_node:
-                    # Gate on the sender actually reporting Connected/
-                    # PartiallyConnected before inducing churn. The previous
-                    # blind delay raced the lightpush connection setup, so peer1
-                    # was sometimes stopped before the sender had a warm path to
-                    # the surviving peer2, leaving no propagation route.
-                    assert wait_for_connected(sender_collector) is not None, (
-                        f"Sender did not reach Connected/PartiallyConnected state " f"before peer churn. Collected events: {sender_collector.events}"
-                    )
+                    # Warm up lightpush links to peer1/peer2 before churn. An Edge
+                    # lightpush-only sender never reports Connected, so we settle
+                    # instead of gating on a connection event.
+                    delay(LIGHTPUSH_WARMUP_S)
                     stop_result = peer1.stop_and_destroy()
                     assert stop_result.is_ok(), f"Failed to stop peer1: {stop_result.err()}"
                     delay(SERVICE_DOWN_SETTLE_S)
