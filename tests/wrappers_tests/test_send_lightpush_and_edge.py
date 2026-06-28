@@ -639,7 +639,6 @@ class TestS26LightpushPeerChurn(StepsCommon):
       - sender: edge node with peer1 and peer2 as static lightpush peers.
     """
 
-    # @pytest.mark.skip(reason="test is failing")
     def test_s26_lightpush_peer_churn_alternate_remains(self):
         sender_collector = EventCollector()
         # Give each node its own fresh ports; do not share one config + portsShift
