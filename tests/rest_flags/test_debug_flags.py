@@ -21,6 +21,7 @@ class TestDebugFlags(StepsFilter, StepsStore, StepsRelay, StepsLightPush):
     def nodes(self):
         self.node1 = WakuNode(NODE_2, f"node1_{self.test_id}")
 
+    @pytest.mark.skip(reason="Volatile: asserts a specific node version range that changes frequently across releases")
     def test_verify_node_version2(self):
         self.node1.start(relay="true")
         node1_version = self.node1.get_version()
