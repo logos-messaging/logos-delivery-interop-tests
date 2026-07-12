@@ -75,6 +75,22 @@ class WrapperManager:
     def send_message(self, message: dict, *, timeout_s: float = 20.0) -> Result[str, str]:
         return self._node.send_message(message, timeout_s=timeout_s)
 
+    def channel_create(
+        self,
+        channel_id: str,
+        content_topic: str,
+        sender_id: str,
+        *,
+        timeout_s: float = 20.0,
+    ) -> Result[str, str]:
+        return self._node.channel_create(channel_id, content_topic, sender_id, timeout_s=timeout_s)
+
+    def channel_send(self, channel_id: str, message: dict, *, timeout_s: float = 20.0) -> Result[str, str]:
+        return self._node.channel_send(channel_id, message, timeout_s=timeout_s)
+
+    def channel_close(self, channel_id: str, *, timeout_s: float = 20.0) -> Result[int, str]:
+        return self._node.channel_close(channel_id, timeout_s=timeout_s)
+
     def get_available_node_info_ids(self, *, timeout_s: float = 20.0) -> Result[list[str], str]:
         return self._node.get_available_node_info_ids(timeout_s=timeout_s)
 
