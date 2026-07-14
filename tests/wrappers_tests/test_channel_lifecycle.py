@@ -14,6 +14,8 @@ class TestChannelLifecycle:
         The reliable channel manager is mounted automatically for a Core-mode
         node, so no store / --reliability is needed. No events are expected.
         """
+        node_config.update({"mode": "Core"})
+
         create_node_result = WrapperManager.create_and_start(config=node_config)
         assert create_node_result.is_ok(), f"Failed to create and start node: {create_node_result.err()}"
         node = create_node_result.ok_value
