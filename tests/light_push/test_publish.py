@@ -29,6 +29,7 @@ class TestLightPushPublish(StepsLightPush):
         failed_payloads = []
         for payload in SAMPLE_INPUTS:
             logger.debug(f'Running test with payload {payload["description"]}')
+            delay(0.5)
             message = self.create_message(payload=to_base64(payload["value"]))
             try:
                 self.check_light_pushed_message_reaches_receiving_peer(message=message)
@@ -88,6 +89,7 @@ class TestLightPushPublish(StepsLightPush):
         failed_content_topics = []
         for content_topic in SAMPLE_INPUTS:
             logger.debug(f'Running test with content topic {content_topic["description"]}')
+            delay(0.5)
             message = self.create_message(contentTopic=content_topic["value"])
             try:
                 self.check_light_pushed_message_reaches_receiving_peer(message=message)

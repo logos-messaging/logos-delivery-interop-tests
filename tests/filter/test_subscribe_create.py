@@ -63,7 +63,7 @@ class TestFilterSubscribeCreate(StepsFilter):
         assert not failed_content_topics, f"ContentTopics failed: {failed_content_topics}"
 
     def test_filter_subscribe_to_29_content_topics_in_separate_calls(self, subscribe_main_nodes):
-        # subscribe_main_nodes already consumed 1 slot; make 29 more = 30 total, all must succeed
+        # subscribe_main_nodes already made 1 subscribe call; make 29 more = 30 total, all must succeed
         _29_content_topics = [str(i) for i in range(29)]
         for content_topic in _29_content_topics:
             self.create_filter_subscription({"requestId": str(uuid4()), "contentFilters": [content_topic], "pubsubTopic": self.test_pubsub_topic})
@@ -77,8 +77,8 @@ class TestFilterSubscribeCreate(StepsFilter):
                 logger.error(f"ContentTopic {content_topic} failed: {str(ex)}")
                 failed_content_topics.append(content_topic)
         assert not failed_content_topics, f"ContentTopics failed: {failed_content_topics}"
-        # Rate limit is a token bucket (30/min); keep calling beyond 30 until one is denied
-        rate_limited = False
+        # Default rate limit is filter:100/1s; sequential calls stay under it, so calls beyond 30 must succeed
+        failed_extra_calls = []
         for extra in range(1, 20):
             try:
                 self.create_filter_subscription(
@@ -86,11 +86,9 @@ class TestFilterSubscribeCreate(StepsFilter):
                 )
                 logger.debug(f"Extra subscribe call #{extra} succeeded")
             except Exception as ex:
-                assert "subscription failed" in str(ex) or "rate limit exceeded" in str(ex), f"Unexpected error on extra call #{extra}: {ex}"
-                logger.info(f"Rate limit hit on extra call #{extra}: {ex}")
-                rate_limited = True
-                break
-        assert rate_limited, "Rate limit was not triggered on any call beyond 30"
+                logger.error(f"Extra subscribe call #{extra} failed: {ex}")
+                failed_extra_calls.append(extra)
+        assert not failed_extra_calls, f"Subscribe calls beyond 30 were rate limited: {failed_extra_calls}"
 
     def test_filter_subscribe_to_101_content_topics(self, subscribe_main_nodes):
         try:
