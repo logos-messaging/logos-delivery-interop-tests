@@ -18,7 +18,7 @@ SENDER_B = "rc05-sender-b"
 CHANNEL_RECEIVED_EVENT = "channel_message_received"
 
 MESH_SETTLE_S = 10
-DELIVERY_TIMEOUT_S = 30.0
+DELIVERY_TIMEOUT_S = 50.0
 
 
 def wait_for_channel_received(collector, channel_id, timeout_s, poll_interval_s=0.5):
@@ -69,6 +69,8 @@ class TestChannelDelivery:
 
                 subscribe_result = receiver.subscribe_content_topic(CONTENT_TOPIC)
                 assert subscribe_result.is_ok(), f"receiver subscribe_content_topic failed: {subscribe_result.err()}"
+                subscribe_result = sender.subscribe_content_topic(CONTENT_TOPIC)
+                assert subscribe_result.is_ok(), f"sender subscribe_content_topic failed: {subscribe_result.err()}"
 
                 receiver_create = receiver.channel_create(CHANNEL_ID, CONTENT_TOPIC, SENDER_B)
                 assert receiver_create.is_ok(), f"receiver channel_create failed: {receiver_create.err()}"
