@@ -1,3 +1,4 @@
+import base64
 import time
 
 from src.libs.common import delay, to_base64
@@ -16,13 +17,11 @@ SENDER_B = "rc05-sender-b"
 
 CHANNEL_RECEIVED_EVENT = "channel_message_received"
 
-# Let the gossipsub mesh + content-topic subscription settle before A sends.
 MESH_SETTLE_S = 10
 DELIVERY_TIMEOUT_S = 30.0
 
 
 def wait_for_channel_received(collector, channel_id, timeout_s, poll_interval_s=0.5):
-    """Poll until a channel_message_received event for `channel_id` arrives, else None."""
     deadline = time.monotonic() + timeout_s
     while True:
         for event in collector.snapshot():
@@ -35,18 +34,18 @@ def wait_for_channel_received(collector, channel_id, timeout_s, poll_interval_s=
 
 class TestChannelDelivery:
     def test_rc05_basic_a_to_b_delivery(self, node_config):
-        """RC05: a message sent by A on a channel is delivered to B on the matching channel + topic.
+        """RC05: A's channel send is delivered to B on the matching channel + topic.
 
-        Two relay-connected nodes both create the same (channelId, contentTopic);
-        B subscribes to the topic. A channel_send()s a payload; B must fire a
-        channel_message_received event carrying that payload intact. Baseline
-        two-party delivery — the positive control for RC06/RC07 ingress drops.
+        Relay-only (store + reliability off); only B subscribes. B must fire a
+        channel_message_received event carrying the payload intact and tagged with A's senderId.
         """
         payload_b64 = to_base64("rc05 hello from A")
 
         node_config.update(
             {
                 "relay": True,
+                "store": False,
+                "reliabilityEnabled": False,
                 "numShardsInNetwork": 1,
             }
         )
@@ -88,4 +87,9 @@ class TestChannelDelivery:
                     f"No {CHANNEL_RECEIVED_EVENT} on B for {CHANNEL_ID} within {DELIVERY_TIMEOUT_S}s. "
                     f"Collected events: {receiver_collector.snapshot()}"
                 )
-                assert received["payload"] == payload_b64, f"delivered payload mismatch: got {received['payload']!r}, sent {payload_b64!r}"
+                assert base64.b64decode(received["payload"]) == base64.b64decode(
+                    payload_b64
+                ), f"delivered payload mismatch: got {received['payload']!r}, sent {payload_b64!r}"
+                assert (
+                    received["senderId"] == SENDER_A
+                ), f"received event must carry the originator's senderId {SENDER_A!r}, got {received.get('senderId')!r}"
