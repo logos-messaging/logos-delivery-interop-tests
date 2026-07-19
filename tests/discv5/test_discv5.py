@@ -66,7 +66,7 @@ class TestDiscv5(StepsRelay, StepsFilter, StepsStore, StepsLightPush):
         self.light_push_node1 = self.running_a_node(
             NODE_2,
             lightpush="true",
-            relay="false",
+            relay="true",
             discv5_bootstrap_node=self.receiving_node1.get_enr_uri(),
             lightpushnode=self.receiving_node1.get_multiaddr_with_id(),
         )

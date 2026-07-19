@@ -1,12 +1,13 @@
-# waku-interop-tests
+# logos-messaging-interop-tests
 
-Waku end‑to‑end (e2e) interoperability test framework for the [Waku v2 protocol](https://rfc.vac.dev/spec/10/). It exercises multiple clients (nwaku, js‑waku, go‑waku…) in realistic network topologies and reports results via Allure.
+Logos Messaging end‑to‑end (e2e) interoperability test framework for the [Waku v2 protocol](https://rfc.vac.dev/spec/10/). It exercises multiple clients (logos-messaging-nim, js‑waku, go‑waku…) in realistic network topologies and reports results via Allure.
 
 ## Setup & contribution
 
 ```bash
-git clone git@github.com:waku-org/waku-interop-tests.git
-cd waku-interop-tests
+# Use sparse checkout since the repo has large history
+git clone --depth=1 git@github.com:logos-messaging/logos-messaging-interop-tests.git
+cd logos-messaging-interop-tests
 
 # create and activate a virtual environment
 python -m venv .venv
@@ -47,15 +48,25 @@ Every day the workflow **nim\_waku\_daily.yml** triggers against the image `waku
 
 To launch it manually:
 
-1. Open [https://github.com/waku-org/waku-interop-tests/actions/workflows/nim\_waku\_daily.yml](https://github.com/waku-org/waku-interop-tests/actions/workflows/nim_waku_daily.yml).
+1. Open [https://github.com/logos-messaging/logos-messaging-interop-tests/actions/workflows/nim\_waku\_daily.yml](https://github.com/logos-messaging/logos-messaging-interop-tests/actions/workflows/nim_waku_daily.yml).
 2. Click **► Run workflow**.
 3. Pick the branch you want to test (defaults to `master`) and press **Run workflow**.
 
-### On‑demand matrix against custom *nwaku* versions
+### PR tests
+
+Every push to a pull request triggers **pr\_tests.yml** which runs:
+
+1. **Build** — compiles `liblogosdelivery.so` (cached by submodule commit hash).
+2. **Wrapper tests** — all tests under `tests/wrappers_tests/` that don't require Docker (~5 min).
+3. **Smoke tests** — `pytest -m smoke` with Docker nodes (~10 min).
+
+To run the **full test suite** (18 shards, same as daily) on a PR, add the label **`full-test`** to the pull request. The full suite will start automatically.
+
+### On‑demand matrix against custom *logos-messaging-nim* versions
 
 Use **interop\_tests.yml** when you need to test a PR or a historical image:
 
-1. Open [https://github.com/waku-org/waku-interop-tests/actions/workflows/interop\_tests.yml](https://github.com/waku-org/waku-interop-tests/actions/workflows/interop_tests.yml).
+1. Open [https://github.com/logos-messaging/logos-messaging-interop-tests/actions/workflows/interop\_tests.yml](https://github.com/logos-messaging/logos-messaging-interop-tests/actions/workflows/interop_tests.yml).
 2. Press **► Run workflow** and choose the branch.
 3. In the *workflow inputs* field set the `nwaku_image` you want, e.g. `wakuorg/nwaku:v0.32.0`.
 
@@ -64,21 +75,11 @@ Use **interop\_tests.yml** when you need to test a PR or a historical image:
 * When the job finishes GitHub will display an **Allure Report** link in the run summary.
 * The bot also posts the same link in the **Waku / test‑reports** Discord channel.
 
-### Updating the CI job used from *nwaku*
+### Updating the CI job used from *logos-messaging-nim*
 
-In the **nwaku** repository itself the file `.github/workflows/test_PR_image.yml` pins the interop test version.
-To update it:
+In the **logos-messaging-nim** repository itself the file `.github/workflows/test_PR_image.yml` pins the interop test version to `SMOKE_TEST_STABLE`.
 
-1. Tag the desired commit in `waku-interop-tests` and push the tag
-
-```bash
-git tag vX.Y.Z
-git push origin vX.Y.Z
-```
-
-2. Edit `test_PR_image.yml` in **nwaku** and set `ref: vX.Y.Z` for the `tests` job.
-
-![CI job location](https://github.com/user-attachments/assets/dd3f95bd-fe79-475b-92b7-891d82346382)
+To update it, move the `SMOKE_TEST_STABLE` tag to point to the desired commit in `waku-interop-tests`.
 
 ## License
 

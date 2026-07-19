@@ -251,6 +251,62 @@ class StepsStore(StepsCommon):
                     ), f"Message hash at index {idx} returned by store doesn't match the computed message hash {expected_hash}. Actual hash: {actual_hash}"
 
     @allure.step
+    def check_sent_message_is_stored(
+        self,
+        expected_hashes,
+        store_node=None,
+        peer_addr=None,
+        include_data=None,
+        pubsub_topic=None,
+        content_topics=None,
+        start_time=None,
+        end_time=None,
+        hashes=None,
+        cursor=None,
+        page_size=None,
+        ascending=None,
+        store_v="v3",
+        **kwargs,
+    ):
+        """Verify that messages with the given hashes are present in the store."""
+        if pubsub_topic is None:
+            pubsub_topic = self.test_pubsub_topic
+        if isinstance(expected_hashes, str):
+            expected_hashes = [expected_hashes]
+        if store_node is None:
+            store_node = self.store_nodes
+        elif not isinstance(store_node, list):
+            store_node = [store_node]
+
+        for node in store_node:
+            logger.debug(f"Checking that peer {node.image} can find the stored messages by hash")
+            self.store_response = self.get_messages_from_store(
+                node=node,
+                peer_addr=peer_addr,
+                include_data=include_data,
+                pubsub_topic=pubsub_topic,
+                content_topics=content_topics,
+                start_time=start_time,
+                end_time=end_time,
+                hashes=hashes,
+                cursor=cursor,
+                page_size=page_size,
+                ascending=ascending,
+                store_v=store_v,
+                **kwargs,
+            )
+
+            logger.debug(f"messages length is {len(self.store_response.messages)}")
+            assert self.store_response.messages, f"Peer {node.image} couldn't find any messages. " f"Actual response: {self.store_response.resp_json}"
+            assert len(self.store_response.messages) >= len(expected_hashes), (
+                f"Expected at least {len(expected_hashes)} messages " f"but got {len(self.store_response.messages)}"
+            )
+
+            actual_hashes = [self.store_response.message_hash(i) for i in range(len(self.store_response.messages))]
+            for expected_hash in expected_hashes:
+                assert expected_hash in actual_hashes, f"Expected hash {expected_hash} not found in store. " f"Actual hashes: {actual_hashes}"
+
+    @allure.step
     def check_store_returns_empty_response(self, pubsub_topic=None):
         if not pubsub_topic:
             pubsub_topic = self.test_pubsub_topic

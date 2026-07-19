@@ -1,0 +1,208 @@
+#!/bin/bash
+set -e
+
+cd ./waku-simulator
+
+export NWAKU_IMAGE=wakuorg/nwaku:latest
+export NUM_NWAKU_NODES=15
+export RLN_ENABLED=false
+
+# Service node config 
+export SERVICENODE_CPU_CORES="0-3"
+export SERVICENODE_MEM_LIMIT=2g
+export POSTGRES_CPU_CORES="0-3"
+export POSTGRES_MEM_LIMIT=2g
+export POSTGRES_SHM=1g
+
+docker compose up -d
+
+# Wait until service node is running
+while true; do
+  sid="$(docker compose ps -q servicenode || true)"
+  if [[ -n "$sid" ]]; then
+    state="$(docker inspect --format '{{.State.Status}}' "$sid" 2>/dev/null || true)"
+    [[ "$state" == "running" ]] && break
+  fi
+  sleep 1
+done
+
+cd ../lpt
+
+# -------------------- LPT config  ---------------------------
+export LPT_IMAGE=harbor.status.im/wakuorg/liteprotocoltester:latest
+export START_PUBLISHING_AFTER=15
+export NUM_MESSAGES=0
+export MESSAGE_INTERVAL_MILLIS=100
+
+# Service peers 
+export LIGHTPUSH_SERVICE_PEER=/ip4/10.2.0.101/tcp/60001/p2p/16Uiu2HAkyte8uj451tGkbww4Mjcg6DRnmAHxNeWyF4zp23RbpG3n
+export FILTER_SERVICE_PEER=/ip4/10.2.0.101/tcp/60001/p2p/16Uiu2HAkyte8uj451tGkbww4Mjcg6DRnmAHxNeWyF4zp23RbpG3n
+
+# Topics 
+export PUBSUB=/waku/2/rs/66/0
+export CONTENT_TOPIC=/tester/2/light-pubsub-test/wakusim
+export CLUSTER_ID=66
+
+# Allow services to settle
+sleep 60
+
+cd ../sonda
+docker build -t local-perf-sonda -f ./Dockerfile.sonda .
+
+cat <<EOF > perf-test.env
+RELAY_NODE_REST_ADDRESS=http://127.0.0.1:8645
+STORE_NODE_REST_ADDRESS=http://127.0.0.1:8644
+QUERY_DELAY=0.5
+STORE_NODES=/ip4/10.2.0.101/tcp/60001/p2p/16Uiu2HAkyte8uj451tGkbww4Mjcg6DRnmAHxNeWyF4zp23RbpG3n
+CLUSTER_ID=66
+SHARD=0
+EOF
+
+sleep 5
+
+# Clean old
+docker rm -f sonda1 sonda2 sonda3 sonda4 sonda5 sonda6 sonda7 sonda8 sonda9 sonda10 sonda11 sonda12 >/dev/null 2>&1 || true
+
+# Baseline Sonda (0.5s)
+docker run -d --name sonda1 --network host -l sonda \
+  --env-file ./perf-test.env local-perf-sonda
+
+cd ../lpt
+
+# Helper echo
+ts() { date '+%F %T'; }
+
+# ============================================================================ #
+# PHASE A: Wave burst #1 (short & intense), then cooldown 
+# Idea: quick history fill + heavy query spike
+# ============================================================================ #
+export NUM_PUBLISHER_NODES=8
+export NUM_RECEIVER_NODES=8
+export MIN_MESSAGE_SIZE=80Kb
+export MAX_MESSAGE_SIZE=120Kb
+
+docker compose down -v >/dev/null 2>&1 || true
+docker compose up -d
+echo " Phase A1: LPT 8/8, 80–120KB; Sonda x1 @0.5s — $(ts)"
+
+# Add two fast Sonda for burst @0.05s
+docker run -d --name sonda2 --network host -l sonda \
+  --env-file ../sonda/perf-test.env -e QUERY_DELAY=0.05 local-perf-sonda
+docker run -d --name sonda3 --network host -l sonda \
+  --env-file ../sonda/perf-test.env -e QUERY_DELAY=0.05 local-perf-sonda
+
+sleep 90
+
+# Cooldown: remove the two fast ones
+docker rm -f sonda2 sonda3 >/dev/null 2>&1 || true
+echo "Phase A2: cooldown to Sonda x1 @0.5s — $(ts)"
+sleep 60
+
+# ============================================================================ #
+# PHASE B: Wave burst #2 (bigger messages, more pubs/recvs), then cooldown
+# ============================================================================ #
+export NUM_PUBLISHER_NODES=10
+export NUM_RECEIVER_NODES=10
+export MIN_MESSAGE_SIZE=120Kb
+export MAX_MESSAGE_SIZE=160Kb
+
+docker compose down -v
+docker compose up -d
+echo " Phase B1: LPT 10/10, 120–160KB; Sonda x1 — $(ts)"
+
+# Heavier spike: three Sonda @0.02s
+docker run -d --name sonda4 --network host -l sonda \
+  --env-file ../sonda/perf-test.env -e QUERY_DELAY=0.02 local-perf-sonda
+docker run -d --name sonda5 --network host -l sonda \
+  --env-file ../sonda/perf-test.env -e QUERY_DELAY=0.02 local-perf-sonda
+docker run -d --name sonda6 --network host -l sonda \
+  --env-file ../sonda/perf-test.env -e QUERY_DELAY=0.02 local-perf-sonda
+
+sleep 120
+
+# Cooldown again: keep only baseline
+docker rm -f sonda4 sonda5 sonda6 >/dev/null 2>&1 || true
+echo "[scenario_7_store_wave] Phase B2: cooldown to Sonda x1 @0.5s — $(ts)"
+sleep 60
+
+# ============================================================================ #
+# PHASE C: Microburst trains (while LPT steady)
+# Start/stop pairs rapidly to create sawtooth Store pressure.
+# ============================================================================ #
+export NUM_PUBLISHER_NODES=10
+export NUM_RECEIVER_NODES=10
+export MIN_MESSAGE_SIZE=60Kb
+export MAX_MESSAGE_SIZE=100Kb
+
+docker compose down -v
+docker compose up -d
+echo " Phase C: microburst trains begin — $(ts)"
+
+# Train 1 (two @0.01s for 45s)
+docker run -d --name sonda7 --network host -l sonda \
+  --env-file ../sonda/perf-test.env -e QUERY_DELAY=0.01 local-perf-sonda
+docker run -d --name sonda8 --network host -l sonda \
+  --env-file ../sonda/perf-test.env -e QUERY_DELAY=0.01 local-perf-sonda
+sleep 45
+docker rm -f sonda7 sonda8 >/dev/null 2>&1 || true
+
+# Train 2 (two @0.02s for 60s)
+docker run -d --name sonda9 --network host -l sonda \
+  --env-file ../sonda/perf-test.env -e QUERY_DELAY=0.02 local-perf-sonda
+docker run -d --name sonda10 --network host -l sonda \
+  --env-file ../sonda/perf-test.env -e QUERY_DELAY=0.02 local-perf-sonda
+sleep 60
+docker rm -f sonda9 sonda10 >/dev/null 2>&1 || true
+
+# Train 3 (three @0.01s for 60s)
+docker run -d --name sonda11 --network host -l sonda \
+  --env-file ../sonda/perf-test.env -e QUERY_DELAY=0.01 local-perf-sonda
+docker run -d --name sonda12 --network host -l sonda \
+  --env-file ../sonda/perf-test.env -e QUERY_DELAY=0.01 local-perf-sonda
+docker run -d --name sonda3 --network host -l sonda \
+  --env-file ../sonda/perf-test.env -e QUERY_DELAY=0.01 local-perf-sonda
+sleep 60
+docker rm -f sonda11 sonda12 sonda3 >/dev/null 2>&1 || true
+
+echo "[scenario_7_store_wave] Phase C: microburst trains done — $(ts)"
+sleep 30
+
+# ============================================================================ #
+# PHASE D: Store-only oscillation (LPT down), cycling query delays
+# Observe Store under alternating light/heavy read pressure.
+# ============================================================================ #
+docker compose down -v
+echo "Phase D: Store-only oscillation — $(ts)"
+
+# Round 1: fast pair @0.02s
+docker run -d --name sonda4 --network host -l sonda \
+  --env-file ../sonda/perf-test.env -e QUERY_DELAY=0.02 local-perf-sonda
+docker run -d --name sonda5 --network host -l sonda \
+  --env-file ../sonda/perf-test.env -e QUERY_DELAY=0.02 local-perf-sonda
+sleep 60
+docker rm -f sonda4 sonda5 >/dev/null 2>&1 || true
+
+# Round 2: very fast pair @0.01s
+docker run -d --name sonda6 --network host -l sonda \
+  --env-file ../sonda/perf-test.env -e QUERY_DELAY=0.01 local-perf-sonda
+docker run -d --name sonda7 --network host -l sonda \
+  --env-file ../sonda/perf-test.env -e QUERY_DELAY=0.01 local-perf-sonda
+sleep 60
+docker rm -f sonda6 sonda7 >/dev/null 2>&1 || true
+
+# Round 3: light @0.1s for recovery view
+docker run -d --name sonda8 --network host -l sonda \
+  --env-file ../sonda/perf-test.env -e QUERY_DELAY=0.1 local-perf-sonda
+sleep 60
+docker rm -f sonda8 >/dev/null 2>&1 || true
+
+echo "Final observe window — $(ts)"
+sleep 60
+
+# -------------------- Cleanup -------------------------------------------------
+docker rm -f sonda1 sonda2 sonda3 sonda4 sonda5 sonda6 sonda7 sonda8 sonda9 sonda10 sonda11 sonda12 >/dev/null 2>&1 || true
+
+cd ..
+
+echo "Test finished at $(ts)"
+# exec ./stop_test.sh

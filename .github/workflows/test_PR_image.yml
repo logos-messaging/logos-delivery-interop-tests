@@ -42,8 +42,8 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          repository: waku-org/waku-interop-tests
-          ref: SMOKE_TEST_0.0.1
+          repository: logos-messaging/logos-messaging-interop-tests
+          ref: SMOKE_TEST_2026.06.25
       - uses: actions/setup-python@v4
         with:
 
@@ -55,7 +55,10 @@ jobs:
       - name: Run tests
         timeout-minutes: 30
         run: |
-          pytest -m 'smoke' -n 4 --dist=loadgroup --reruns 1 --junit-xml=pytest_results.xml
+          pytest -m 'smoke' -n 4 --dist=loadgroup --reruns 1 \
+            --ignore=tests/wrappers_tests \
+            --ignore=vendor/logos-delivery-python-bindings/tests \
+            --junit-xml=pytest_results.xml
 
       - name: Test Report
         if: always()

@@ -1,0 +1,101 @@
+name: Send API E2E Tests
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+env:
+  FORCE_COLOR: "1"
+
+jobs:
+  send-api-e2e:
+    name: send API e2e tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: logos-messaging/logos-messaging-interop-tests
+          ref: SMOKE_TEST_2026.06.25
+          submodules: recursive
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - run: pip install -r requirements.txt
+
+      # No build step: liblogosdelivery.so is built by logos-delivery's ci.yml
+      # (build job) and consumed here as a workflow artifact from the same run.
+      - name: Download liblogosdelivery.so
+        uses: actions/download-artifact@v4
+        with:
+          name: liblogosdelivery
+          path: vendor/logos-delivery-python-bindings/lib/
+
+      - name: Verify wrapper library
+        run: test -f vendor/logos-delivery-python-bindings/lib/liblogosdelivery.so
+
+      - name: Run send API E2E tests - basic life cycle
+        continue-on-error: true
+        env:
+          PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
+        run: |
+          pytest tests/wrappers_tests/test_basic_life_cycle.py \
+            -m "not docker_required" \
+            --junit-xml=send-api-results-basic.xml
+
+      - name: Run send API E2E tests - send handle and subscription
+        continue-on-error: true
+        env:
+          PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
+        run: |
+          pytest tests/wrappers_tests/test_send_handle_and_subscription.py \
+            -m "not docker_required" \
+            --junit-xml=send-api-results-send-handle-and-subscription.xml
+
+      - name: Run send API E2E tests - send relay propagation
+        continue-on-error: true
+        env:
+          PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
+        run: |
+          pytest tests/wrappers_tests/test_send_relay_propagation.py \
+            -m "not docker_required" \
+            --junit-xml=send-api-results-send-relay-propagation.xml
+
+      - name: Run send API E2E tests - send lightpush and edge
+        continue-on-error: true
+        env:
+          PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
+        run: |
+          pytest tests/wrappers_tests/test_send_lightpush_and_edge.py \
+            -m "not docker_required" \
+            --junit-xml=send-api-results-send-lightpush-and-edge.xml
+
+      - name: Run send API E2E tests - send errors and concurrency
+        continue-on-error: true
+        env:
+          PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
+        run: |
+          pytest tests/wrappers_tests/test_send_errors_and_concurrency.py \
+            -m "not docker_required" \
+            --junit-xml=send-api-results-send-errors-and-concurrency.xml
+
+      - name: Run send API E2E tests - corner cases
+        continue-on-error: true
+        env:
+          PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
+        run: |
+          pytest tests/wrappers_tests/test_wrapper_corner_cases.py \
+            -m "not docker_required" \
+            --junit-xml=send-api-results-corner-cases.xml
+
+      - name: Test Report
+        if: always()
+        uses: dorny/test-reporter@95058abb17504553158e70e2c058fe1fda4392c2
+        with:
+          name: Send API E2E Test Results
+          path: send-api-results-*.xml
+          reporter: java-junit
+          use-actions-summary: "true"

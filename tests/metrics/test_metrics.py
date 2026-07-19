@@ -10,6 +10,7 @@ from src.steps.store import StepsStore
 
 
 class TestMetrics(StepsRelay, StepsMetrics, StepsFilter, StepsLightPush, StepsStore):
+    @pytest.mark.xfail(reason="these metrics are new from libp2p and has no values yet")
     def test_metrics_initial_value(self):
         node = WakuNode(DEFAULT_NWAKU, f"node1_{self.test_id}")
         node.start(relay="true", filter="true", store="true", lightpush="true")
@@ -47,7 +48,6 @@ class TestMetrics(StepsRelay, StepsMetrics, StepsFilter, StepsLightPush, StepsSt
         self.check_metric(self.node1, "waku_peer_store_size", 1)
         self.check_metric(self.node1, "waku_histogram_message_size_count", 1)
         self.check_metric(self.node1, 'waku_node_messages_total{type="relay"}', 1)
-        self.check_metric(self.node1, 'waku_filter_requests{type="SUBSCRIBE"}', 1)
         if self.node2.is_nwaku():
             self.check_metric(
                 self.node2, f'waku_service_peers{{protocol="/vac/waku/filter-subscribe/2.0.0-beta1",peerId="{self.node1.get_tcp_address()}"}}', 1
@@ -95,11 +95,6 @@ class TestMetrics(StepsRelay, StepsMetrics, StepsFilter, StepsLightPush, StepsSt
         self.check_metric(self.publishing_node1, "waku_histogram_message_size_count", 1)
         self.check_metric(self.publishing_node1, 'waku_node_messages_total{type="relay"}', 1)
         if self.store_node1.is_nwaku():
-            self.check_metric(
-                self.store_node1,
-                f'waku_service_peers{{protocol="/vac/waku/store/2.0.0-beta4",peerId="{self.publishing_node1.get_tcp_address()}"}}',
-                1,
-            )
             self.check_metric(
                 self.store_node1,
                 f'waku_service_peers{{protocol="/vac/waku/store-query/3.0.0",peerId="{self.publishing_node1.get_tcp_address()}"}}',

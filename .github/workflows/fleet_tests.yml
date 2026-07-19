@@ -1,0 +1,37 @@
+name: Waku Fleet Tests
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      node1:
+        required: true
+        description: "Node that usually publishes messages. Used for all tests"
+        type: string
+        default: "wakuorg/nwaku:v0.38.1"
+      node2:
+        required: true
+        description: "Node that usually queries for published messages. Used for all tests"
+        type: string
+        default: "wakuorg/nwaku:v0.38.1"
+      additional_nodes:
+        required: false
+        description: "Additional optional nodes used in e2e tests, separated by ,"
+        type: string
+        default: "wakuorg/nwaku:v0.38.1,wakuorg/nwaku:v0.38.1,wakuorg/nwaku:v0.38.1"
+
+jobs:
+  test-common:
+    uses: ./.github/workflows/test_common.yml
+    secrets: inherit
+    with:
+      node1: ${{ inputs.node1 || 'wakuorg/nwaku:v0.38.1' }}
+      node2: ${{ inputs.node2 || 'wakuorg/nwaku:v0.38.1' }}
+      additional_nodes: ${{ inputs.additional_nodes || 'wakuorg/nwaku:v0.38.1,wakuorg/nwaku:v0.38.1,wakuorg/nwaku:v0.38.1' }}
+      fleet_tests: true
+      caller: "fleet"
