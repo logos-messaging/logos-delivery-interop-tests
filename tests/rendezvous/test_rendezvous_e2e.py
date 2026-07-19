@@ -1,39 +1,43 @@
-import pytest
-from src.env_vars import NODE_1, NODE_2, STRESS_ENABLED
-from src.libs.common import delay
 from src.libs.custom_logger import get_custom_logger
-from src.node.waku_node import WakuNode
-from src.steps.filter import StepsFilter
-from src.steps.light_push import StepsLightPush
-from src.steps.relay import StepsRelay
-from src.steps.store import StepsStore
+from src.steps.rendezvous import StepsRendezvous
 
 logger = get_custom_logger(__name__)
 
 """
+End-to-end coverage for the rendezvous discovery protocol.
 
-This tests will cover rendezvous protocol e2e scenarios 
-
+Topology is a star centered on a rendezvous point. Mix-enabled registrant nodes
+advertise themselves on the point; a separate discovering node connected only to
+the point must learn about the registrants through rendezvous alone (discv5 and
+peer-exchange are disabled everywhere).
 """
 
 
-class TestE2E(StepsRelay):
-    @pytest.fixture(scope="function", autouse=True)
-    def nodes(self):
-        self.node1 = WakuNode(NODE_2, f"node1_{self.test_id}")
-        self.node2 = WakuNode(NODE_1, f"node2_{self.test_id}")
-        self.node3 = WakuNode(NODE_2, f"node3_{self.test_id}")
+class TestRendezvousE2E(StepsRendezvous):
+    def test_discover_mix_peers_via_rendezvous(self):
+        self.setup_rendezvous_point()
+        registrant_a = self.setup_registrant_node("registrant_a")
+        registrant_b = self.setup_registrant_node("registrant_b")
+        self.wait_for_autoconnection([registrant_a, registrant_b])
 
-    def test_basic_rendezvous_register_and_discover(self):
-        self.node1.start(rendezvous="true", relay="true")
-        delay(5)
-        self.node2.start(rendezvous="true", relay="true", discv5_bootstrap_node=self.node1.get_enr_uri())
-        self.node1.set_relay_subscriptions([self.test_pubsub_topic])
-        self.node2.set_relay_subscriptions([self.test_pubsub_topic])
-        self.wait_for_autoconnection([self.node1, self.node2], hard_wait=30)
-        self.node3.start(rendezvous="true", relay="true")
-        self.node2.add_peers([self.node3.get_multiaddr_with_id()])
-        delay(60)
-        discovered = self.node3.get_peers()
-        logger.debug(f"Node3 peers count is : {len(discovered)}")
-        assert len(discovered) > 0, "No peers discovered via Rendezvous"
+        discoverer = self.setup_discovering_node("discoverer")
+        self.wait_for_autoconnection([discoverer])
+
+        expected_ids = [registrant_a.get_id(), registrant_b.get_id()]
+        discovered_ids = self.wait_for_rendezvous_discovery(discoverer, expected_ids)
+
+        assert set(expected_ids) <= discovered_ids, "Registrant peers were not discovered via rendezvous"
+
+    def test_discover_mix_peer_that_joins_late(self):
+        self.setup_rendezvous_point()
+        discoverer = self.setup_discovering_node("discoverer")
+        self.wait_for_autoconnection([discoverer])
+
+        # Registrant appears only after the discoverer is already running, so it
+        # can only be found through a later rendezvous discovery cycle.
+        late_registrant = self.setup_registrant_node("late_registrant")
+        self.wait_for_autoconnection([late_registrant])
+
+        discovered_ids = self.wait_for_rendezvous_discovery(discoverer, [late_registrant.get_id()])
+
+        assert late_registrant.get_id() in discovered_ids, "Late-joining mix peer was not discovered via rendezvous"
