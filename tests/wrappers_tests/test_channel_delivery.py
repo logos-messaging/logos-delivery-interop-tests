@@ -2,6 +2,7 @@ import base64
 import time
 
 from src.libs.common import delay, to_base64
+from src.node.subprocess_node import ChannelSenderProcess
 from src.node.wrappers_manager import WrapperManager
 from src.node.wrapper_helpers import (
     EventCollector,
@@ -60,8 +61,12 @@ class TestChannelDelivery:
     def test_rc05_basic_a_to_b_delivery(self, node_config):
         """RC05: A's channel send is delivered to B on the matching channel + topic.
 
-        Relay-only (store + reliability off); only B subscribes. B must fire a
-        channel_message_received event carrying the payload intact and tagged with A's senderId.
+        Relay-only (store + reliability off). B must fire a channel_message_received
+        event carrying the payload intact and tagged with A's senderId.
+
+        A runs in a separate, storage-isolated process: co-located nodes share the
+        library's SDS Persistency singleton and B drops A's own message as a
+        duplicate. See src/node/subprocess_node.py.
         """
         payload_b64 = to_base64("rc05 hello from A")
 
@@ -84,30 +89,21 @@ class TestChannelDelivery:
                 "staticnodes": [get_node_multiaddr(receiver)],
                 "portsShift": 1,
             }
-            sender_collector = EventCollector()
-            sender_result = WrapperManager.create_and_start(config=sender_config, event_cb=sender_collector.event_callback)
-            assert sender_result.is_ok(), f"Failed to start sender: {sender_result.err()}"
 
-            with sender_result.ok_value as sender:
-                assert wait_for_connected(sender_collector) is not None, "Sender did not reach Connected/PartiallyConnected state"
+            subscribe_result = receiver.subscribe_content_topic(CONTENT_TOPIC)
+            assert subscribe_result.is_ok(), f"receiver subscribe_content_topic failed: {subscribe_result.err()}"
 
-                subscribe_result = receiver.subscribe_content_topic(CONTENT_TOPIC)
-                assert subscribe_result.is_ok(), f"receiver subscribe_content_topic failed: {subscribe_result.err()}"
-                subscribe_result = sender.subscribe_content_topic(CONTENT_TOPIC)
-                assert subscribe_result.is_ok(), f"sender subscribe_content_topic failed: {subscribe_result.err()}"
+            receiver_create = receiver.channel_create(CHANNEL_ID, CONTENT_TOPIC, SENDER_B)
+            assert receiver_create.is_ok(), f"receiver channel_create failed: {receiver_create.err()}"
 
-                receiver_create = receiver.channel_create(CHANNEL_ID, CONTENT_TOPIC, SENDER_B)
-                assert receiver_create.is_ok(), f"receiver channel_create failed: {receiver_create.err()}"
-
-                sender_create = sender.channel_create(CHANNEL_ID, CONTENT_TOPIC, SENDER_A)
-                assert sender_create.is_ok(), f"sender channel_create failed: {sender_create.err()}"
-
-                delay(MESH_SETTLE_S)
-
-                send_result = sender.channel_send(CHANNEL_ID, create_message_bindings(payload=payload_b64))
-                assert send_result.is_ok(), f"channel_send failed: {send_result.err()}"
-                assert send_result.ok_value, f"channel_send returned an empty handle: {send_result.ok_value!r}"
-
+            with ChannelSenderProcess(
+                sender_config,
+                content_topic=CONTENT_TOPIC,
+                channel_id=CHANNEL_ID,
+                sender_id=SENDER_A,
+                payload_b64=payload_b64,
+                settle_s=MESH_SETTLE_S,
+            ):
                 received = wait_for_channel_received(receiver_collector, CHANNEL_ID, DELIVERY_TIMEOUT_S)
                 assert received is not None, (
                     f"No {CHANNEL_RECEIVED_EVENT} on B for {CHANNEL_ID} within {DELIVERY_TIMEOUT_S}s. "
