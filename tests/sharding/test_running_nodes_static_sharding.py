@@ -57,7 +57,8 @@ class TestRunningNodesStaticSharding(StepsSharding):
             assert f"Peer NODE_2:{NODE_2} couldn't find any messages" in str(ex)
 
     def test_start_node_with_50_pubsub_topics(self):
-        topics = ["/waku/2/rs/2/" + str(i) for i in range(50)]
+        # cluster 2 is the reserved logos.dev default cluster; use the safe cluster 199
+        topics = ["/waku/2/rs/199/" + str(i) for i in range(50)]
         self.setup_main_relay_nodes(pubsub_topic=topics)
         self.subscribe_main_relay_nodes(pubsub_topics=topics)
         for pubsub_topic in topics:
