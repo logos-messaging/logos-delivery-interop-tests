@@ -209,6 +209,16 @@ jobs:
             --reruns 2 \
             --junit-xml=wrapper-results-corner-cases.xml
 
+      - name: Run wrapper tests - channel delivery
+        continue-on-error: true
+        env:
+          PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
+        run: |
+          pytest tests/wrappers_tests/test_channel_delivery.py \
+            -m "not docker_required" \
+            --reruns 2 \
+            --junit-xml=wrapper-results-channel-delivery.xml
+
       - name: Test Report
         if: always()
         uses: dorny/test-reporter@95058abb17504553158e70e2c058fe1fda4392c2

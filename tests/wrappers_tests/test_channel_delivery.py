@@ -22,6 +22,9 @@ MESSAGE_RECEIVED_EVENT = "message_received"
 RC06_CHANNEL_ID = "rc06-channel"
 RC06_CONTENT_TOPIC = "/test/1/rc06-channel/proto"
 
+CLOSED_CHANNEL_ID = "rc-closed-channel"
+CLOSED_CONTENT_TOPIC = "/test/1/rc-closed-channel/proto"
+
 MESH_SETTLE_S = 10
 DELIVERY_TIMEOUT_S = 50.0
 # Once the unmarked message has provably reached B's messaging layer, the
@@ -180,3 +183,59 @@ class TestChannelDelivery:
                 # The channel ingress filter drops the unmarked message: no channel event.
                 leaked = wait_for_channel_received(receiver_collector, RC06_CHANNEL_ID, NO_CHANNEL_DELIVERY_WINDOW_S)
                 assert leaked is None, f"an unmarked message must not surface as a {CHANNEL_RECEIVED_EVENT}; got: {leaked!r}"
+
+    def test_receive_after_close_emits_no_channel_event(self, node_config):
+        """A closed channel must not deliver: B closes its channel, then A sends a
+        valid channel message on the same channel + content topic.
+
+        B stays subscribed to the content topic, so B's messaging layer still
+        surfaces the message (message_received), proving it arrived, but the
+        closed channel must not fire channel_message_received.
+        """
+        payload_b64 = to_base64("message for a closed channel")
+
+        node_config.update(
+            {
+                "relay": True,
+                "store": False,
+                "reliabilityEnabled": False,
+                "numShardsInNetwork": 1,
+            }
+        )
+
+        receiver_collector = EventCollector()
+        receiver_result = WrapperManager.create_and_start(config=node_config, event_cb=receiver_collector.event_callback)
+        assert receiver_result.is_ok(), f"Failed to start receiver: {receiver_result.err()}"
+
+        with receiver_result.ok_value as receiver:
+            sender_config = {
+                **node_config,
+                "staticnodes": [get_node_multiaddr(receiver)],
+                "portsShift": 1,
+            }
+
+            subscribe_result = receiver.subscribe_content_topic(CLOSED_CONTENT_TOPIC)
+            assert subscribe_result.is_ok(), f"receiver subscribe_content_topic failed: {subscribe_result.err()}"
+
+            receiver_create = receiver.channel_create(CLOSED_CHANNEL_ID, CLOSED_CONTENT_TOPIC, SENDER_B)
+            assert receiver_create.is_ok(), f"receiver channel_create failed: {receiver_create.err()}"
+
+            receiver_close = receiver.channel_close(CLOSED_CHANNEL_ID)
+            assert receiver_close.is_ok(), f"receiver channel_close failed: {receiver_close.err()}"
+
+            with ChannelSenderProcess(
+                sender_config,
+                content_topic=CLOSED_CONTENT_TOPIC,
+                channel_id=CLOSED_CHANNEL_ID,
+                sender_id=SENDER_A,
+                payload_b64=payload_b64,
+                settle_s=MESH_SETTLE_S,
+            ):
+                arrived = wait_for_message_received(receiver_collector, CLOSED_CONTENT_TOPIC, DELIVERY_TIMEOUT_S)
+                assert arrived is not None, (
+                    f"receiver never saw a {MESSAGE_RECEIVED_EVENT} for {CLOSED_CONTENT_TOPIC} within {DELIVERY_TIMEOUT_S}s; "
+                    f"cannot conclude the closed channel stayed silent. Collected events: {receiver_collector.snapshot()}"
+                )
+
+                leaked = wait_for_channel_received(receiver_collector, CLOSED_CHANNEL_ID, NO_CHANNEL_DELIVERY_WINDOW_S)
+                assert leaked is None, f"a closed channel must not emit {CHANNEL_RECEIVED_EVENT}; got: {leaked!r}"
