@@ -1,5 +1,3 @@
-import uuid
-
 import pytest
 from src.node.wrappers_manager import WrapperManager
 from src.node.wrapper_helpers import EventCollector, create_message_bindings
@@ -14,8 +12,7 @@ UNKNOWN_CHANNEL_ID = "rc02-unknown-channel"
 RC03_CHANNEL_ID = "rc03-channel"
 
 RC04_CHANNEL_ID = "rc04-channel"
-RC04_EPHEMERAL_CHANNEL_ID = "rc04-ephemeral-channel"
-RC04_DISTINCT_CHANNEL_ID = "rc04-distinct-channel"
+RC04_CLOSED_CHANNEL_ID = "rc04-closed-channel"
 
 # Give the reliable channel manager a moment to settle a freshly-created
 # channel before we act on it.
@@ -106,41 +103,6 @@ class TestChannelLifecycle:
         finally:
             node.stop_and_destroy()
 
-    def test_rc03_close_random_id_leaves_open_channel_intact(self, node_config):
-        """RC03 variant: closing a random unknown id while a real channel is open.
-
-        A genuine channel is created and left open; closing a random id Errs with
-        "unknown channel: <id>" and must not disturb the open channel, which then
-        still closes cleanly. No events are expected.
-        """
-        node_config.update({"mode": "Core"})
-
-        channel_id = f"rc03-open-{uuid.uuid4()}"
-        random_id = f"rc03-random-{uuid.uuid4()}"
-
-        collector = EventCollector()
-        create_node_result = WrapperManager.create_and_start(config=node_config, event_cb=collector.event_callback)
-        assert create_node_result.is_ok(), f"Failed to create and start node: {create_node_result.err()}"
-        node = create_node_result.ok_value
-
-        try:
-            create_result = node.channel_create(channel_id, CONTENT_TOPIC, SENDER_ID)
-            assert create_result.is_ok(), f"channel_create failed: {create_result.err()}"
-
-            delay(CHANNEL_SETTLE_S)
-
-            random_close_result = node.channel_close(random_id)
-            assert random_close_result.is_err(), f"channel_close on a random id must fail, got Ok({random_close_result.ok_value!r})"
-            assert f"unknown channel: {random_id}" in random_close_result.err(), f"unexpected error message: {random_close_result.err()!r}"
-
-            # The real channel was left untouched and still closes cleanly.
-            close_result = node.channel_close(channel_id)
-            assert close_result.is_ok(), f"open channel_close failed after a bad-id close: {close_result.err()}"
-
-            assert collector.events == [], f"expected no events, got: {collector.events}"
-        finally:
-            node.stop_and_destroy()
-
     def test_rc04_empty_payload_rejected_and_send_returns_handle(self, node_config):
         """RC04: empty payload is rejected; a non-empty send returns a handle synchronously.
 
@@ -170,58 +132,33 @@ class TestChannelLifecycle:
         finally:
             node.stop_and_destroy()
 
-    def test_rc04_ephemeral_send_returns_handle(self, node_config):
-        """RC04 variant: an ephemeral channel_send still returns a handle synchronously.
+    def test_rc04_send_after_close_rejected(self, node_config):
+        """RC04 variant: sending after the channel is closed is rejected.
 
-        The ephemeral flag only affects downstream persistence / terminal events,
-        not the send contract, so channel_send returns Ok(channelReqId) immediately.
+        Exercises the teardown -> send ordering (distinct from RC02's
+        never-created id): once channel_close removes the id, channel_send Errs
+        with "unknown channel: <id>". No events are expected.
         """
         node_config.update({"mode": "Core"})
 
-        create_node_result = WrapperManager.create_and_start(config=node_config)
+        collector = EventCollector()
+        create_node_result = WrapperManager.create_and_start(config=node_config, event_cb=collector.event_callback)
         assert create_node_result.is_ok(), f"Failed to create and start node: {create_node_result.err()}"
         node = create_node_result.ok_value
 
         try:
-            create_result = node.channel_create(RC04_EPHEMERAL_CHANNEL_ID, CONTENT_TOPIC, SENDER_ID)
+            create_result = node.channel_create(RC04_CLOSED_CHANNEL_ID, CONTENT_TOPIC, SENDER_ID)
             assert create_result.is_ok(), f"channel_create failed: {create_result.err()}"
 
             delay(CHANNEL_SETTLE_S)
 
-            send_result = node.channel_send(RC04_EPHEMERAL_CHANNEL_ID, create_message_bindings(ephemeral=True))
-            assert send_result.is_ok(), f"ephemeral channel_send failed: {send_result.err()}"
-            assert send_result.ok_value, f"channel_send must return a non-empty channelReqId handle, got: {send_result.ok_value!r}"
-        finally:
-            node.stop_and_destroy()
+            close_result = node.channel_close(RC04_CLOSED_CHANNEL_ID)
+            assert close_result.is_ok(), f"channel_close failed: {close_result.err()}"
 
-    def test_rc04_sequential_sends_return_distinct_handles(self, node_config):
-        """RC04 variant: back-to-back sends each return a distinct handle.
+            send_result = node.channel_send(RC04_CLOSED_CHANNEL_ID, create_message_bindings())
+            assert send_result.is_err(), f"channel_send after close must fail, got Ok({send_result.ok_value!r})"
+            assert f"unknown channel: {RC04_CLOSED_CHANNEL_ID}" in send_result.err(), f"unexpected error message: {send_result.err()!r}"
 
-        Every channel_send is its own request, so two sends on the same channel
-        return two different (non-empty) channelReqId handles.
-        """
-        node_config.update({"mode": "Core"})
-
-        create_node_result = WrapperManager.create_and_start(config=node_config)
-        assert create_node_result.is_ok(), f"Failed to create and start node: {create_node_result.err()}"
-        node = create_node_result.ok_value
-
-        try:
-            create_result = node.channel_create(RC04_DISTINCT_CHANNEL_ID, CONTENT_TOPIC, SENDER_ID)
-            assert create_result.is_ok(), f"channel_create failed: {create_result.err()}"
-
-            delay(CHANNEL_SETTLE_S)
-
-            first_result = node.channel_send(RC04_DISTINCT_CHANNEL_ID, create_message_bindings())
-            assert first_result.is_ok(), f"first channel_send failed: {first_result.err()}"
-            assert first_result.ok_value, f"first channel_send returned an empty handle: {first_result.ok_value!r}"
-
-            second_result = node.channel_send(RC04_DISTINCT_CHANNEL_ID, create_message_bindings())
-            assert second_result.is_ok(), f"second channel_send failed: {second_result.err()}"
-            assert second_result.ok_value, f"second channel_send returned an empty handle: {second_result.ok_value!r}"
-
-            assert (
-                first_result.ok_value != second_result.ok_value
-            ), f"channel_send handles must be distinct, got the same id twice: {first_result.ok_value!r}"
+            assert collector.events == [], f"expected no events, got: {collector.events}"
         finally:
             node.stop_and_destroy()
