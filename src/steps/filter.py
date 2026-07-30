@@ -18,7 +18,7 @@ logger = get_custom_logger(__name__)
 class StepsFilter(StepsCommon):
     test_pubsub_topic = VALID_PUBSUB_TOPICS[1]
     second_pubsub_topic = VALID_PUBSUB_TOPICS[2]
-    another_cluster_pubsub_topic = "/waku/2/rs/2/2"
+    another_cluster_pubsub_topic = "/waku/2/rs/199/2"
     test_content_topic = "/test/1/waku-filter/proto"
     second_content_topic = "/test/2/waku-filter/proto"
     test_payload = "Filter works!!"
