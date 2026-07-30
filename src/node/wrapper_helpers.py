@@ -13,6 +13,7 @@ DEFAULT_PAYLOAD = to_base64("test payload")
 EVENT_PROPAGATED = "message_propagated"
 EVENT_SENT = "message_sent"
 EVENT_ERROR = "message_error"
+EVENT_CHANNEL_RECEIVED = "channel_message_received"
 
 # MaxTimeInCache from send_service.nim.
 MAX_TIME_IN_CACHE_S = 60.0

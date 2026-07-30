@@ -26,6 +26,16 @@ RC07_CHANNEL_ID = "rc07-channel"
 RC07_CONTENT_TOPIC = "/test/1/rc07-channel/proto"
 RC07_OTHER_CONTENT_TOPIC = "/test/1/rc07-other/proto"
 
+RC08_CHANNEL_ID = "rc08-channel"
+RC08_CONTENT_TOPIC = "/test/1/rc08-channel/proto"
+# A reply only references the message it answers once that message has landed in
+# the replier's SDS history. Replying immediately races that write and produces a
+# reply with an empty causal history, which asserts nothing about ordering.
+RC08_CAUSAL_SETTLE_S = 5
+
+RC09_CHANNEL_ID = "rc09-channel"
+RC09_CONTENT_TOPIC = "/test/1/rc09-channel/proto"
+
 CLOSED_CHANNEL_ID = "rc-closed-channel"
 CLOSED_CONTENT_TOPIC = "/test/1/rc-closed-channel/proto"
 
@@ -35,6 +45,13 @@ DELIVERY_TIMEOUT_S = 50.0
 # channel ingress decision has already been made on that same event, so this is
 # just a short grace window to catch any late channel_message_received.
 NO_CHANNEL_DELIVERY_WINDOW_S = 10.0
+
+# A never gets a peer to dial before it sends, so there is no mesh to settle.
+RC09_SENDER_SETTLE_S = 2
+# DefaultRepairTMin in nim-sds: a repair request only becomes eligible to ride
+# on an outgoing message once T_min has passed since the dependency went missing.
+RC09_REPAIR_REQUEST_DELAY_S = 35
+RC09_RECOVERY_TIMEOUT_S = 90.0
 
 
 def wait_for_channel_received(collector, channel_id, timeout_s, poll_interval_s=0.5):
@@ -46,6 +63,25 @@ def wait_for_channel_received(collector, channel_id, timeout_s, poll_interval_s=
         if time.monotonic() >= deadline:
             return None
         time.sleep(poll_interval_s)
+
+
+def wait_for_channel_received_count(collector, channel_id, count, timeout_s, poll_interval_s=0.5):
+    """Channel events for `channel_id`, oldest first; waits for `count` of them.
+
+    Returns whatever has arrived when the timeout expires, so a caller can
+    assert on both the order and the shortfall.
+    """
+    deadline = time.monotonic() + timeout_s
+    while True:
+        received = [e for e in collector.snapshot() if e.get("eventType") == CHANNEL_RECEIVED_EVENT and e.get("channelId") == channel_id]
+        if len(received) >= count or time.monotonic() >= deadline:
+            return received
+        time.sleep(poll_interval_s)
+
+
+def channel_payloads(events):
+    """Decoded payloads of channel events, oldest first."""
+    return [base64.b64decode(event["payload"]) for event in events]
 
 
 def wait_for_message_received(collector, content_topic, timeout_s, poll_interval_s=0.5):
@@ -241,6 +277,136 @@ class TestChannelDelivery:
 
                 leaked = wait_for_channel_received(receiver_collector, RC07_CHANNEL_ID, NO_CHANNEL_DELIVERY_WINDOW_S)
                 assert leaked is None, f"a message on a foreign content topic must not surface as a {CHANNEL_RECEIVED_EVENT}; got: {leaked!r}"
+
+    def test_rc08_bidirectional_exchange_preserves_causal_order(self, node_config):
+        """RC08: A and B exchange interleaved messages on one channel, and each
+        side delivers the other's via channel_message_received in causal order.
+
+        A sends m1; B replies m2 only once m1 has landed, so m2's SDS causal
+        history references m1; A then sends m3, which in turn references m2. B
+        must deliver m1 then m3, and A must deliver m2.
+        """
+        m1, m2, m3 = "rc08 from A", "rc08 reply from B", "rc08 follow-up from A"
+
+        node_config.update(
+            {
+                "relay": True,
+                "store": False,
+                "reliabilityEnabled": False,
+                "numShardsInNetwork": 1,
+            }
+        )
+
+        receiver_collector = EventCollector()
+        receiver_result = WrapperManager.create_and_start(config=node_config, event_cb=receiver_collector.event_callback)
+        assert receiver_result.is_ok(), f"Failed to start receiver: {receiver_result.err()}"
+
+        with receiver_result.ok_value as receiver:
+            sender_config = {
+                **node_config,
+                "staticnodes": [get_node_multiaddr(receiver)],
+                "portsShift": 1,
+            }
+
+            subscribe_result = receiver.subscribe_content_topic(RC08_CONTENT_TOPIC)
+            assert subscribe_result.is_ok(), f"receiver subscribe_content_topic failed: {subscribe_result.err()}"
+
+            receiver_create = receiver.channel_create(RC08_CHANNEL_ID, RC08_CONTENT_TOPIC, SENDER_B)
+            assert receiver_create.is_ok(), f"receiver channel_create failed: {receiver_create.err()}"
+
+            with ChannelSenderProcess(
+                sender_config,
+                content_topic=RC08_CONTENT_TOPIC,
+                channel_id=RC08_CHANNEL_ID,
+                sender_id=SENDER_A,
+                payload_b64=to_base64(m1),
+                settle_s=MESH_SETTLE_S,
+            ) as sender:
+                first = wait_for_channel_received(receiver_collector, RC08_CHANNEL_ID, DELIVERY_TIMEOUT_S)
+                assert first is not None, (
+                    f"B never saw A's first message within {DELIVERY_TIMEOUT_S}s; "
+                    f"nothing to reply to. Collected events: {receiver_collector.snapshot()}"
+                )
+
+                # B replies only now, so m2 carries m1 in its causal history.
+                delay(RC08_CAUSAL_SETTLE_S)
+                reply_result = receiver.channel_send(RC08_CHANNEL_ID, create_message_bindings(payload=to_base64(m2)))
+                assert reply_result.is_ok(), f"receiver channel_send failed: {reply_result.err()}"
+
+                delivered_to_a = sender.wait_for_received(1, DELIVERY_TIMEOUT_S)
+                assert channel_payloads(delivered_to_a) == [m2.encode()], f"A must deliver B's reply; got {channel_payloads(delivered_to_a)!r}"
+
+                sender.send(to_base64(m3))
+
+                delivered_to_b = wait_for_channel_received_count(receiver_collector, RC08_CHANNEL_ID, 2, DELIVERY_TIMEOUT_S)
+                assert channel_payloads(delivered_to_b) == [m1.encode(), m3.encode()], (
+                    f"B must deliver A's messages in causal order; got {channel_payloads(delivered_to_b)!r}. "
+                    f"Collected events: {receiver_collector.snapshot()}"
+                )
+
+    def test_rc09_offline_receiver_recovers_via_sds_repair(self, node_config):
+        """RC09: A sends while B is not up yet; once B joins it still ends up
+        delivering the missed message, via SDS-R repair.
+
+        Nothing re-publishes a message on its own — the unacked-buffer sweep only
+        counts attempts and never re-emits, and the periodic-sync callback is
+        unwired — so recovery runs through SDS-R: B learns m1 exists from m2's
+        causal history and parks m2, attaches a repair request to its own next
+        send once T_min has passed, and A answers by rebroadcasting m1, which
+        releases the parked m2. B must end up with m1 then m2.
+        """
+        m1, m2, m3 = "rc09 sent while B is away", "rc09 sent after B joins", "rc09 from B"
+
+        node_config.update(
+            {
+                "relay": True,
+                "store": False,
+                "reliabilityEnabled": False,
+                "numShardsInNetwork": 1,
+            }
+        )
+        # A comes up first with nobody to dial; B joins later and dials A.
+        sender_config = {**node_config, "portsShift": 1}
+
+        with ChannelSenderProcess(
+            sender_config,
+            content_topic=RC09_CONTENT_TOPIC,
+            channel_id=RC09_CHANNEL_ID,
+            sender_id=SENDER_A,
+            payload_b64=to_base64(m1),
+            settle_s=RC09_SENDER_SETTLE_S,
+        ) as sender:
+            receiver_collector = EventCollector()
+            receiver_config = {**node_config, "staticnodes": [sender.multiaddr]}
+            receiver_result = WrapperManager.create_and_start(config=receiver_config, event_cb=receiver_collector.event_callback)
+            assert receiver_result.is_ok(), f"Failed to start receiver: {receiver_result.err()}"
+
+            with receiver_result.ok_value as receiver:
+                assert wait_for_connected(receiver_collector) is not None, "Receiver did not reach Connected/PartiallyConnected state"
+
+                subscribe_result = receiver.subscribe_content_topic(RC09_CONTENT_TOPIC)
+                assert subscribe_result.is_ok(), f"receiver subscribe_content_topic failed: {subscribe_result.err()}"
+
+                receiver_create = receiver.channel_create(RC09_CHANNEL_ID, RC09_CONTENT_TOPIC, SENDER_B)
+                assert receiver_create.is_ok(), f"receiver channel_create failed: {receiver_create.err()}"
+
+                delay(MESH_SETTLE_S)
+
+                # m2 is B's only clue that it missed m1: SDS parks m2 and books a
+                # repair request for the dependency it cannot resolve.
+                sender.send(to_base64(m2))
+
+                delay(RC09_REPAIR_REQUEST_DELAY_S)
+
+                # The request only travels attached to B's own outgoing traffic.
+                repair_carrier = receiver.channel_send(RC09_CHANNEL_ID, create_message_bindings(payload=to_base64(m3)))
+                assert repair_carrier.is_ok(), f"receiver channel_send failed: {repair_carrier.err()}"
+
+                recovered = wait_for_channel_received_count(receiver_collector, RC09_CHANNEL_ID, 2, RC09_RECOVERY_TIMEOUT_S)
+                assert channel_payloads(recovered) == [m1.encode(), m2.encode()], (
+                    f"B must recover the message it missed and release the parked one, in causal order; "
+                    f"got {channel_payloads(recovered)!r}. Collected events: {receiver_collector.snapshot()}"
+                )
 
     def test_receive_after_close_emits_no_channel_event(self, node_config):
         """A closed channel must not deliver: B closes its channel, then A sends a

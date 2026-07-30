@@ -4,9 +4,10 @@ import multiprocessing as mp
 import os
 import queue
 import tempfile
+import time
 
 from src.libs.common import delay
-from src.node.wrapper_helpers import EventCollector, create_message_bindings, wait_for_connected
+from src.node.wrapper_helpers import EVENT_CHANNEL_RECEIVED, EventCollector, create_message_bindings, get_node_multiaddr, wait_for_connected
 from src.node.wrappers_manager import WrapperManager
 
 # `spawn`, not `fork`: the child loads its own liblogosdelivery, so it gets an
@@ -16,9 +17,21 @@ _SPAWN = mp.get_context("spawn")
 
 SENDER_READY_TIMEOUT_S = 120.0
 SENDER_STOP_TIMEOUT_S = 30.0
+SEND_ACK_TIMEOUT_S = 60.0
+_SERVE_POLL_S = 0.2
 
 
-def _sender_worker(config, content_topic, channel_id, sender_id, payload_b64, settle_s, result_q, stop_evt):
+def _send(sender, channel_id, payload_b64):
+    """Sends on the channel; returns None on success, an error string otherwise."""
+    send_result = sender.channel_send(channel_id, create_message_bindings(payload=payload_b64))
+    if send_result.is_err():
+        return f"sender channel_send failed: {send_result.err()}"
+    if not send_result.ok_value:
+        return f"sender channel_send returned an empty handle: {send_result.ok_value!r}"
+    return None
+
+
+def _sender_worker(config, content_topic, channel_id, sender_id, payload_b64, settle_s, result_q, cmd_q, evt_q, stop_evt):
     # chdir before the node starts so the library's default "./data" store
     # resolves to a private path — separate globals still share ./data/sds.db.
     os.chdir(tempfile.mkdtemp(prefix="rc_sender_"))
@@ -30,7 +43,9 @@ def _sender_worker(config, content_topic, channel_id, sender_id, payload_b64, se
         return
 
     with started.ok_value as sender:
-        if wait_for_connected(collector) is None:
+        # Without staticnodes this peer is the first node up and has nobody to
+        # dial: the node under test joins later and dials `multiaddr` instead.
+        if config.get("staticnodes") and wait_for_connected(collector) is None:
             result_q.put("sender did not reach Connected/PartiallyConnected state")
             return
 
@@ -46,38 +61,58 @@ def _sender_worker(config, content_topic, channel_id, sender_id, payload_b64, se
 
         delay(settle_s)
 
-        send_result = sender.channel_send(channel_id, create_message_bindings(payload=payload_b64))
-        if send_result.is_err():
-            result_q.put(f"sender channel_send failed: {send_result.err()}")
-            return
-        if not send_result.ok_value:
-            result_q.put(f"sender channel_send returned an empty handle: {send_result.ok_value!r}")
-            return
+        if payload_b64 is not None:
+            outcome = _send(sender, channel_id, payload_b64)
+            if outcome is not None:
+                result_q.put(outcome)
+                return
 
-        # Signal the message is on the wire, then stay alive so the relay
-        # connection persists while it propagates to the receiver.
-        result_q.put(None)
-        stop_evt.wait()
+        # Signal readiness (and how to dial us), then stay alive so the relay
+        # connection persists while messages propagate — and so SDS keeps
+        # answering repair requests for what this peer already sent.
+        result_q.put({"multiaddr": get_node_multiaddr(sender)})
+
+        forwarded = 0
+        while not stop_evt.is_set():
+            received = [e for e in collector.snapshot() if e.get("eventType") == EVENT_CHANNEL_RECEIVED and e.get("channelId") == channel_id]
+            for event in received[forwarded:]:
+                evt_q.put(event)
+            forwarded = len(received)
+
+            try:
+                next_payload = cmd_q.get(timeout=_SERVE_POLL_S)
+            except queue.Empty:
+                continue
+            result_q.put(_send(sender, channel_id, next_payload))
 
 
 class ChannelSenderProcess:
-    """Run a channel sender node in a separate, storage-isolated process.
+    """Run a channel peer node in a separate, storage-isolated process.
 
-    `__enter__` starts the sender and blocks until the message is on the wire
-    (raising on failure/timeout); `__exit__` tears it down. Needed because
-    co-located nodes share the library's process-wide SDS Persistency singleton.
+    `__enter__` starts the peer and blocks until it is ready, including its
+    initial `payload_b64` send when one is given (raising on failure/timeout);
+    `__exit__` tears it down. Needed because co-located nodes share the
+    library's process-wide SDS Persistency singleton.
+
+    `multiaddr` lets the node under test dial this peer when it joins later,
+    `send()` drives further sends, and `wait_for_received()` reports the channel
+    messages this peer itself received.
     """
 
-    def __init__(self, config, *, content_topic, channel_id, sender_id, payload_b64, settle_s):
+    def __init__(self, config, *, content_topic, channel_id, sender_id, payload_b64=None, settle_s):
         self._args = (config, content_topic, channel_id, sender_id, payload_b64, settle_s)
         self._stop_evt = _SPAWN.Event()
         self._result_q = _SPAWN.Queue()
+        self._cmd_q = _SPAWN.Queue()
+        self._evt_q = _SPAWN.Queue()
         self._proc = None
+        self._received = []
+        self.multiaddr = None
 
     def __enter__(self) -> "ChannelSenderProcess":
         self._proc = _SPAWN.Process(
             target=_sender_worker,
-            args=(*self._args, self._result_q, self._stop_evt),
+            args=(*self._args, self._result_q, self._cmd_q, self._evt_q, self._stop_evt),
             daemon=True,
         )
         self._proc.start()
@@ -86,10 +121,31 @@ class ChannelSenderProcess:
         except queue.Empty:
             self.__exit__(None, None, None)
             raise AssertionError(f"sender subprocess did not report readiness within {SENDER_READY_TIMEOUT_S}s")
-        if outcome is not None:
+        if not isinstance(outcome, dict):
             self.__exit__(None, None, None)
             raise AssertionError(outcome)
+        self.multiaddr = outcome["multiaddr"]
         return self
+
+    def send(self, payload_b64) -> None:
+        """Sends another message on the channel, blocking until the peer acks it."""
+        self._cmd_q.put(payload_b64)
+        try:
+            outcome = self._result_q.get(timeout=SEND_ACK_TIMEOUT_S)
+        except queue.Empty:
+            raise AssertionError(f"sender subprocess did not acknowledge a send within {SEND_ACK_TIMEOUT_S}s")
+        if outcome is not None:
+            raise AssertionError(outcome)
+
+    def wait_for_received(self, count, timeout_s) -> list:
+        """Channel messages this peer received, oldest first; waits for `count`."""
+        deadline = time.monotonic() + timeout_s
+        while len(self._received) < count and time.monotonic() < deadline:
+            try:
+                self._received.append(self._evt_q.get(timeout=_SERVE_POLL_S))
+            except queue.Empty:
+                continue
+        return list(self._received)
 
     def __exit__(self, *_) -> None:
         self._stop_evt.set()
