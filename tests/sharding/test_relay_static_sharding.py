@@ -22,8 +22,8 @@ class TestRelayStaticSharding(StepsSharding):
 
     def test_subscribe_and_publish_on_another_shard(self):
         self.setup_main_relay_nodes(pubsub_topic=self.test_pubsub_topic)
-        self.subscribe_main_relay_nodes(pubsub_topics=["/waku/2/rs/2/1"])
-        self.check_published_message_reaches_relay_peer(pubsub_topic="/waku/2/rs/2/1")
+        self.subscribe_main_relay_nodes(pubsub_topics=["/waku/2/rs/199/1"])
+        self.check_published_message_reaches_relay_peer(pubsub_topic="/waku/2/rs/199/1")
         try:
             self.check_published_message_reaches_relay_peer(pubsub_topic=self.test_pubsub_topic)
             if self.node2.is_nwaku():
@@ -36,7 +36,7 @@ class TestRelayStaticSharding(StepsSharding):
     def test_cant_publish_on_not_subscribed_shard(self):
         self.setup_main_relay_nodes(pubsub_topic=self.test_pubsub_topic)
         self.subscribe_main_relay_nodes(pubsub_topics=[self.test_pubsub_topic])
-        self.check_publish_fails_on_not_subscribed_pubsub_topic("/waku/2/rs/2/1")
+        self.check_publish_fails_on_not_subscribed_pubsub_topic("/waku/2/rs/199/1")
 
     def test_subscribe_via_api_to_new_pubsub_topics(self):
         self.setup_main_relay_nodes(pubsub_topic=PUBSUB_TOPICS_SAME_CLUSTER[:1])

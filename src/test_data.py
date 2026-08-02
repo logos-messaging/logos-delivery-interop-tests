@@ -124,8 +124,10 @@ PUBSUB_TOPICS_STORE = [
 INVALID_PUBSUB_TOPICS = ["/test/2/rs/0/1", "/waku/3/rs/0/1", "/waku/2/test/0/1", "/waku/2/rs/3/b", "/waku/2/rs/0"]
 
 PUBSUB_TOPICS_DIFFERENT_CLUSTERS = [
-    "/waku/2/rs/2/0",
-    "/waku/2/rs/2/1",
+    # cluster 2 is the logos.dev default cluster with its own settings, so it is
+    # reserved; use the safe cluster 199 instead.
+    "/waku/2/rs/199/0",
+    "/waku/2/rs/199/1",
     "/waku/2/rs/5/0",
     "/waku/2/rs/5/1",
     "/waku/2/rs/5/999",
