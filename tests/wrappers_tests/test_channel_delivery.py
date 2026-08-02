@@ -48,9 +48,6 @@ NO_CHANNEL_DELIVERY_WINDOW_S = 10.0
 
 # A has no peer to dial before it sends, so no mesh to settle.
 RC09_SENDER_SETTLE_S = 2
-# nim-sds DefaultRepairTMin: a repair request rides on an outgoing message only
-# after T_min has passed.
-RC09_REPAIR_REQUEST_DELAY_S = 35
 RC09_RECOVERY_TIMEOUT_S = 90.0
 
 
@@ -349,18 +346,19 @@ class TestChannelDelivery:
                     f"Collected events: {receiver_collector.snapshot()}"
                 )
 
-    def test_rc09_offline_receiver_recovers_via_sds_repair(self, node_config):
-        """RC09: A sends while B is not up yet; B joins and still delivers the
-        missed message, via SDS-R repair.
+    def test_rc09_late_joining_receiver_still_receives(self, node_config):
+        """RC09: A sends m1 while B is not up yet; B joins and still ends up with
+        both m1 and m2.
 
-        Nothing re-publishes on its own (the unacked sweep only counts attempts,
-        the periodic-sync callback is unwired), so recovery goes: B learns m1
-        exists from m2's causal history and parks m2, rides a repair request on
-        its own next send, A rebroadcasts m1, the parked m2 is released. B must
-        end up with m1 then m2.
+        Recovery here is the send service's relay retry, not SDS: A republishes
+        m1 while it is unacknowledged (within MaxTimeInCache) and it lands as
+        soon as B joins the mesh. SDS-R is not exercised — a repair request only
+        rides out after T_req, a hash in [repairTMin, repairTMax) = [30s, 300s)
+        that logos-delivery does not expose, so it cannot be driven from an E2E
+        test. That path is RC10, and it belongs Nim-side next to runRepairSweep.
         """
         channel_id = unique_channel_id(RC09_CHANNEL_PREFIX)
-        m1, m2, m3 = "rc09 sent while B is away", "rc09 sent after B joins", "rc09 from B"
+        m1, m2 = "rc09 sent while B is away", "rc09 sent after B joins"
 
         node_config.update(
             {
@@ -397,18 +395,11 @@ class TestChannelDelivery:
 
                 delay(MESH_SETTLE_S)
 
-                # m2 is B's only clue it missed m1: SDS parks it and books a repair request.
                 sender.send(to_base64(m2))
-
-                delay(RC09_REPAIR_REQUEST_DELAY_S)
-
-                # The request only travels on B's own outgoing traffic.
-                repair_carrier = receiver.channel_send(channel_id, create_message_bindings(payload=to_base64(m3)))
-                assert repair_carrier.is_ok(), f"receiver channel_send failed: {repair_carrier.err()}"
 
                 recovered = wait_for_channel_received_count(receiver_collector, channel_id, 2, RC09_RECOVERY_TIMEOUT_S)
                 assert channel_payloads(recovered) == [m1.encode(), m2.encode()], (
-                    f"B must recover the message it missed and release the parked one, in causal order; "
+                    f"B must end up with the message sent before it joined, then the one after; "
                     f"got {channel_payloads(recovered)!r}. Collected events: {receiver_collector.snapshot()}"
                 )
 
