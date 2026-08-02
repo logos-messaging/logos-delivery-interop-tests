@@ -43,8 +43,7 @@ def _sender_worker(config, content_topic, channel_id, sender_id, payload_b64, se
         return
 
     with started.ok_value as sender:
-        # Without staticnodes this peer is the first node up and has nobody to
-        # dial: the node under test joins later and dials `multiaddr` instead.
+        # No staticnodes: this peer is first up, the node under test dials it later.
         if config.get("staticnodes") and wait_for_connected(collector) is None:
             result_q.put("sender did not reach Connected/PartiallyConnected state")
             return
@@ -67,9 +66,8 @@ def _sender_worker(config, content_topic, channel_id, sender_id, payload_b64, se
                 result_q.put(outcome)
                 return
 
-        # Signal readiness (and how to dial us), then stay alive so the relay
-        # connection persists while messages propagate — and so SDS keeps
-        # answering repair requests for what this peer already sent.
+        # Signal readiness, then stay alive so the relay connection persists
+        # while messages propagate and SDS answers repair requests.
         result_q.put({"multiaddr": get_node_multiaddr(sender)})
 
         forwarded = 0
@@ -89,14 +87,12 @@ def _sender_worker(config, content_topic, channel_id, sender_id, payload_b64, se
 class ChannelSenderProcess:
     """Run a channel peer node in a separate, storage-isolated process.
 
-    `__enter__` starts the peer and blocks until it is ready, including its
-    initial `payload_b64` send when one is given (raising on failure/timeout);
-    `__exit__` tears it down. Needed because co-located nodes share the
-    library's process-wide SDS Persistency singleton.
+    `__enter__` blocks until the peer is ready, including its initial
+    `payload_b64` send when given; `__exit__` tears it down. Needed because
+    co-located nodes share the library's SDS Persistency singleton.
 
-    `multiaddr` lets the node under test dial this peer when it joins later,
-    `send()` drives further sends, and `wait_for_received()` reports the channel
-    messages this peer itself received.
+    `multiaddr` lets the node under test dial this peer, `send()` drives further
+    sends, `wait_for_received()` reports what this peer received.
     """
 
     def __init__(self, config, *, content_topic, channel_id, sender_id, payload_b64=None, settle_s):

@@ -5,6 +5,7 @@ import json
 import re
 import threading
 import time
+import uuid
 from typing import Optional
 from src.libs.common import to_base64
 
@@ -243,6 +244,15 @@ def enr_udp_port(enr_uri: str) -> int:
         return prefix
     size = prefix - 0x80  # short string: prefix is 0x80 + length
     return int.from_bytes(payload[key + 5 : key + 5 + size], "big")
+
+
+def unique_channel_id(prefix: str) -> str:
+    """A per-run channel id.
+
+    SDS state is persisted per channelId and restored on create, so a fixed id
+    leaks one run's causal history into the next.
+    """
+    return f"{prefix}-{uuid.uuid4().hex[:8]}"
 
 
 def create_message_bindings(**overrides) -> dict:
