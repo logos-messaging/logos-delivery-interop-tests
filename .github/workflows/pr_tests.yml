@@ -35,7 +35,7 @@ jobs:
       github.event.action != 'labeled' ||
       github.event.label.name == 'full-test'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
 
@@ -48,7 +48,7 @@ jobs:
 
       - name: Cache liblogosdelivery.so
         id: cache-lib
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: vendor/logos-delivery-python-bindings/lib/liblogosdelivery.so
           key: ${{ steps.cache-key.outputs.key }}
@@ -117,7 +117,7 @@ jobs:
           ls -l "$BINDINGS_DIR/lib/liblogosdelivery.so"
 
       - name: Upload library artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: liblogosdelivery
           path: vendor/logos-delivery-python-bindings/lib/liblogosdelivery.so
@@ -132,11 +132,11 @@ jobs:
       github.event_name != 'push' &&
       (github.event.action != 'labeled' || github.event.label.name == 'full-test')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: "pip"
@@ -144,7 +144,7 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: Download liblogosdelivery.so
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: liblogosdelivery
           path: vendor/logos-delivery-python-bindings/lib/
@@ -221,7 +221,7 @@ jobs:
 
       - name: Test Report
         if: always()
-        uses: dorny/test-reporter@95058abb17504553158e70e2c058fe1fda4392c2
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
         with:
           name: Wrapper Test Results
           path: wrapper-results-*.xml
@@ -242,11 +242,11 @@ jobs:
       ADDITIONAL_NODES: "wakuorg/nwaku:latest,wakuorg/nwaku:latest,wakuorg/nwaku:latest"
       RLN_CREDENTIALS: ${{ secrets.RLN_CREDENTIALS }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: "pip"
@@ -254,7 +254,7 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: Download liblogosdelivery.so
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: liblogosdelivery
           path: vendor/logos-delivery-python-bindings/lib/
@@ -273,7 +273,7 @@ jobs:
 
       - name: Test Report
         if: always()
-        uses: dorny/test-reporter@95058abb17504553158e70e2c058fe1fda4392c2
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
         with:
           name: Smoke Test Results
           path: smoke-results.xml

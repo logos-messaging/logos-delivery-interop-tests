@@ -82,14 +82,14 @@ jobs:
       jobResult_17: ${{ steps.set_result.outputs.JOB_RESULT_17 }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
 
       - name: Remove unwanted software
         uses: ./.github/actions/prune-vm
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: "pip"
@@ -219,7 +219,7 @@ jobs:
 
       - name: Upload allure results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: allure-results-${{ matrix.shard }}
           path: allure-results-${{ matrix.shard }}
@@ -238,7 +238,7 @@ jobs:
 
     steps:
       - name: Download all allure results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: all-results
           merge-multiple: true
@@ -246,7 +246,7 @@ jobs:
       - name: Check out gh-pages history if it exists
         id: checkout_gh_pages
         continue-on-error: true
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: gh-pages
           path: gh-pages
