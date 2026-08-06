@@ -5,8 +5,9 @@ concurrency:
   cancel-in-progress: false
 
 on:
+  # The nightly image is pushed at 04:34-04:41 UTC; 06:00 keeps this run behind it.
   schedule:
-    - cron:  '0 4 * * *'
+    - cron:  '0 6 * * *'
   workflow_dispatch:
 
 jobs:
@@ -14,7 +15,9 @@ jobs:
     uses: ./.github/workflows/test_common.yml
     secrets: inherit
     with:
-      node1: "wakuorg/nwaku:latest"
-      node2: "wakuorg/nwaku:latest"
-      additional_nodes: "wakuorg/nwaku:latest,wakuorg/nwaku:latest,wakuorg/nwaku:latest"
-      caller: "nim"
+      node1: "quay.io/wakuorg/nwaku-pr:nightly"
+      node2: "quay.io/wakuorg/nwaku-pr:nightly"
+      additional_nodes: "quay.io/wakuorg/nwaku-pr:nightly,quay.io/wakuorg/nwaku-pr:nightly,quay.io/wakuorg/nwaku-pr:nightly"
+      default_nwaku: "quay.io/wakuorg/nwaku-pr:nightly"
+      caller: "nim-core"
+      reruns: 0

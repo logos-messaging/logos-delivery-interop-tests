@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       run_full_suite:
-        description: "Run the full test suite (18 shards)"
+        description: "Run the full test suite (17 shards)"
         required: false
         default: false
         type: boolean
@@ -127,7 +127,7 @@ jobs:
     name: Wrapper Tests
     runs-on: ubuntu-latest
     needs: [build]
-    timeout-minutes: 45
+    timeout-minutes: 60
     if: >-
       github.event_name != 'push' &&
       (github.event.action != 'labeled' || github.event.label.name == 'full-test')
@@ -158,6 +158,26 @@ jobs:
             -m "not docker_required" \
             --reruns 2 \
             --junit-xml=wrapper-results-basic.xml
+
+      - name: Run wrapper tests - channel lifecycle
+        continue-on-error: true
+        env:
+          PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
+        run: |
+          pytest tests/wrappers_tests/test_channel_lifecycle.py \
+            -m "not docker_required" \
+            --reruns 2 \
+            --junit-xml=wrapper-results-channel-lifecycle.xml
+
+      - name: Run wrapper tests - docker required
+        continue-on-error: true
+        env:
+          PYTHONPATH: ${{ github.workspace }}/vendor/logos-delivery-python-bindings/waku
+        run: |
+          pytest tests/wrappers_tests \
+            -m docker_required \
+            --reruns 2 \
+            --junit-xml=wrapper-results-docker.xml
 
       - name: Run wrapper tests - send handle and subscription
         continue-on-error: true

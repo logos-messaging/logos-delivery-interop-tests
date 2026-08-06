@@ -7,7 +7,7 @@ import allure
 from src.libs.common import to_base64, delay
 from src.node.waku_message import WakuMessage
 from src.env_vars import (
-    DEFAULT_NWAKU,
+    UPSTREAM_NWAKU,
     NODE_2,
     ADDITIONAL_NODES,
 )
@@ -64,7 +64,7 @@ class StepsSharding(StepsRelay):
     @allure.step
     def setup_nwaku_relay_nodes(self, num_nodes, **kwargs):
         for index in range(num_nodes):
-            node = WakuNode(DEFAULT_NWAKU, f"node{index + 3}_{self.test_id}")
+            node = WakuNode(UPSTREAM_NWAKU, f"node{index + 3}_{self.test_id}")
             node.start(relay="true", discv5_bootstrap_node=self.enr_uri, **kwargs)
             self.add_node_peer(node, [self.multiaddr_with_id])
             self.optional_nodes.append(node)

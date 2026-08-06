@@ -42,9 +42,9 @@ Waku logs can be found in `log/docker` folder while test log can be seen either 
 
 ## Continuous Integration (CI)
 
-### Daily build on *nwaku\:latest*
+### Daily build on the logos-delivery nightly image
 
-Every day the workflow **nim\_waku\_daily.yml** triggers against the image `wakuorg/nwaku:latest`.
+Every day the workflow **nim\_waku\_daily.yml** triggers against `quay.io/wakuorg/nwaku-pr:nightly`, the image built from logos-delivery master by that repository's pre-release workflow. It is scheduled after the image is published.
 
 To launch it manually:
 
@@ -57,10 +57,12 @@ To launch it manually:
 Every push to a pull request triggers **pr\_tests.yml** which runs:
 
 1. **Build** — compiles `liblogosdelivery.so` (cached by submodule commit hash).
-2. **Wrapper tests** — all tests under `tests/wrappers_tests/` that don't require Docker (~5 min).
+2. **Wrapper tests** — all tests under `tests/wrappers_tests/`, including the `docker_required` ones (~5 min).
 3. **Smoke tests** — `pytest -m smoke` with Docker nodes (~10 min).
 
-To run the **full test suite** (18 shards, same as daily) on a PR, add the label **`full-test`** to the pull request. The full suite will start automatically.
+The daily and full-suite runs no longer build `liblogosdelivery.so`: they skip `tests/wrappers_tests/`, which runs in the PR tests above. Most of that suite is also mirrored in the logos-delivery repository (`tests-e2e/`).
+
+To run the **full test suite** (17 shards) on a PR, add the label **`full-test`** to the pull request. Note it runs against `wakuorg/nwaku:latest`, unlike the daily run, which uses our own image. The full suite will start automatically.
 
 ### On‑demand matrix against custom *logos-messaging-nim* versions
 
