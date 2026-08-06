@@ -1,4 +1,5 @@
 import pytest
+from uuid import uuid4
 from src.env_vars import NODE_1, NODE_2
 from src.libs.custom_logger import get_custom_logger
 from src.test_data import INVALID_CONTENT_TOPICS, SAMPLE_INPUTS, VALID_PUBSUB_TOPICS
@@ -9,6 +10,7 @@ logger = get_custom_logger(__name__)
 
 @pytest.mark.usefixtures("setup_main_relay_node", "setup_main_filter_node")
 class TestFilterSubscribeCreate(StepsFilter):
+    @pytest.mark.waku_test_fleet
     def test_filter_subscribe_to_single_topics(self):
         self.wait_for_subscriptions_on_main_nodes([self.test_content_topic])
         self.check_published_message_reaches_filter_peer()
@@ -46,6 +48,7 @@ class TestFilterSubscribeCreate(StepsFilter):
                 failed_pubsub_topics.append(pubsub_topic)
         assert not failed_pubsub_topics, f"PubsubTopics failed: {failed_pubsub_topics}"
 
+    @pytest.mark.waku_test_fleet
     def test_filter_subscribe_to_100_content_topics_in_one_call(self):
         failed_content_topics = []
         _100_content_topics = [str(i) for i in range(100)]
@@ -60,9 +63,10 @@ class TestFilterSubscribeCreate(StepsFilter):
         assert not failed_content_topics, f"ContentTopics failed: {failed_content_topics}"
 
     def test_filter_subscribe_to_29_content_topics_in_separate_calls(self, subscribe_main_nodes):
+        # subscribe_main_nodes already made 1 subscribe call; make 29 more = 30 total, all must succeed
         _29_content_topics = [str(i) for i in range(29)]
         for content_topic in _29_content_topics:
-            self.create_filter_subscription({"requestId": "1", "contentFilters": [content_topic], "pubsubTopic": self.test_pubsub_topic})
+            self.create_filter_subscription({"requestId": str(uuid4()), "contentFilters": [content_topic], "pubsubTopic": self.test_pubsub_topic})
         failed_content_topics = []
         for content_topic in _29_content_topics:
             logger.debug(f"Running test with content topic {content_topic}")
@@ -73,11 +77,18 @@ class TestFilterSubscribeCreate(StepsFilter):
                 logger.error(f"ContentTopic {content_topic} failed: {str(ex)}")
                 failed_content_topics.append(content_topic)
         assert not failed_content_topics, f"ContentTopics failed: {failed_content_topics}"
-        try:
-            self.create_filter_subscription({"requestId": "1", "contentFilters": ["rate limited"], "pubsubTopic": self.test_pubsub_topic})
-            raise AssertionError("The 30th subscribe call was not rate limited!!!")
-        except Exception as ex:
-            assert "subscription failed" in str(ex) or "rate limit exceeded" in str(ex)
+        # Default rate limit is filter:100/1s; sequential calls stay under it, so calls beyond 30 must succeed
+        failed_extra_calls = []
+        for extra in range(1, 20):
+            try:
+                self.create_filter_subscription(
+                    {"requestId": str(uuid4()), "contentFilters": [f"extra_{extra}"], "pubsubTopic": self.test_pubsub_topic}
+                )
+                logger.debug(f"Extra subscribe call #{extra} succeeded")
+            except Exception as ex:
+                logger.error(f"Extra subscribe call #{extra} failed: {ex}")
+                failed_extra_calls.append(extra)
+        assert not failed_extra_calls, f"Subscribe calls beyond 30 were rate limited: {failed_extra_calls}"
 
     def test_filter_subscribe_to_101_content_topics(self, subscribe_main_nodes):
         try:
@@ -87,6 +98,7 @@ class TestFilterSubscribeCreate(StepsFilter):
         except Exception as ex:
             assert "Bad Request" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_filter_subscribe_refresh(self):
         for _ in range(2):
             self.wait_for_subscriptions_on_main_nodes([self.test_content_topic])
@@ -148,6 +160,7 @@ class TestFilterSubscribeCreate(StepsFilter):
         except Exception as ex:
             assert "Bad Request" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_filter_subscribe_with_extra_field(self, subscribe_main_nodes):
         try:
             self.create_filter_subscription(

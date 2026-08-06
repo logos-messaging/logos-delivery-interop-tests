@@ -5,11 +5,13 @@ from src.steps.filter import StepsFilter
 
 @pytest.mark.usefixtures("setup_main_relay_node", "setup_main_filter_node", "subscribe_main_nodes")
 class TestFilterUnSubscribe(StepsFilter):
+    @pytest.mark.waku_test_fleet
     def test_filter_unsubscribe_from_single_content_topic(self):
         self.check_published_message_reaches_filter_peer()
         self.delete_filter_subscription({"requestId": "1", "contentFilters": [self.test_content_topic], "pubsubTopic": self.test_pubsub_topic})
         self.check_publish_without_filter_subscription()
 
+    @pytest.mark.waku_test_fleet
     def test_filter_unsubscribe_from_all_subscribed_content_topics(self):
         content_topics = [input["value"] for input in SAMPLE_INPUTS[:2]]
         self.wait_for_subscriptions_on_main_nodes(content_topics)
@@ -25,6 +27,7 @@ class TestFilterUnSubscribe(StepsFilter):
         self.check_published_message_reaches_filter_peer(self.create_message(contentTopic=content_topics[1]))
         self.check_publish_without_filter_subscription(self.create_message(contentTopic=content_topics[0]))
 
+    @pytest.mark.waku_test_fleet
     def test_filter_unsubscribe_from_pubsub_topics(self):
         self.wait_for_subscriptions_on_main_nodes([self.test_content_topic], self.test_pubsub_topic)
         self.wait_for_subscriptions_on_main_nodes([self.second_content_topic], self.second_pubsub_topic)

@@ -4,7 +4,14 @@ from src.libs.custom_logger import get_custom_logger
 from time import time
 from src.libs.common import delay, to_base64
 from src.steps.light_push import StepsLightPush
-from src.test_data import INVALID_CONTENT_TOPICS, INVALID_PAYLOADS, PUBSUB_TOPICS_WRONG_FORMAT, SAMPLE_INPUTS, SAMPLE_TIMESTAMPS, VALID_PUBSUB_TOPICS
+from src.test_data import (
+    INVALID_CONTENT_TOPICS,
+    INVALID_PAYLOADS,
+    PUBSUB_TOPICS_WRONG_FORMAT,
+    SAMPLE_INPUTS,
+    VALID_PUBSUB_TOPICS,
+    get_sample_timestamps,
+)
 
 logger = get_custom_logger(__name__)
 
@@ -17,10 +24,12 @@ class TestLightPushPublish(StepsLightPush):
         self.setup_first_lightpush_node()
         self.subscribe_to_pubsub_topics_via_relay()
 
+    @pytest.mark.waku_test_fleet
     def test_light_push_with_valid_payloads(self):
         failed_payloads = []
         for payload in SAMPLE_INPUTS:
             logger.debug(f'Running test with payload {payload["description"]}')
+            delay(0.5)
             message = self.create_message(payload=to_base64(payload["value"]))
             try:
                 self.check_light_pushed_message_reaches_receiving_peer(message=message)
@@ -75,10 +84,12 @@ class TestLightPushPublish(StepsLightPush):
         except Exception as ex:
             assert "Message size exceeded maximum of 153600 bytes" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_light_push_with_valid_content_topics(self):
         failed_content_topics = []
         for content_topic in SAMPLE_INPUTS:
             logger.debug(f'Running test with content topic {content_topic["description"]}')
+            delay(0.5)
             message = self.create_message(contentTopic=content_topic["value"])
             try:
                 self.check_light_pushed_message_reaches_receiving_peer(message=message)
@@ -146,14 +157,17 @@ class TestLightPushPublish(StepsLightPush):
         assert not success_content_topics, f"Invalid Content topics that didn't failed: {success_content_topics}"
 
     def test_light_push_with_missing_pubsub_topics(self):
+        # use auto sharding so the shard is derived from the content topic instead of a pubsub topic
+        self.setup_first_lightpush_node(num_shards_in_network=self.num_shards_in_network)
         try:
             self.light_push_node1.send_light_push_message({"message": self.create_message()})
         except Exception as ex:
             assert "not_published_to_any_peer" in str(ex) or "timeout" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_light_push_with_valid_timestamps(self):
         failed_timestamps = []
-        for timestamp in SAMPLE_TIMESTAMPS:
+        for timestamp in get_sample_timestamps():
             if self.light_push_node1.type() in timestamp["valid_for"]:
                 logger.debug(f'Running test with timestamp {timestamp["description"]}')
                 message = self.create_message(timestamp=timestamp["value"])
@@ -166,7 +180,7 @@ class TestLightPushPublish(StepsLightPush):
 
     def test_light_push_with_invalid_timestamps(self):
         success_timestamps = []
-        for timestamp in SAMPLE_TIMESTAMPS:
+        for timestamp in get_sample_timestamps():
             if self.light_push_node1.type() not in timestamp["valid_for"]:
                 logger.debug(f'Running test with timestamp {timestamp["description"]}')
                 message = self.create_message(timestamp=timestamp["value"])
@@ -191,6 +205,7 @@ class TestLightPushPublish(StepsLightPush):
         except Exception as ex:
             assert "Bad Request" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_light_push_with_valid_meta(self):
         self.check_light_pushed_message_reaches_receiving_peer(message=self.create_message(meta=to_base64(self.test_payload)))
 
@@ -208,6 +223,7 @@ class TestLightPushPublish(StepsLightPush):
         except Exception as ex:
             assert '(kind: InvalidLengthField, field: "meta")' in str(ex) or "invalid length for Meta field" in str(ex)
 
+    @pytest.mark.waku_test_fleet
     def test_light_push_with_ephemeral(self):
         failed_ephemeral = []
         for ephemeral in [True, False]:
@@ -219,6 +235,7 @@ class TestLightPushPublish(StepsLightPush):
                 failed_ephemeral.append(ephemeral)
         assert not failed_ephemeral, f"Ephemeral that failed: {failed_ephemeral}"
 
+    @pytest.mark.waku_test_fleet
     def test_light_push_with_extra_field(self):
         try:
             self.check_light_pushed_message_reaches_receiving_peer(message=self.create_message(extraField="extraValue"))

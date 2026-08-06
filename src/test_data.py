@@ -1,3 +1,4 @@
+import os
 from time import time
 from datetime import datetime, timedelta
 
@@ -96,7 +97,7 @@ CONTENT_TOPICS_SHARD_7 = [
     "/newsService/4.0/updates/yaml",
 ]
 
-DEFAULT_CLUSTER_ID = "3"
+DEFAULT_CLUSTER_ID = "198"
 VALID_PUBSUB_TOPICS = [
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/0",
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/1",
@@ -104,6 +105,9 @@ VALID_PUBSUB_TOPICS = [
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/25",
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/1000",
 ]
+
+FLEET_CLUSTER_ID = "1"
+FLEET_PUBSUB_TOPICS = [f"/waku/2/rs/{FLEET_CLUSTER_ID}/{i}" for i in range(8)]
 
 PUBSUB_TOPICS_STORE = [
     f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/0",
@@ -120,8 +124,10 @@ PUBSUB_TOPICS_STORE = [
 INVALID_PUBSUB_TOPICS = ["/test/2/rs/0/1", "/waku/3/rs/0/1", "/waku/2/test/0/1", "/waku/2/rs/3/b", "/waku/2/rs/0"]
 
 PUBSUB_TOPICS_DIFFERENT_CLUSTERS = [
-    "/waku/2/rs/2/0",
-    "/waku/2/rs/2/1",
+    # cluster 2 is the logos.dev default cluster with its own settings, so it is
+    # reserved; use the safe cluster 199 instead.
+    "/waku/2/rs/199/0",
+    "/waku/2/rs/199/1",
     "/waku/2/rs/5/0",
     "/waku/2/rs/5/1",
     "/waku/2/rs/5/999",
@@ -130,14 +136,14 @@ PUBSUB_TOPICS_DIFFERENT_CLUSTERS = [
 ]
 
 PUBSUB_TOPICS_SAME_CLUSTER = [
-    "/waku/2/rs/2/0",
-    "/waku/2/rs/2/1",
-    "/waku/2/rs/2/2",
-    "/waku/2/rs/2/3",
-    "/waku/2/rs/2/4",
-    "/waku/2/rs/2/5",
-    "/waku/2/rs/2/6",
-    "/waku/2/rs/2/7",
+    "/waku/2/rs/199/0",
+    "/waku/2/rs/199/1",
+    "/waku/2/rs/199/2",
+    "/waku/2/rs/199/3",
+    "/waku/2/rs/199/4",
+    "/waku/2/rs/199/5",
+    "/waku/2/rs/199/6",
+    "/waku/2/rs/199/7",
 ]
 
 PUBSUB_TOPICS_WRONG_FORMAT = [
@@ -147,28 +153,47 @@ PUBSUB_TOPICS_WRONG_FORMAT = [
     {"description": "A bool", "value": True},
 ]
 
-SAMPLE_TIMESTAMPS = [
-    {"description": "Now", "value": int(time() * 1e9), "valid_for": ["nwaku"]},
-    {
-        "description": "Far future",
-        "value": int((NOW + timedelta(days=365 * 10)).timestamp() * 1e9),
-        "valid_for": ["nwaku"],
-    },  # 10 years from now
-    {"description": "Recent past", "value": int((NOW - timedelta(hours=1)).timestamp() * 1e9), "valid_for": ["nwaku"]},  # 1 hour ago
-    {"description": "Near future", "value": int((NOW + timedelta(hours=1)).timestamp() * 1e9), "valid_for": ["nwaku"]},  # 1 hour ahead
-    {"description": "Positive number", "value": 1, "valid_for": ["nwaku"]},
-    {"description": "Negative number", "value": -1, "valid_for": ["nwaku"]},
-    {"description": "DST change", "value": int(datetime(2020, 3, 8, 2, 0, 0).timestamp() * 1e9), "valid_for": ["nwaku"]},  # DST starts
-    {"description": "Timestamp as string number", "value": str(int(time() * 1e9)), "valid_for": []},
-    {"description": "Invalid large number", "value": 2**63, "valid_for": []},
-    {"description": "Float number", "value": float(time() * 1e9), "valid_for": []},
-    {"description": "Array instead of timestamp", "value": [int(time() * 1e9)], "valid_for": []},
-    {"description": "Object instead of timestamp", "value": {"time": int(time() * 1e9)}, "valid_for": []},
-    {"description": "ISO 8601 timestamp", "value": "2023-12-26T10:58:51", "valid_for": []},
-    {"description": "Missing", "value": None, "valid_for": []},
-]
 
-PUBSUB_TOPICS_RLN = ["/waku/2/rs/1/0"]
+def get_sample_timestamps():
+    """Return timestamp test-cases with values evaluated fresh at call time.
+
+    This factory function MUST be called from inside each test (never at module
+    import time) so that the "Now" value reflects the actual time when the
+    message is published.
+
+    Valid_for semantics:
+    ``["nwaku"]`` – accepted by nwaku in the current run mode.
+    ``[]``        – rejected by nwaku in the current run mode (either
+                    structurally invalid type, or out-of-epoch in fleet/RLN
+                    mode).
+    """
+    now_ns = int(time() * 1e9)
+    now_dt = datetime.now()
+    fleet_mode = os.getenv("FLEET_BOOTSTRAP", "false").lower() == "true"
+    standalone_valid = [] if fleet_mode else ["nwaku"]
+    return [
+        {"description": "Now", "value": now_ns, "valid_for": ["nwaku"]},
+        # 10 years from now
+        {"description": "Far future", "value": int((now_dt + timedelta(days=365 * 10)).timestamp() * 1e9), "valid_for": standalone_valid},
+        # 1 hour ago
+        {"description": "Recent past", "value": int((now_dt - timedelta(hours=1)).timestamp() * 1e9), "valid_for": standalone_valid},
+        # 1 hour ahead
+        {"description": "Near future", "value": int((now_dt + timedelta(hours=1)).timestamp() * 1e9), "valid_for": standalone_valid},
+        {"description": "Positive number", "value": 1, "valid_for": standalone_valid},
+        {"description": "Negative number", "value": -1, "valid_for": standalone_valid},
+        # DST starts
+        {"description": "DST change", "value": int(datetime(2020, 3, 8, 2, 0, 0).timestamp() * 1e9), "valid_for": standalone_valid},
+        {"description": "Timestamp as string number", "value": str(now_ns), "valid_for": []},
+        {"description": "Invalid large number", "value": 2**63, "valid_for": []},
+        {"description": "Float number", "value": float(now_ns), "valid_for": []},
+        {"description": "Array instead of timestamp", "value": [now_ns], "valid_for": []},
+        {"description": "Object instead of timestamp", "value": {"time": now_ns}, "valid_for": []},
+        {"description": "ISO 8601 timestamp", "value": "2023-12-26T10:58:51", "valid_for": []},
+        {"description": "Missing", "value": None, "valid_for": []},
+    ]
+
+
+PUBSUB_TOPICS_RLN = [f"/waku/2/rs/{DEFAULT_CLUSTER_ID}/0"]
 
 LOG_ERROR_KEYWORDS = [
     "crash",
@@ -214,7 +239,6 @@ METRICS_WITH_INITIAL_VALUE_ZERO = [
     "waku_rln_total_generated_proofs",
     "libp2p_pubsub_sig_verify_success_total",
     "libp2p_pubsub_sig_verify_failure_total",
-    "libp2p_pubsub_disconnects_over_non_priority_queue_limit_total",
     "libp2p_pubsub_peers",
     "libp2p_pubsub_unsubscriptions_total",
     "libp2p_pubsub_validation_success_total",
@@ -277,40 +301,6 @@ METRICS_WITH_INITIAL_VALUE_ZERO = [
     'waku_archive_query_duration_seconds_bucket{le="7.5"}',
     'waku_archive_query_duration_seconds_bucket{le="10.0"}',
     'waku_archive_query_duration_seconds_bucket{le="+Inf"}',
-    "waku_legacy_archive_insert_duration_seconds_sum",
-    "waku_legacy_archive_insert_duration_seconds_count",
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.005"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.01"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.025"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.05"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.075"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.1"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.25"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.5"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="0.75"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="1.0"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="2.5"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="5.0"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="7.5"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="10.0"}',
-    'waku_legacy_archive_insert_duration_seconds_bucket{le="+Inf"}',
-    "waku_legacy_archive_query_duration_seconds_sum",
-    "waku_legacy_archive_query_duration_seconds_count",
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.005"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.01"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.025"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.05"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.075"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.1"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.25"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.5"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="0.75"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="1.0"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="2.5"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="5.0"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="7.5"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="10.0"}',
-    'waku_legacy_archive_query_duration_seconds_bucket{le="+Inf"}',
     "waku_filter_subscriptions",
     "waku_filter_handle_message_duration_seconds_sum",
     "waku_filter_handle_message_duration_seconds_count",
@@ -383,7 +373,6 @@ METRICS_WITH_INITIAL_VALUE_ZERO = [
     'waku_filter_handle_message_duration_seconds_bucket{le="20.0"}',
     'waku_filter_handle_message_duration_seconds_bucket{le="30.0"}',
     "total_messages_cached",
-    "waku_legacy_store_queries_total",
     "waku_store_queries_total",
     "mix_pool_size",
     "libp2p_gossipsub_imreceiving_saved_messages_total",

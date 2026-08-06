@@ -22,6 +22,21 @@ on:
         required: false
         description: "Workflow caller. Used in reporting"
         type: string
+      fleet_tests:
+        required: false
+        description: "Run fleet tests only"
+        type: boolean
+        default: false
+      deploy_allure:
+        required: false
+        description: "Deploy allure report to gh-pages"
+        type: boolean
+        default: true
+      send_discord:
+        required: false
+        description: "Send test results to Discord"
+        type: boolean
+        default: false
 
 env:
   FORCE_COLOR: "1"
@@ -32,18 +47,18 @@ env:
   RLN_CREDENTIALS: ${{ secrets.RLN_CREDENTIALS }}
 
 jobs:
-
   tests:
     name: tests
     strategy:
       fail-fast: false
       matrix:
         shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
-  # total number of shards =18 means tests will split into 18 thread and run in parallel to increase execution speed
-  # command for sharding :
-  # pytest --shard-id=<shard_number> --num-shards=<total_shards>
-  # shard 16 for test_rln.py file as they shall run sequentially
-  # shard 17 for test_cursor_many_msgs.py as it takes time >7 mins
+    # total number of shards =18 means tests will split into 18 thread and run in parallel to increase execution speed
+    # command for sharding :
+    # pytest --shard-id=<shard_number> --num-shards=<total_shards>
+    # shard 16 for test_rln.py file as they shall run sequentially
+    # shard 17 for test_cursor_many_msgs.py as it takes time >7 mins
+
     runs-on: ubuntu-latest
     timeout-minutes: 120
     outputs:
@@ -65,142 +80,306 @@ jobs:
       jobResult_15: ${{ steps.set_result.outputs.JOB_RESULT_15 }}
       jobResult_16: ${{ steps.set_result.outputs.JOB_RESULT_16 }}
       jobResult_17: ${{ steps.set_result.outputs.JOB_RESULT_17 }}
+
     steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
 
-    - uses: actions/checkout@v4
+      - name: Remove unwanted software
+        uses: ./.github/actions/prune-vm
 
-    - name: Remove unwanted software
-      uses: ./.github/actions/prune-vm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
 
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-        cache: 'pip'
+      - name: Add python bindings to PYTHONPATH
+        run: echo "PYTHONPATH=$(pwd)/vendor/logos-delivery-python-bindings/waku:$PYTHONPATH" >> $GITHUB_ENV
 
-    - name: Install system deps for tc / nsenter
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          util-linux \
-          iproute2 \
-          sudo \
-          ca-certificates \
-          curl
+      - name: Install system deps for tc / nsenter
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            util-linux \
+            iproute2 \
+            sudo \
+            ca-certificates \
+            curl \
+            make \
+            gcc \
+            g++
 
-    - run: pip install -r requirements.txt
+      - name: Install Nim 2.2.4
+        run: |
+          set -euo pipefail
+          curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y
+          echo "$HOME/.nimble/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.nimble/bin:$PATH"
+          choosenim 2.2.4
+          # Pin the nimble that generated logos-delivery's nimble.lock. A newer
+          # nimble recomputes the locked Nim package checksum differently, which
+          # makes `nimble setup --localdeps` abort with a checksum mismatch.
+          (cd /tmp && nimble install "nimble@0.22.3" -y)
+          nim --version
+          nimble --version
 
-    - name: Run tests
+      - run: pip install -r requirements.txt
 
-      run: |
-        if [ "${{ matrix.shard }}" == "16" ]; then
-            pytest tests/relay/test_rln.py --alluredir=allure-results-${{ matrix.shard }}
-        elif [ "${{ matrix.shard }}" == "17" ]; then
-            pytest tests/store/test_cursor_many_msgs.py --alluredir=allure-results-${{ matrix.shard }}
-        elif [ "${{ matrix.shard }}" != "17" ]; then
-            pytest --ignore=tests/relay/test_rln.py --ignore=tests/store/test_cursor_many_msgs.py --reruns 2 --shard-id=${{ matrix.shard }} --num-shards=16 --alluredir=allure-results-${{ matrix.shard }}
-        fi
+      - name: Build liblogosdelivery.so for python bindings
+        run: |
+          set -euo pipefail
 
-    - name: Upload allure results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: allure-results-${{ matrix.shard }}
-        path: allure-results-${{ matrix.shard }}
+          export PATH="$HOME/.nimble/bin:$PATH"
 
-    - name: Set job result
-      id: set_result
-      if: always()
-      run: |
-        version="${{ matrix.shard }}"
-        echo "JOB_RESULT_${version}=${{ job.status }}" >> "$GITHUB_OUTPUT"
+          BINDINGS_DIR="$(pwd)/vendor/logos-delivery-python-bindings"
+          DELIVERY_DIR="$BINDINGS_DIR/vendor/logos-delivery"
 
+          mkdir -p "$BINDINGS_DIR/lib"
+
+          cd "$DELIVERY_DIR"
+
+          ln -sf waku.nimble waku.nims
+
+          # `make liblogosdelivery` resolves the locked deps via
+          # `nimble setup --localdeps` (build-deps prerequisite); a bare
+          # `nimble install -y` here is redundant and pulls Nim from the lock,
+          # which is what triggered the checksum mismatch.
+          make liblogosdelivery
+
+          SO_PATH="$(find . -type f -name 'liblogosdelivery.so' | head -n 1)"
+
+          if [ -z "$SO_PATH" ]; then
+            echo "liblogosdelivery.so was not built"
+            exit 1
+          fi
+
+          cp "$SO_PATH" "$BINDINGS_DIR/lib/liblogosdelivery.so"
+
+          echo "Built library:"
+          ls -l "$BINDINGS_DIR/lib/liblogosdelivery.so"
+          
+          # Cleanup build artifacts        
+          rm -rf .gh-pages/nim 
+
+
+      - name: Verify wrapper library
+        run: |
+          test -f vendor/logos-delivery-python-bindings/lib/liblogosdelivery.so
+
+      - name: Debug Python import paths
+        run: |
+          pwd
+          echo "PYTHONPATH=$PYTHONPATH"
+          find . -maxdepth 5 | grep wrapper || true
+          python - <<'PY'
+          import sys
+          print("sys.path:")
+          for p in sys.path:
+              print(p)
+          try:
+              import wrapper
+              print("wrapper import OK:", wrapper)
+          except Exception as e:
+              print("wrapper import failed:", e)
+              raise
+          PY
+
+      - name: Run tests
+        run: |
+          export PATH="$HOME/.nimble/bin:$PATH"
+          export PYTHONPATH="$(pwd)/vendor/logos-delivery-python-bindings/waku:$PYTHONPATH"
+
+          if [ "${{ inputs.fleet_tests }}" == "true" ]; then
+              if [ "${{ matrix.shard }}" == "0" ]; then
+                  pytest --fleet -m waku_test_fleet \
+                    --ignore=vendor/logos-delivery-python-bindings/tests \
+                    --alluredir=allure-results-${{ matrix.shard }}
+              else
+                  echo "Skipping shard ${{ matrix.shard }}: fleet tests run on shard 0 only"
+              fi
+          elif [ "${{ matrix.shard }}" == "16" ]; then
+              pytest tests/relay/test_rln.py \
+                --ignore=vendor/logos-delivery-python-bindings/tests \
+                --alluredir=allure-results-${{ matrix.shard }}
+          elif [ "${{ matrix.shard }}" == "17" ]; then
+              pytest tests/store/test_cursor_many_msgs.py \
+                --ignore=vendor/logos-delivery-python-bindings/tests \
+                --alluredir=allure-results-${{ matrix.shard }}
+          else
+              pytest \
+                --ignore=vendor/logos-delivery-python-bindings/tests \
+                --ignore=tests/relay/test_rln.py \
+                --ignore=tests/store/test_cursor_many_msgs.py \
+                --reruns 2 \
+                --shard-id=${{ matrix.shard }} \
+                --num-shards=16 \
+                --alluredir=allure-results-${{ matrix.shard }}
+          fi
+
+      - name: Upload allure results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: allure-results-${{ matrix.shard }}
+          path: allure-results-${{ matrix.shard }}
+
+      - name: Set job result
+        id: set_result
+        if: always()
+        run: |
+          version="${{ matrix.shard }}"
+          echo "JOB_RESULT_${version}=${{ job.status }}" >> "$GITHUB_OUTPUT"
 
   aggregate-reports:
     runs-on: ubuntu-latest
     needs: [tests]
-    if: always()
+    if: always() && inputs.deploy_allure
+
     steps:
       - name: Download all allure results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: all-results
           merge-multiple: true
 
-      - name: Get allure history
-        if: always()
-        uses: actions/checkout@v4
+      - name: Check out gh-pages history if it exists
+        id: checkout_gh_pages
+        continue-on-error: true
+        uses: actions/checkout@v5
         with:
           ref: gh-pages
           path: gh-pages
+          fetch-depth: 1
+
+      - name: Prepare empty gh-pages fallback
+        if: steps.checkout_gh_pages.outcome != 'success'
+        run: |
+          mkdir -p gh-pages/${{ env.CALLER }}/last-history
+
+      - name: Remove oversized Allure text attachments
+        if: always()
+        run: |
+          set -euo pipefail
+
+          echo "Before cleanup:"
+          find all-results -type f | wc -l || true
+          du -sh all-results || true
+
+          find all-results -type f -name "*.txt" -delete || true
+
+          echo "After cleanup:"
+          find all-results -type f | wc -l || true
+          du -sh all-results || true
 
       - name: Setup allure report
-        uses: simple-elf/allure-report-action@master
+        uses: simple-elf/allure-report-action@v1.15
         if: always()
         id: allure-report
         with:
           allure_results: all-results
           gh_pages: gh-pages/${{ env.CALLER }}
           allure_history: allure-history
-          keep_reports: 30
+          keep_reports: 10
           report_url: https://logos-messaging.github.io/logos-delivery-interop-tests/${{ env.CALLER }}
+
+      - name: Fix permissions (CRITICAL)
+        if: always()
+        run: |
+          echo "Fixing permissions..."
+          sudo chown -R $USER:$USER allure-history || true
+          sudo chmod -R u+rwX allure-history || true
+
+      - name: Clean allure-history
+        if: always()
+        run: |
+          echo "Cleaning allure-history..."
+
+          # Remove ALL txt attachments from history
+          find allure-history -type f -name "*.txt" -delete || true
+
+          echo "After cleanup:"
+          du -sh allure-history || true
+
+      - name: Verify generated report content
+        if: always()
+        run: |
+          set -euo pipefail
+
+          test -d allure-history
+          test -d "allure-history/${{ github.run_number }}"
+          test -f "allure-history/${{ github.run_number }}/index.html"
+          test -d "allure-history/last-history"
+
+          echo "=== allure-history size ==="
+          du -sh allure-history || true
+
+          echo "=== largest files ==="
+          find allure-history -type f -printf '%s %p\n' | sort -nr | head -50 || true
+
+          echo "=== symlinks ==="
+          find allure-history -type l -ls || true
+
+          echo "=== hard-linked files ==="
+          find allure-history -type f -links +1 -ls || true
+
+          echo "=== top-level tree ==="
+          find allure-history -maxdepth 2 -type f | sort | head -100 || true
 
       - name: Deploy report to Github Pages
         uses: peaceiris/actions-gh-pages@v3
-        if: always()
         with:
-            github_token: ${{ secrets.GITHUB_TOKEN }}
-            publish_branch: gh-pages
-            publish_dir: allure-history
-            destination_dir: ${{ env.CALLER }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./allure-history
+          destination_dir: ${{ env.CALLER }}
+          keep_files: false
+          enable_jekyll: false
 
       - name: Store output from matrix jobs
         run: |
-            echo '${{ toJSON(needs.tests.outputs) }}' > results.json
+          echo '${{ toJSON(needs.tests.outputs) }}' > results.json
 
       - name: Create job summary
         if: always()
         run: |
-            echo "## Run Information" >> $GITHUB_STEP_SUMMARY
-            echo "- **Event**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **Actor**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **Node1**: ${{ env.NODE_1 }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **Node2**: ${{ env.NODE_2 }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **Additonal Nodes**: ${{ env.ADDITIONAL_NODES }}" >> $GITHUB_STEP_SUMMARY
-            echo "## Test Results" >> $GITHUB_STEP_SUMMARY
-            echo "Allure report will be available at: https://logos-messaging.github.io/logos-delivery-interop-tests/${{ env.CALLER }}/${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-            
-            # Evaluate overall result
-            TESTS_RESULT="success"
-            for key in $(jq -r 'keys[]' results.json); do
-              result=$(jq -r --arg key "$key" '.[$key]' results.json)
-              echo "Key: $key, Value: $result"
-              # Check condition on the result
-              if [ "$result" != "success" ]; then
-                echo "Value 'success' not found at key: $key"
-                TESTS_RESULT="failure"
-                break
-              fi
-            done
-            
-            # Notify Waku team
-            if [ "$TESTS_RESULT" != "success" ]; then
-              echo "There are failures with nwaku node. cc <@&1111608257824440330>" >> $GITHUB_STEP_SUMMARY
+          echo "## Run Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Event**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Actor**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Node1**: ${{ env.NODE_1 }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Node2**: ${{ env.NODE_2 }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Additonal Nodes**: ${{ env.ADDITIONAL_NODES }}" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "Allure report will be available at: https://logos-messaging.github.io/logos-delivery-interop-tests/${{ env.CALLER }}/${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+
+          TESTS_RESULT="success"
+          for key in $(jq -r 'keys[]' results.json); do
+            result=$(jq -r --arg key "$key" '.[$key]' results.json)
+            echo "Key: $key, Value: $result"
+            if [ -n "$result" ] && [ "$result" != "success" ]; then
+              echo "Value 'success' not found at key: $key"
+              TESTS_RESULT="failure"
+              break
             fi
-            
-            # Write result and summary to ENV
-            echo "TESTS_RESULT=$TESTS_RESULT" >> $GITHUB_ENV  
-            {
-              echo 'JOB_SUMMARY<<EOF'
-              cat $GITHUB_STEP_SUMMARY
-              echo EOF
-            } >> $GITHUB_ENV
+          done
+
+          if [ "$TESTS_RESULT" != "success" ]; then
+            echo "There are failures with nwaku node. cc <@&1111608257824440330>" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "TESTS_RESULT=$TESTS_RESULT" >> $GITHUB_ENV
+          {
+            echo 'JOB_SUMMARY<<EOF'
+            cat $GITHUB_STEP_SUMMARY
+            echo EOF
+          } >> $GITHUB_ENV
 
       - name: Send report to Discord
         uses: rjstone/discord-webhook-notify@v1
-        if: always() && env.CALLER != 'manual'
+        if: always() && env.CALLER != 'manual' && inputs.send_discord
         with:
-             severity: ${{ env.TESTS_RESULT == 'success' && 'info' || 'error' }}
-             username: ${{ github.workflow }}
-             description: "## Job Result:  ${{ env.TESTS_RESULT }}"
-             details: ${{ env.JOB_SUMMARY }}
-             webhookUrl: ${{ secrets.DISCORD_TEST_REPORTS_WH }}
+          severity: ${{ env.TESTS_RESULT == 'success' && 'info' || 'error' }}
+          username: ${{ github.workflow }}
+          description: "## Job Result:  ${{ env.TESTS_RESULT }}"
+          details: ${{ env.JOB_SUMMARY }}
+          webhookUrl: ${{ secrets.DISCORD_TEST_REPORTS_WH }}
