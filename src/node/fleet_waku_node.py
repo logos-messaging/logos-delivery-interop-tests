@@ -4,6 +4,7 @@ When fleet bootstrap is active (``--fleet`` CLI flag or ``FLEET_BOOTSTRAP=true``
 env var), an instance of :class:`FleetBootstrapConfig` is assigned to
 ``WakuNode._pre_start_hook``.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -5,7 +5,6 @@ from src.libs.custom_logger import get_custom_logger
 from src.steps.sharding import StepsSharding
 from src.test_data import CONTENT_TOPICS_DIFFERENT_SHARDS, CONTENT_TOPICS_SHARD_0, CONTENT_TOPICS_SHARD_7, PUBSUB_TOPICS_SAME_CLUSTER
 
-
 logger = get_custom_logger(__name__)
 
 

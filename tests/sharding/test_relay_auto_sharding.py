@@ -6,7 +6,6 @@ from src.steps.relay import StepsRelay
 from src.steps.sharding import StepsSharding
 from src.test_data import CONTENT_TOPICS_DIFFERENT_SHARDS, CONTENT_TOPICS_SHARD_0
 
-
 logger = get_custom_logger(__name__)
 
 

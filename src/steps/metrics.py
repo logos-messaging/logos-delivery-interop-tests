@@ -5,7 +5,6 @@ from tenacity import retry, stop_after_delay, wait_fixed
 
 from src.test_data import METRICS_WITH_INITIAL_VALUE_ZERO
 
-
 logger = get_custom_logger(__name__)
 
 
