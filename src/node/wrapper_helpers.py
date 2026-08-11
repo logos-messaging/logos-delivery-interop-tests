@@ -5,6 +5,7 @@ import json
 import re
 import threading
 import time
+import uuid
 from typing import Optional
 from src.libs.common import to_base64
 
@@ -13,6 +14,7 @@ DEFAULT_PAYLOAD = to_base64("test payload")
 EVENT_PROPAGATED = "message_propagated"
 EVENT_SENT = "message_sent"
 EVENT_ERROR = "message_error"
+EVENT_CHANNEL_RECEIVED = "channel_message_received"
 
 # MaxTimeInCache from send_service.nim.
 MAX_TIME_IN_CACHE_S = 60.0
@@ -183,9 +185,9 @@ def get_node_multiaddr(node) -> str:
     list), this fails loudly instead of silently passing a malformed string
     downstream to staticnodes / add_peers.
     """
-    result = node.get_node_info_raw("MyMultiaddresses")
+    result = node.get_node_info("MyMultiaddresses")
     if result.is_err():
-        raise RuntimeError(f"get_node_info_raw failed: {result.err()}")
+        raise RuntimeError(f"get_node_info failed: {result.err()}")
 
     addr = result.ok_value.strip()
     if not addr or not addr.startswith("/"):
@@ -216,7 +218,7 @@ def get_node_bound_ports(node) -> dict:
     Keys: tcp, webSocket, rest, discv5Udp, metrics. A value of 0 means the
     service is disabled or did not bind.
     """
-    result = node.get_node_info_raw("MyBoundPorts")
+    result = node.get_node_info("MyBoundPorts")
     if result.is_err():
         raise RuntimeError(f"MyBoundPorts query failed: {result.err()}")
     return json.loads(result.ok_value)
@@ -242,6 +244,15 @@ def enr_udp_port(enr_uri: str) -> int:
         return prefix
     size = prefix - 0x80  # short string: prefix is 0x80 + length
     return int.from_bytes(payload[key + 5 : key + 5 + size], "big")
+
+
+def unique_channel_id(prefix: str) -> str:
+    """A per-run channel id.
+
+    SDS state is persisted per channelId and restored on create, so a fixed id
+    leaks one run's causal history into the next.
+    """
+    return f"{prefix}-{uuid.uuid4().hex[:8]}"
 
 
 def create_message_bindings(**overrides) -> dict:
