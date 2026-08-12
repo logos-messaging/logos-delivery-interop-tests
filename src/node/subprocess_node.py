@@ -20,6 +20,9 @@ SENDER_STOP_TIMEOUT_S = 30.0
 SEND_ACK_TIMEOUT_S = 60.0
 _SERVE_POLL_S = 0.2
 
+CMD_SEND = "send"
+CMD_RECREATE = "recreate"
+
 
 def _send(sender, channel_id, payload_b64):
     """Sends on the channel; returns None on success, an error string otherwise."""
@@ -28,6 +31,18 @@ def _send(sender, channel_id, payload_b64):
         return f"sender channel_send failed: {send_result.err()}"
     if not send_result.ok_value:
         return f"sender channel_send returned an empty handle: {send_result.ok_value!r}"
+    return None
+
+
+def _recreate(sender, channel_id, content_topic, sender_id):
+    """Closes the channel and creates it again under the same id."""
+    close_result = sender.channel_close(channel_id)
+    if close_result.is_err():
+        return f"sender channel_close failed: {close_result.err()}"
+
+    create_result = sender.channel_create(channel_id, content_topic, sender_id)
+    if create_result.is_err():
+        return f"sender channel_create failed: {create_result.err()}"
     return None
 
 
@@ -78,10 +93,21 @@ def _sender_worker(config, content_topic, channel_id, sender_id, payload_b64, se
             forwarded = len(received)
 
             try:
-                next_payload = cmd_q.get(timeout=_SERVE_POLL_S)
+                op, arg = cmd_q.get(timeout=_SERVE_POLL_S)
             except queue.Empty:
                 continue
-            result_q.put(_send(sender, channel_id, next_payload))
+
+            if op == CMD_SEND:
+                result_q.put(_send(sender, channel_id, arg))
+                continue
+
+            outcome = _recreate(sender, channel_id, content_topic, sender_id)
+            if outcome is None:
+                # channel_close drops the content topic subscription and
+                # channel_create re-adds it; let the mesh catch up before the
+                # next send, or it goes out to nobody.
+                delay(settle_s)
+            result_q.put(outcome)
 
 
 class ChannelSenderProcess:
@@ -92,7 +118,8 @@ class ChannelSenderProcess:
     co-located nodes share the library's SDS Persistency singleton.
 
     `multiaddr` lets the node under test dial this peer, `send()` drives further
-    sends, `wait_for_received()` reports what this peer received.
+    sends, `close_and_recreate()` cycles the channel under the same id, and
+    `wait_for_received()` reports what this peer received.
     """
 
     def __init__(self, config, *, content_topic, channel_id, sender_id, payload_b64=None, settle_s):
@@ -123,15 +150,23 @@ class ChannelSenderProcess:
         self.multiaddr = outcome["multiaddr"]
         return self
 
-    def send(self, payload_b64) -> None:
-        """Sends another message on the channel, blocking until the peer acks it."""
-        self._cmd_q.put(payload_b64)
+    def _run(self, op, arg, what) -> None:
+        self._cmd_q.put((op, arg))
         try:
             outcome = self._result_q.get(timeout=SEND_ACK_TIMEOUT_S)
         except queue.Empty:
-            raise AssertionError(f"sender subprocess did not acknowledge a send within {SEND_ACK_TIMEOUT_S}s")
+            raise AssertionError(f"sender subprocess did not acknowledge {what} within {SEND_ACK_TIMEOUT_S}s")
         if outcome is not None:
             raise AssertionError(outcome)
+
+    def send(self, payload_b64) -> None:
+        """Sends another message on the channel, blocking until the peer acks it."""
+        self._run(CMD_SEND, payload_b64, "a send")
+
+    def close_and_recreate(self) -> None:
+        """Closes and re-creates the channel under the same id, blocking until
+        the peer has re-subscribed and the mesh has settled."""
+        self._run(CMD_RECREATE, None, "a close/re-create")
 
     def wait_for_received(self, count, timeout_s) -> list:
         """Channel messages this peer received, oldest first; waits for `count`."""
