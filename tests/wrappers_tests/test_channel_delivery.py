@@ -45,6 +45,9 @@ RC12_CHANNEL_PREFIX = "rc12-channel"
 RC12_CONTENT_TOPIC = "/test/1/rc12-channel/proto"
 SENDER_C = "rc12-sender-c"
 
+RC13_CHANNEL_PREFIX = "rc13-channel"
+RC13_CONTENT_TOPIC = "/test/1/rc13-channel/proto"
+
 CLOSED_CHANNEL_PREFIX = "rc-closed-channel"
 CLOSED_CONTENT_TOPIC = "/test/1/rc-closed-channel/proto"
 
@@ -573,6 +576,78 @@ class TestChannelDelivery:
                         SENDER_A,
                         SENDER_A,
                     ], f"both events must carry {SENDER_A!r}, got {[e.get('senderId') for e in on_b + on_c]!r}"
+
+    def test_rc13_close_recreate_then_send_delivers_new_message(self, node_config):
+        """RC13: A closes and re-creates its channel, then sends again.
+
+        A sends m1, cycles the channel under the same id, then sends m2. B must
+        deliver m2 exactly once and ordered after m1, and must not replay m1 —
+        the re-created channel picks up the restored SDS history rather than
+        starting a fresh one.
+
+        Distinct from the nim in-process test, which cycles the *receiver's*
+        channel and asserts a replayed m1 is suppressed on ingress; here the
+        cycle is on the send path.
+        """
+        channel_id = unique_channel_id(RC13_CHANNEL_PREFIX)
+        m1, m2 = "rc13 before close", "rc13 after re-create"
+
+        node_config.update(
+            {
+                "relay": True,
+                "store": False,
+                "reliabilityEnabled": False,
+                "numShardsInNetwork": 1,
+            }
+        )
+
+        receiver_collector = EventCollector()
+        receiver_result = WrapperManager.create_and_start(config=node_config, event_cb=receiver_collector.event_callback)
+        assert receiver_result.is_ok(), f"Failed to start receiver: {receiver_result.err()}"
+
+        with receiver_result.ok_value as receiver:
+            sender_config = {
+                **node_config,
+                "staticnodes": [get_node_multiaddr(receiver)],
+                "portsShift": 1,
+            }
+
+            subscribe_result = receiver.subscribe_content_topic(RC13_CONTENT_TOPIC)
+            assert subscribe_result.is_ok(), f"receiver subscribe_content_topic failed: {subscribe_result.err()}"
+
+            receiver_create = receiver.channel_create(channel_id, RC13_CONTENT_TOPIC, SENDER_B)
+            assert receiver_create.is_ok(), f"receiver channel_create failed: {receiver_create.err()}"
+
+            with ChannelSenderProcess(
+                sender_config,
+                content_topic=RC13_CONTENT_TOPIC,
+                channel_id=channel_id,
+                sender_id=SENDER_A,
+                payload_b64=to_base64(m1),
+                settle_s=MESH_SETTLE_S,
+            ) as sender:
+                first = wait_for_channel_received(receiver_collector, channel_id, DELIVERY_TIMEOUT_S)
+                assert first is not None, (
+                    f"No {CHANNEL_RECEIVED_EVENT} for m1 on {channel_id} within {DELIVERY_TIMEOUT_S}s; "
+                    f"the close/re-create is only meaningful once m1 landed. Collected events: {receiver_collector.snapshot()}"
+                )
+
+                sender.close_and_recreate()
+                sender.send(to_base64(m2))
+
+                received = wait_for_channel_received_count(receiver_collector, channel_id, 2, DELIVERY_TIMEOUT_S)
+                assert len(received) == 2, (
+                    f"expected m1 then m2 on {channel_id}, got {len(received)}: {channel_payloads(received)!r}. "
+                    f"Collected events: {receiver_collector.snapshot()}"
+                )
+                assert channel_payloads(received) == [
+                    m1.encode(),
+                    m2.encode(),
+                ], f"expected [m1, m2] in causal order, got: {channel_payloads(received)!r}"
+
+                # A third event could only be a replayed m1 from the re-created channel.
+                settled = wait_for_channel_received_count(receiver_collector, channel_id, 3, NO_CHANNEL_DELIVERY_WINDOW_S)
+                assert len(settled) == 2, f"re-create must not re-deliver m1; got: {channel_payloads(settled)!r}"
 
     def test_receive_after_close_emits_no_channel_event(self, node_config):
         """A closed channel must not deliver: B closes its channel, then A sends a
