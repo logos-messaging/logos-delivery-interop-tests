@@ -37,12 +37,23 @@ on:
         description: "Send test results to Discord"
         type: boolean
         default: false
+      reruns:
+        required: false
+        description: "pytest --reruns; 0 keeps flaky runs visible in the report"
+        type: number
+        default: 2
+      default_nwaku:
+        required: false
+        description: "Image for tests that build their own nodes instead of using node1/node2"
+        type: string
+        default: ""
 
 env:
   FORCE_COLOR: "1"
   NODE_1: ${{ inputs.node1 }}
   NODE_2: ${{ inputs.node2 }}
   ADDITIONAL_NODES: ${{ inputs.additional_nodes }}
+  DEFAULT_NWAKU: ${{ inputs.default_nwaku }}
   CALLER: ${{ inputs.caller || 'manual' }}
   RLN_CREDENTIALS: ${{ secrets.RLN_CREDENTIALS }}
 
@@ -52,11 +63,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
-    # total number of shards =18 means tests will split into 18 thread and run in parallel to increase execution speed
+        shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,17]
+    # 16 sharded runners plus one dedicated shard, running in parallel
     # command for sharding :
     # pytest --shard-id=<shard_number> --num-shards=<total_shards>
-    # shard 16 for test_rln.py file as they shall run sequentially
     # shard 17 for test_cursor_many_msgs.py as it takes time >7 mins
 
     runs-on: ubuntu-latest
@@ -78,13 +88,10 @@ jobs:
       jobResult_13: ${{ steps.set_result.outputs.JOB_RESULT_13 }}
       jobResult_14: ${{ steps.set_result.outputs.JOB_RESULT_14 }}
       jobResult_15: ${{ steps.set_result.outputs.JOB_RESULT_15 }}
-      jobResult_16: ${{ steps.set_result.outputs.JOB_RESULT_16 }}
       jobResult_17: ${{ steps.set_result.outputs.JOB_RESULT_17 }}
 
     steps:
       - uses: actions/checkout@v5
-        with:
-          submodules: recursive
 
       - name: Remove unwanted software
         uses: ./.github/actions/prune-vm
@@ -94,9 +101,6 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
-      - name: Add python bindings to PYTHONPATH
-        run: echo "PYTHONPATH=$(pwd)/vendor/logos-delivery-python-bindings/waku:$PYTHONPATH" >> $GITHUB_ENV
-
       - name: Install system deps for tc / nsenter
         run: |
           sudo apt-get update
@@ -105,115 +109,45 @@ jobs:
             iproute2 \
             sudo \
             ca-certificates \
-            curl \
-            make \
-            gcc \
-            g++
-
-      - name: Install Nim 2.2.4
-        run: |
-          set -euo pipefail
-          curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y
-          echo "$HOME/.nimble/bin" >> "$GITHUB_PATH"
-          export PATH="$HOME/.nimble/bin:$PATH"
-          choosenim 2.2.4
-          # Pin the nimble that generated logos-delivery's nimble.lock. A newer
-          # nimble recomputes the locked Nim package checksum differently, which
-          # makes `nimble setup --localdeps` abort with a checksum mismatch.
-          (cd /tmp && nimble install "nimble@0.22.3" -y)
-          nim --version
-          nimble --version
+            curl
 
       - run: pip install -r requirements.txt
 
-      - name: Build liblogosdelivery.so for python bindings
+      - name: Pull and inspect node images
         run: |
           set -euo pipefail
-
-          export PATH="$HOME/.nimble/bin:$PATH"
-
-          BINDINGS_DIR="$(pwd)/vendor/logos-delivery-python-bindings"
-          DELIVERY_DIR="$BINDINGS_DIR/vendor/logos-delivery"
-
-          mkdir -p "$BINDINGS_DIR/lib"
-
-          cd "$DELIVERY_DIR"
-
-          ln -sf waku.nimble waku.nims
-
-          # `make liblogosdelivery` resolves the locked deps via
-          # `nimble setup --localdeps` (build-deps prerequisite); a bare
-          # `nimble install -y` here is redundant and pulls Nim from the lock,
-          # which is what triggered the checksum mismatch.
-          make liblogosdelivery
-
-          SO_PATH="$(find . -type f -name 'liblogosdelivery.so' | head -n 1)"
-
-          if [ -z "$SO_PATH" ]; then
-            echo "liblogosdelivery.so was not built"
-            exit 1
-          fi
-
-          cp "$SO_PATH" "$BINDINGS_DIR/lib/liblogosdelivery.so"
-
-          echo "Built library:"
-          ls -l "$BINDINGS_DIR/lib/liblogosdelivery.so"
-          
-          # Cleanup build artifacts        
-          rm -rf .gh-pages/nim 
-
-
-      - name: Verify wrapper library
-        run: |
-          test -f vendor/logos-delivery-python-bindings/lib/liblogosdelivery.so
-
-      - name: Debug Python import paths
-        run: |
-          pwd
-          echo "PYTHONPATH=$PYTHONPATH"
-          find . -maxdepth 5 | grep wrapper || true
-          python - <<'PY'
-          import sys
-          print("sys.path:")
-          for p in sys.path:
-              print(p)
-          try:
-              import wrapper
-              print("wrapper import OK:", wrapper)
-          except Exception as e:
-              print("wrapper import failed:", e)
-              raise
-          PY
+          printf '%s\n' "$NODE_1" "$NODE_2" "$DEFAULT_NWAKU" ${ADDITIONAL_NODES:-} | tr ',' '\n' | sort -u | while read -r image; do
+            [ -n "$image" ] || continue
+            docker pull -q "$image"
+            docker image inspect "$image" \
+              --format "- \`$image\` digest={{if .RepoDigests}}{{index .RepoDigests 0}}{{else}}<none>{{end}} created={{.Created}}" \
+              | tee -a "$GITHUB_STEP_SUMMARY"
+          done
 
       - name: Run tests
+        id: run_tests
         run: |
-          export PATH="$HOME/.nimble/bin:$PATH"
-          export PYTHONPATH="$(pwd)/vendor/logos-delivery-python-bindings/waku:$PYTHONPATH"
-
           if [ "${{ inputs.fleet_tests }}" == "true" ]; then
               if [ "${{ matrix.shard }}" == "0" ]; then
                   pytest --fleet -m waku_test_fleet \
-                    --ignore=vendor/logos-delivery-python-bindings/tests \
+                    --ignore=tests/wrappers_tests \
+                    --junit-xml=junit-${{ matrix.shard }}.xml \
                     --alluredir=allure-results-${{ matrix.shard }}
               else
                   echo "Skipping shard ${{ matrix.shard }}: fleet tests run on shard 0 only"
               fi
-          elif [ "${{ matrix.shard }}" == "16" ]; then
-              pytest tests/relay/test_rln.py \
-                --ignore=vendor/logos-delivery-python-bindings/tests \
-                --alluredir=allure-results-${{ matrix.shard }}
           elif [ "${{ matrix.shard }}" == "17" ]; then
               pytest tests/store/test_cursor_many_msgs.py \
-                --ignore=vendor/logos-delivery-python-bindings/tests \
+                --junit-xml=junit-${{ matrix.shard }}.xml \
                 --alluredir=allure-results-${{ matrix.shard }}
           else
               pytest \
-                --ignore=vendor/logos-delivery-python-bindings/tests \
-                --ignore=tests/relay/test_rln.py \
+                --ignore=tests/wrappers_tests \
                 --ignore=tests/store/test_cursor_many_msgs.py \
-                --reruns 2 \
+                --reruns ${{ inputs.reruns }} \
                 --shard-id=${{ matrix.shard }} \
                 --num-shards=16 \
+                --junit-xml=junit-${{ matrix.shard }}.xml \
                 --alluredir=allure-results-${{ matrix.shard }}
           fi
 
@@ -223,6 +157,14 @@ jobs:
         with:
           name: allure-results-${{ matrix.shard }}
           path: allure-results-${{ matrix.shard }}
+
+      - name: Upload junit report
+        if: always() && steps.run_tests.outcome != 'skipped'
+        uses: actions/upload-artifact@v6
+        with:
+          name: junit-${{ matrix.shard }}
+          path: junit-${{ matrix.shard }}.xml
+          if-no-files-found: ${{ inputs.fleet_tests && 'ignore' || 'error' }}
 
       - name: Set job result
         id: set_result
@@ -240,6 +182,7 @@ jobs:
       - name: Download all allure results
         uses: actions/download-artifact@v7
         with:
+          pattern: allure-results-*
           path: all-results
           merge-multiple: true
 
