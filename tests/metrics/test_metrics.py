@@ -30,9 +30,9 @@ class TestMetrics(StepsRelay, StepsMetrics, StepsFilter, StepsLightPush, StepsSt
                 self.check_metric(node, "libp2p_pubsub_topics", 1)
                 self.check_metric(node, "libp2p_pubsub_subscriptions_total", 1)
                 self.check_metric(node, 'libp2p_gossipsub_peers_per_topic_mesh{topic="other"}', 1)
-                self.check_metric(node, "waku_peer_store_size", 1)
-                self.check_metric(node, "waku_histogram_message_size_count", 1)
-                self.check_metric(node, 'waku_node_messages_total{type="relay"}', 1)
+                self.check_metric(node, "logos_delivery_peer_store_size", 1)
+                self.check_metric(node, "logos_delivery_histogram_message_size_count", 1)
+                self.check_metric(node, 'logos_delivery_node_messages_total{type="relay"}', 1)
 
     @pytest.mark.usefixtures("setup_main_relay_node", "setup_main_filter_node", "subscribe_main_nodes")
     def test_metrics_after_filter_get(self):
@@ -45,16 +45,18 @@ class TestMetrics(StepsRelay, StepsMetrics, StepsFilter, StepsLightPush, StepsSt
         self.check_metric(self.node1, "libp2p_pubsub_peers", 1)
         self.check_metric(self.node1, "libp2p_pubsub_topics", 1)
         self.check_metric(self.node1, "libp2p_pubsub_subscriptions_total", 1)
-        self.check_metric(self.node1, "waku_peer_store_size", 1)
-        self.check_metric(self.node1, "waku_histogram_message_size_count", 1)
-        self.check_metric(self.node1, 'waku_node_messages_total{type="relay"}', 1)
+        self.check_metric(self.node1, "logos_delivery_peer_store_size", 1)
+        self.check_metric(self.node1, "logos_delivery_histogram_message_size_count", 1)
+        self.check_metric(self.node1, 'logos_delivery_node_messages_total{type="relay"}', 1)
         if self.node2.is_nwaku():
             self.check_metric(
-                self.node2, f'waku_service_peers{{protocol="/vac/waku/filter-subscribe/2.0.0-beta1",peerId="{self.node1.get_tcp_address()}"}}', 1
+                self.node2,
+                f'logos_delivery_service_peers{{protocol="/vac/waku/filter-subscribe/2.0.0-beta1",peerId="{self.node1.get_tcp_address()}"}}',
+                1,
             )
             self.check_metric(self.node2, "libp2p_peers", 1)
             self.check_metric(self.node2, "libp2p_total_dial_attempts_total", 1)
-            self.check_metric(self.node2, "waku_peer_store_size", 1)
+            self.check_metric(self.node2, "logos_delivery_peer_store_size", 1)
 
     def test_metrics_after_light_push(self):
         self.setup_first_receiving_node()
@@ -69,19 +71,19 @@ class TestMetrics(StepsRelay, StepsMetrics, StepsFilter, StepsLightPush, StepsSt
         if self.light_push_node1.is_nwaku():
             self.check_metric(
                 self.light_push_node1,
-                f'waku_service_peers{{protocol="/vac/waku/lightpush/2.0.0-beta1",peerId="{self.receiving_node1.get_tcp_address()}"}}',
+                f'logos_delivery_service_peers{{protocol="/vac/waku/lightpush/2.0.0-beta1",peerId="{self.receiving_node1.get_tcp_address()}"}}',
                 1,
             )
             self.check_metric(self.light_push_node1, "libp2p_peers", 1)
-            self.check_metric(self.light_push_node1, "waku_peer_store_size", 1)
+            self.check_metric(self.light_push_node1, "logos_delivery_peer_store_size", 1)
         if self.receiving_node1.is_nwaku():
             self.check_metric(self.receiving_node1, "libp2p_peers", 1)
             self.check_metric(self.receiving_node1, "libp2p_pubsub_peers", 1)
             self.check_metric(self.receiving_node1, "libp2p_pubsub_topics", 1)
             self.check_metric(self.receiving_node1, "libp2p_pubsub_subscriptions_total", 1)
-            self.check_metric(self.receiving_node1, "waku_peer_store_size", 1)
-            self.check_metric(self.receiving_node1, "waku_histogram_message_size_count", 1)
-            self.check_metric(self.receiving_node1, 'waku_node_messages_total{type="relay"}', 1)
+            self.check_metric(self.receiving_node1, "logos_delivery_peer_store_size", 1)
+            self.check_metric(self.receiving_node1, "logos_delivery_histogram_message_size_count", 1)
+            self.check_metric(self.receiving_node1, 'logos_delivery_node_messages_total{type="relay"}', 1)
 
     def test_metrics_after_store_get(self, node_setup):
         self.publish_message(message=self.create_message())
@@ -91,19 +93,19 @@ class TestMetrics(StepsRelay, StepsMetrics, StepsFilter, StepsLightPush, StepsSt
         self.check_metric(self.publishing_node1, "libp2p_pubsub_peers", 1)
         self.check_metric(self.publishing_node1, "libp2p_pubsub_topics", 1)
         self.check_metric(self.publishing_node1, "libp2p_pubsub_subscriptions_total", 1)
-        self.check_metric(self.publishing_node1, "waku_peer_store_size", 1)
-        self.check_metric(self.publishing_node1, "waku_histogram_message_size_count", 1)
-        self.check_metric(self.publishing_node1, 'waku_node_messages_total{type="relay"}', 1)
+        self.check_metric(self.publishing_node1, "logos_delivery_peer_store_size", 1)
+        self.check_metric(self.publishing_node1, "logos_delivery_histogram_message_size_count", 1)
+        self.check_metric(self.publishing_node1, 'logos_delivery_node_messages_total{type="relay"}', 1)
         if self.store_node1.is_nwaku():
             self.check_metric(
                 self.store_node1,
-                f'waku_service_peers{{protocol="/vac/waku/store-query/3.0.0",peerId="{self.publishing_node1.get_tcp_address()}"}}',
+                f'logos_delivery_service_peers{{protocol="/vac/waku/store-query/3.0.0",peerId="{self.publishing_node1.get_tcp_address()}"}}',
                 1,
             )
             self.check_metric(self.store_node1, "libp2p_peers", 1)
             self.check_metric(self.store_node1, "libp2p_pubsub_peers", 1)
             self.check_metric(self.store_node1, "libp2p_pubsub_topics", 1)
             self.check_metric(self.store_node1, "libp2p_pubsub_subscriptions_total", 1)
-            self.check_metric(self.store_node1, "waku_peer_store_size", 1)
-            self.check_metric(self.store_node1, "waku_histogram_message_size_count", 1)
-            self.check_metric(self.store_node1, 'waku_node_messages_total{type="relay"}', 1)
+            self.check_metric(self.store_node1, "logos_delivery_peer_store_size", 1)
+            self.check_metric(self.store_node1, "logos_delivery_histogram_message_size_count", 1)
+            self.check_metric(self.store_node1, 'logos_delivery_node_messages_total{type="relay"}', 1)
