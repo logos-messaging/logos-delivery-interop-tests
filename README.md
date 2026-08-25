@@ -57,10 +57,12 @@ To launch it manually:
 Every push to a pull request triggers **pr\_tests.yml** which runs:
 
 1. **Build** — compiles `liblogosdelivery.so` (cached by submodule commit hash).
-2. **Wrapper tests** — all tests under `tests/wrappers_tests/` that don't require Docker (~5 min).
+2. **Wrapper tests** — all tests under `tests/wrappers_tests/`, including the `docker_required` ones (~10 min).
 3. **Smoke tests** — `pytest -m smoke` with Docker nodes (~10 min).
 
-To run the **full test suite** (18 shards, same as daily) on a PR, add the label **`full-test`** to the pull request. The full suite will start automatically.
+This job is the only place `tests/wrappers_tests/` runs. The daily and full-suite runs skip that directory and therefore no longer build `liblogosdelivery.so`; most of it is also mirrored in the logos-delivery repository under `tests-e2e/`.
+
+To run the **full test suite** (17 shards, same as daily) on a PR, add the label **`full-test`** to the pull request. The full suite will start automatically.
 
 ### On‑demand matrix against custom *logos-messaging-nim* versions
 
