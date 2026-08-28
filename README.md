@@ -56,11 +56,13 @@ To launch it manually:
 
 Every push to a pull request triggers **pr\_tests.yml** which runs:
 
-1. **Build** — compiles `liblogosdelivery.so` (cached by submodule commit hash).
-2. **Wrapper tests** — all tests under `tests/wrappers_tests/`, including the `docker_required` ones (~10 min).
-3. **Smoke tests** — `pytest -m smoke` with Docker nodes (~10 min).
+1. **Smoke tests** — `pytest -m smoke` with Docker nodes (~10 min).
 
-This job is the only place `tests/wrappers_tests/` runs. The daily and full-suite runs skip that directory and therefore no longer build `liblogosdelivery.so`; most of it is also mirrored in the logos-delivery repository under `tests-e2e/`.
+Wrapper/send-API tests live in `logos-delivery/tests-e2e/tests/wrappers_tests/`; this repo covers
+interop, fleet and REST/protocol tests only. Any test that drives `liblogosdelivery` through CFFI
+belongs there. **wrapper_suite_guard.yml** fails its `No wrapper tests` check on any pull request
+that adds or modifies files under `tests/wrappers_tests/`; the check must be configured as a
+required status check on `master` to actually block a merge, and it matches that literal path only.
 
 To run the **full test suite** (17 shards, same as daily) on a PR, add the label **`full-test`** to the pull request. The full suite will start automatically.
 

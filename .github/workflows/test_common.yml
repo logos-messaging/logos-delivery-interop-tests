@@ -130,7 +130,6 @@ jobs:
           if [ "${{ inputs.fleet_tests }}" == "true" ]; then
               if [ "${{ matrix.shard }}" == "0" ]; then
                   pytest --fleet -m waku_test_fleet \
-                    --ignore=tests/wrappers_tests \
                     --junit-xml=junit-${{ matrix.shard }}.xml \
                     --alluredir=allure-results-${{ matrix.shard }}
               else
@@ -142,7 +141,6 @@ jobs:
                 --alluredir=allure-results-${{ matrix.shard }}
           else
               pytest \
-                --ignore=tests/wrappers_tests \
                 --ignore=tests/store/test_cursor_many_msgs.py \
                 --reruns ${{ inputs.reruns }} \
                 --shard-id=${{ matrix.shard }} \
