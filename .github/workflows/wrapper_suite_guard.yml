@@ -1,0 +1,34 @@
+name: Wrapper Suite Guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  no-wrapper-tests:
+    name: No wrapper tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Reject new or modified wrapper tests
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          # Lowercase d excludes deletions, so removing the suite stays allowed.
+          hits="$(git diff --name-only --diff-filter=d --merge-base "$BASE_SHA" "$HEAD_SHA" -- tests/wrappers_tests)"
+
+          if [ -n "$hits" ]; then
+            echo "Offending paths:"
+            printf '%s\n' "$hits"
+            echo "::error::tests/wrappers_tests/ is retired in this repo. Tests that drive liblogosdelivery through CFFI live in logos-delivery/tests-e2e/tests/wrappers_tests/, which owns the wrapper/send-API suite and runs it against the library built by that repo's own CI. Move these changes there and drop them from this PR."
+            exit 1
+          fi
+
+          echo "No additions or modifications under tests/wrappers_tests/."
